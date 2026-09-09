@@ -1,0 +1,162 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+/* Procedure Description
+"CALCULA EL TIEMPO DE SERVICIO"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT  PARAMETER FECHA-INGRESO  AS DATE.
+DEFINE INPUT  PARAMETER FECHA-CESE     AS DATE.
+DEFINE OUTPUT PARAMETER ANOS           AS INTEGER.
+DEFINE OUTPUT PARAMETER MESES          AS INTEGER.
+DEFINE OUTPUT PARAMETER DIAS           AS INTEGER.
+
+DEFINE VARIABLE FECHA-1 AS DATE.         
+DEFINE VARIABLE DIAS-XX AS INTEGER.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+CASE (MONTH(FECHA-CESE) - 1) :
+  WHEN 2 
+    THEN DIAS-XX = IF ( YEAR(FECHA-CESE) MODULO 4 ) = 0 THEN 29 ELSE 28.
+  WHEN 1 OR WHEN 3 OR WHEN 5 OR WHEN 7 OR WHEN 8 OR WHEN 10          
+    THEN DIAS-XX = 31.
+  OTHERWISE           
+         DIAS-XX = 30.
+END CASE.
+
+DEFINE VARIABLE DIAS-YY AS INTEGER.
+CASE (MONTH(FECHA-CESE)):
+  WHEN 2 
+    THEN DIAS-YY = IF ( YEAR(FECHA-CESE) MODULO 4 ) = 0 THEN 29 ELSE 28.
+  WHEN 1 OR WHEN 3 OR WHEN 5 OR WHEN 7 OR WHEN 8 OR WHEN 10          
+    THEN DIAS-YY = 31.
+  OTHERWISE           
+         DIAS-YY = 30.
+END CASE.
+
+IF DAY(FECHA-CESE) >= DAY(FECHA-INGRESO)
+THEN FECHA-1 = DATE( 
+                    MONTH(FECHA-CESE), 
+                    DAY(FECHA-INGRESO), 
+                    YEAR(FECHA-CESE)).
+ELSE DO:
+     CASE (MONTH(FECHA-CESE) - 1):                             
+     WHEN 0
+     THEN FECHA-1 = DATE( 
+                    12, 
+                    DAY(FECHA-INGRESO), 
+                    YEAR(FECHA-CESE) - 1).
+     WHEN 1 OR WHEN 3 OR WHEN 5 OR WHEN 7 OR WHEN 8 OR WHEN 10 
+     THEN FECHA-1 = DATE( 
+                    MONTH(FECHA-CESE) - 1, 
+                    DAY(FECHA-INGRESO), 
+                    YEAR(FECHA-CESE)).
+     OTHERWISE
+          IF DAY(FECHA-INGRESO) > DIAS-XX
+          THEN FECHA-1 = DATE( 
+                    MONTH(FECHA-CESE) - 1, 
+                    DIAS-XX, 
+                    YEAR(FECHA-CESE)).
+          ELSE FECHA-1 = DATE( 
+                    MONTH(FECHA-CESE) - 1, 
+                    DAY(FECHA-INGRESO), 
+                    YEAR(FECHA-CESE)).
+                    
+    END CASE.
+END.
+
+ANOS  = YEAR(FECHA-1)  - YEAR(FECHA-INGRESO).
+MESES = MONTH(FECHA-1) - MONTH(FECHA-INGRESO).
+IF MESES < 0
+THEN ASSIGN MESES = MESES + 12
+            ANOS  = ANOS - 1.
+
+DIAS = FECHA-CESE - FECHA-1.
+
+IF MONTH(FECHA-INGRESO) = 2 THEN DO:
+   IF DIAS-XX = 29 THEN DIAS = DIAS - 2.
+   IF DIAS-XX = 28 THEN DIAS = DIAS - 3.
+END.
+
+IF DIAS = DIAS-YY
+THEN ASSIGN MESES = MESES + 1 
+            DIAS  = 0.     
+            
+IF MESES > 12            
+THEN ASSIGN MESES = MESES - 12 
+            ANOS  = ANOS  + 1.     
+/* RHC 27.04.05 */
+IF DIAS < 0 THEN DO:
+    DIAS = FECHA-CESE - FECHA-INGRESO.
+    MESES = MESES - 1.
+END.
+
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

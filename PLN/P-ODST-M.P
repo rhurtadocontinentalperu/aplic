@@ -1,0 +1,141 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r2 GUI
+/* Procedure Description
+"C lculo Otros Descuentos
+- 1 PRESTAMOS
+- 2 ADELANTOS"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+{pln/s-global.i}
+{bin/s-global.i}
+
+DEFINE INPUT-OUTPUT PARAMETER s-Var    AS DECIMAL.
+DEFINE INPUT        PARAMETER s-CodCal AS INTEGER   NO-UNDO.
+DEFINE INPUT        PARAMETER s-CodPln AS INTEGER   NO-UNDO.
+DEFINE INPUT        PARAMETER s-CodPer AS CHARACTER NO-UNDO.
+DEFINE INPUT        PARAMETER s-Neto   AS DECIMAL   NO-UNDO.
+DEFINE INPUT        PARAMETER s-TpoCmb AS DECIMAL   NO-UNDO.
+DEFINE INPUT        PARAMETER s-ImpDst AS DECIMAL   NO-UNDO.
+DEFINE INPUT        PARAMETER s-ClfDto AS INTEGER   NO-UNDO.
+DEFINE INPUT        PARAMETER s-TpoDto AS INTEGER   NO-UNDO.
+
+DEFINE VARIABLE s-Cuota     AS DECIMAL NO-UNDO.
+DEFINE VARIABLE s-Cuota-usa AS DECIMAL NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+FOR EACH integral.PL-CFG-CTE-MES WHERE
+    integral.PL-CFG-CTE-MES.CodCia          = s-CodCia AND
+    integral.PL-CFG-CTE-MES.Periodo         = s-Periodo AND
+    integral.PL-CFG-CTE-MES.NroMes          = s-NroMes AND
+    integral.PL-CFG-CTE-MES.Clf-Cte-Mes     = s-ClfDto AND
+    integral.PL-CFG-CTE-MES.Tpo-Cte-Mes     = s-TpoDto AND
+    integral.PL-CFG-CTE-MES.CodPer          = s-CodPer AND
+    integral.PL-CFG-CTE-MES.Sdo-Cte-Mes     > 0 AND
+    MONTH(integral.PL-CFG-CTE-MES.Fch-Prx-Pgo-Mes) = s-NroMes:
+
+    IF integral.PL-CFG-CTE-MES.Moneda-Mes THEN DO:
+        IF integral.PL-CFG-CTE-MES.Cuo-Por-Mes <> 0 THEN DO:
+            S-Cuota     = integral.PL-CFG-CTE-MES.Cuo-Por-Mes * ( s-ImpDst / 100 ).
+            S-Cuota-Usa = 0.
+        END.
+        ELSE DO:
+            S-Cuota     = integral.PL-CFG-CTE-MES.Cuo-Cte-Mes.
+            S-Cuota-Usa = 0.
+        END.
+        s-Cuota = MINIMUM( s-Neto, integral.PL-CFG-CTE-MES.Sdo-Cte-Mes, s-cuota ).
+        integral.PL-CFG-CTE-MES.Sdo-Cte-Mes =
+            integral.PL-CFG-CTE-MES.Sdo-Cte-Mes - s-Cuota.
+        integral.PL-CFG-CTE-MES.Sdo-Usa-Mes = 0.
+    END.
+    ELSE DO:
+        IF integral.PL-CFG-CTE-MES.Cuo-Por-Mes <> 0 THEN DO:
+            S-Cuota     = integral.PL-CFG-CTE-MES.Cuo-Por-Mes * ( s-ImpDst / 100 ).
+            S-Cuota-Usa = IF S-TpoCmb > 0 THEN S-Cuota / s-TpoCmb ELSE 0.
+        END.
+        ELSE DO:
+            S-Cuota     = integral.PL-CFG-CTE-MES.Cuo-Cte-Mes * s-TpoCmb.
+            S-Cuota-Usa = integral.PL-CFG-CTE-MES.Cuo-Cte-Mes.
+        END.
+        IF s-Cuota <> MINIMUM(s-Neto, integral.PL-CFG-CTE-MES.Sdo-Cte-Mes, s-cuota) THEN DO:
+            s-Cuota = MINIMUM(s-Neto, integral.PL-CFG-CTE-MES.Sdo-Cte-Mes, s-cuota).
+            s-Cuota-Usa = IF S-TpoCmb > 0 THEN S-Cuota / s-TpoCmb ELSE 0.
+        END.
+        integral.PL-CFG-CTE-MES.Sdo-Usa-Mes = integral.PL-CFG-CTE-MES.Sdo-Usa-Mes - s-Cuota-USA.
+        integral.PL-CFG-CTE-MES.Sdo-Cte-Mes = 0.
+    END.
+
+    /* Creando Movimiento */
+    CREATE integral.PL-MOV-CTE-MES.
+    ASSIGN
+        integral.PL-MOV-CTE-MES.Clf-Cte-mes         = s-ClfDto
+        integral.PL-MOV-CTE-MES.CodCal              = s-CodCal
+        integral.PL-MOV-CTE-MES.CodCia              = s-CodCia
+        integral.PL-MOV-CTE-MES.CodPer              = s-CodPer
+        integral.PL-MOV-CTE-MES.CodPln              = s-CodPln
+        integral.PL-MOV-CTE-MES.Fch-Ult-Mov-Cte-Mes = TODAY
+        integral.PL-MOV-CTE-MES.Hra-Ult-Mov-Cte-Mes = STRING(TIME,"HH:MM")
+        integral.PL-MOV-CTE-MES.Nro-Cte-Mes = integral.PL-CFG-CTE-MES.Nro-Cte-Mes
+        integral.PL-MOV-CTE-MES.NroMes = s-NroMes
+        integral.PL-MOV-CTE-MES.Periodo = s-Periodo
+        integral.PL-MOV-CTE-MES.Tpo-Cte-Mes = s-TpoDto
+        integral.PL-MOV-CTE-MES.Val-Cte-Mes = s-Cuota
+        integral.PL-MOV-CTE-MES.Val-USA-Mes = s-Cuota-USA
+        s-Var = s-Var + s-Cuota
+        s-Neto = s-Neto - s-Cuota.
+    IF s-Neto <= 0 THEN LEAVE.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

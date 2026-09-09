@@ -1,0 +1,264 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-fact01.p
+    Purpose     : Impresion de Fact/Boletas 
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR s-codcia AS INT.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+DEF SHARED VAR cl-codcia AS INT.
+DEF SHARED VAR s-user-id AS CHAR.
+
+DEF VAR I-NroItm AS INTEGER.
+DEF VAR X-TOTAL AS DECIMAL.
+DEF VAR X-SUMA  AS CHAR.
+Def var x-fchdoc as date.
+Def var x-fchvto as date.
+Def var x-imptot as decimal.
+
+FIND FIRST ccbcmvto WHERE ROWID(ccbcmvto) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcmvto THEN RETURN.
+FIND gn-clie WHERE gn-clie.codcia = cl-codcia AND
+     gn-clie.codcli = ccbcmvto.codcli NO-LOCK.
+
+/* Definimos impresoras */
+DEFINE VAR s-printer-list AS CHAR.
+DEFINE VAR s-port-list AS CHAR.
+DEFINE VAR s-port-name AS CHAR format "x(20)".
+DEFINE VAR s-printer-count AS INTEGER.
+
+DEF TEMP-TABLE Detalle LIKE Ccbdmvto
+    FIELD NroItm AS INT.
+
+DEF VAR s-Task-No AS INTE NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.88
+         WIDTH              = 52.86.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+RUN Carga-Temporal.
+IF NOT CAN-FIND(FIRST w-report WHERE w-report.task-no = s-task-no 
+                AND w-report.llave-c = s-user-id NO-LOCK)
+    THEN DO:
+    MESSAGE 'Fin de archivo' VIEW-AS ALERT-BOX WARNING.
+    RETURN.
+END.
+
+DEFINE VAR p-pagina-final AS INTEGER.
+DEFINE VAR p-pagina-inicial AS INTEGER.
+DEFINE VAR p-salida-impresion AS INTEGER.
+DEFINE VAR p-printer-name AS CHAR.
+DEFINE VAR p-printer-port AS CHARACTER.
+DEFINE VAR p-print-file AS CHAR.
+DEFINE VAR p-nro-copias AS INTEGER.
+DEFINE VAR p-orientacion AS INTEGER.
+
+DEF VAR RB-REPORT-LIBRARY AS CHAR.
+DEF VAR RB-REPORT-NAME AS CHAR .
+DEF VAR RB-INCLUDE-RECORDS AS CHAR INITIAL "".
+DEF VAR RB-FILTER AS CHAR INITIAL "".
+DEF VAR RB-OTHER-PARAMETERS AS CHAR INITIAL "".     
+
+/* capturamos ruta inicial */
+GET-KEY-VALUE SECTION 'STARTUP' KEY 'BASE' VALUE RB-REPORT-LIBRARY.
+ASSIGN
+    p-nro-copias = 1
+    RB-REPORT-LIBRARY = RB-REPORT-LIBRARY + "ccb/rbccb.prl"
+    RB-REPORT-NAME = "Formato Canje por Letra"
+    RB-INCLUDE-RECORDS = "O"
+    RB-FILTER = " w-report.task-no = " + STRING(s-task-no) + " AND w-report.llave-c = '" + s-user-id + "'".
+/* PARAMETROS */
+RUN lib/_Imprime3 (p-pagina-final,
+                   p-pagina-inicial,
+                   p-salida-impresion,
+                   p-printer-name,
+                   p-printer-port,
+                   p-print-file,
+                   p-nro-copias,
+                   p-orientacion,
+                   RB-REPORT-LIBRARY,
+                   RB-REPORT-NAME,
+                   RB-INCLUDE-RECORDS,
+                   RB-FILTER,
+                   RB-OTHER-PARAMETERS).
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Temporal) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Temporal Procedure 
+PROCEDURE Carga-Temporal :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+DEF VAR x-NroItm AS INT NO-UNDO.
+DEF VAR x-Factor AS INT NO-UNDO.     
+
+EMPTY TEMP-TABLE Detalle.    
+x-NroItm = 0.
+/* ************************************************************************** */
+/* 1ro. Las letras */
+/* ************************************************************************** */
+FOR EACH Ccbcdocu NO-LOCK WHERE Ccbcdocu.codcia = Ccbcmvto.codcia
+    AND Ccbcdocu.coddoc = "LET"
+    AND Ccbcdocu.coddiv = Ccbcmvto.coddiv
+    AND Ccbcdocu.codref = Ccbcmvto.coddoc
+    AND Ccbcdocu.nroref = Ccbcmvto.nrodoc:
+    x-NroItm = x-NroItm + 1.
+    CREATE Detalle.
+    ASSIGN
+        Detalle.NroItm = x-NroItm
+        Detalle.CodCia = Ccbcdocu.codcia
+        Detalle.CodCli = Ccbcdocu.codcli
+        Detalle.CodDiv = Ccbcdocu.coddiv
+        Detalle.CodRef = Ccbcdocu.coddoc
+        Detalle.NroRef = Ccbcdocu.nrodoc
+        Detalle.FchEmi = Ccbcdocu.fchdoc
+        Detalle.FchVto = Ccbcdocu.fchvto
+        Detalle.ImpDoc = Ccbcdocu.imptot
+        Detalle.ImpTot = Ccbcdocu.imptot
+        Detalle.TpoRef = "L".
+END.
+/* ************************************************************************** */
+/* 2do. Los comprobantes canjeados */
+/* ************************************************************************** */
+FOR EACH CCBDMVTO NO-LOCK WHERE CCBDMVTO.codcia = ccbcmvto.codcia 
+    AND CCBDMVTO.CODCLI = ccbcmvto.codcli 
+    AND CcbDMvto.CodDoc = CcbcMvto.CodDoc 
+    AND CCBDMVTO.nrodoc = ccbcmvto.nrodoc 
+    AND Ccbdmvto.tporef <> "L":
+    x-NroItm = x-NroItm + 1.
+    CREATE Detalle.
+    BUFFER-COPY Ccbdmvto TO Detalle 
+        ASSIGN 
+        Detalle.NroItm = x-NroItm
+        Detalle.TpoRef = "O".
+    FIND Ccbcdocu WHERE Ccbcdocu.codcia = Ccbdmvto.codcia 
+        AND Ccbcdocu.coddoc = Ccbdmvto.codref 
+        AND Ccbcdocu.nrodoc = Ccbdmvto.nroref NO-LOCK NO-ERROR.
+    IF AVAILABLE CCBCDOCU THEN 
+        ASSIGN
+        Detalle.FchEmi = CcbCDocu.FchDoc
+        Detalle.FchVto = CcbCDocu.FchVto.
+    FIND FacDocum WHERE FacDocum.CodCia = Ccbcdocu.CodCia
+        AND FacDocum.CodDoc = Ccbcdocu.CodDoc
+        NO-LOCK.
+    IF FacDocum.TpoDoc = YES THEN x-Factor = 1.
+    ELSE x-Factor = -1.
+    Detalle.ImpTot = Detalle.ImpTot * x-Factor.
+END.
+
+/* Cargamos el archivo de impresión */
+s-Task-No = 0.
+REPEAT:
+    s-task-no = RANDOM(1,999999).
+    IF NOT CAN-FIND(FIRST w-report WHERE w-report.task-no = s-task-no AND
+                    w-report.llave-c = s-user-id NO-LOCK)
+        THEN LEAVE.
+END.
+x-NroItm = 0.
+FOR EACH Detalle NO-LOCK BREAK BY Detalle.TpoRef BY Detalle.NroItm:
+    IF LAST-OF(Detalle.Tporef) THEN x-NroItm = 0.
+    /* CONTADOR */
+    x-NroItm = x-NroItm + 1.
+    CREATE w-report.
+    /* LLAVE */
+    ASSIGN
+        w-report.task-no = s-task-no
+        w-report.llave-c = s-user-id
+        w-report.llave-i = Detalle.NroItm.      /*x-NroItm.*/
+    /* QUIEBRE */
+    ASSIGN
+        w-report.campo-c[20] = Detalle.tporef
+        w-report.campo-f[20] = Ccbcmvto.codmon.
+    /* CABECERA */
+    ASSIGN
+        w-report.campo-c[1] = Ccbcmvto.nrodoc
+        w-report.campo-f[1] = Ccbcmvto.imptot
+        w-report.campo-c[2] = gn-clie.nomcli
+        w-report.campo-c[3] = gn-clie.dircli
+        w-report.campo-c[4] = gn-clie.ruc
+        .
+    /* DETALLES */
+    ASSIGN
+        w-report.campo-c[10] = Detalle.codref
+        w-report.campo-c[11] = Detalle.nroref
+        w-report.campo-d[10] = Detalle.fchemi
+        w-report.campo-d[11] = Detalle.fchvto
+        w-report.campo-f[10] = Detalle.imptot.
+END.
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

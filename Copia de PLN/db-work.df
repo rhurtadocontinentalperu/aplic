@@ -1,0 +1,973 @@
+ADD TABLE "PF-CIAS"
+  AREA "Schema Area"
+  LABEL "Compañias"
+  DUMP-NAME "pf-cias"
+
+ADD FIELD "CodCia" OF "PF-CIAS" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Compañia"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cias"
+  HELP "Código de Compañia"
+  ORDER 10
+
+ADD FIELD "NomCia" OF "PF-CIAS" AS character 
+  FORMAT "X(50)"
+  INITIAL ""
+  LABEL "Razón Social"
+  POSITION 3
+  MAX-WIDTH 100
+  COLUMN-LABEL "Razón Social"
+  HELP "Razón Social de la Compañia"
+  LENGTH 0
+  ORDER 20
+
+ADD FIELD "RucCia" OF "PF-CIAS" AS integer 
+  FORMAT "99999999"
+  INITIAL "0"
+  LABEL "RUC"
+  POSITION 4
+  MAX-WIDTH 4
+  COLUMN-LABEL "RUC"
+  HELP "Registro Unico de Contribuyente de la Compañia"
+  ORDER 50
+
+ADD FIELD "DirCia" OF "PF-CIAS" AS character 
+  FORMAT "X(50)"
+  INITIAL ""
+  LABEL "Dirección"
+  POSITION 5
+  MAX-WIDTH 100
+  COLUMN-LABEL "Dirección"
+  HELP "Dirección de la Compañia"
+  LENGTH 0
+  ORDER 30
+
+ADD FIELD "TlflCia" OF "PF-CIAS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Telefonos"
+  POSITION 6
+  MAX-WIDTH 40
+  COLUMN-LABEL "Telefonos"
+  HELP "Telefonos de la Compañia"
+  LENGTH 0
+  ORDER 40
+
+ADD FIELD "RegPat" OF "PF-CIAS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "Registro patronal"
+  POSITION 7
+  MAX-WIDTH 30
+  HELP "Registro patronal"
+  ORDER 60
+
+ADD INDEX "IDX01" ON "PF-CIAS" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "CodCia" ASCENDING 
+
+ADD TABLE "PL-AFPS"
+  AREA "Schema Area"
+  LABEL "AFPS"
+  DESCRIPTION "
+
+"
+  DUMP-NAME "pl-afps"
+
+ADD FIELD "codafp" OF "PL-AFPS" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Código"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Código"
+  HELP "Código de AFP"
+  ORDER 70
+
+ADD FIELD "desafp" OF "PL-AFPS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Nombre"
+  POSITION 3
+  MAX-WIDTH 60
+  COLUMN-LABEL "Nombre"
+  HELP "Nombre o razón social"
+  LENGTH 0
+  ORDER 80
+
+ADD FIELD "Fondo-AFP" OF "PL-AFPS" AS decimal 
+  FORMAT "ZZ9.99"
+  INITIAL "0"
+  LABEL "% Fondo AFP"
+  POSITION 4
+  MAX-WIDTH 17
+  COLUMN-LABEL "% Fondo AFP"
+  HELP "Porcentaje fondo AFP"
+  DECIMALS 2
+  ORDER 90
+
+ADD FIELD "Comision-Fija-AFP" OF "PL-AFPS" AS decimal 
+  FORMAT "Z,ZZZ,ZZ9.99"
+  INITIAL "0"
+  LABEL "Comisión fija"
+  POSITION 5
+  MAX-WIDTH 17
+  COLUMN-LABEL "Comisión fija"
+  HELP "Comisión fija"
+  DECIMALS 2
+  ORDER 100
+
+ADD FIELD "Comision-Porcentual-AFP" OF "PL-AFPS" AS decimal 
+  FORMAT "ZZ9.99"
+  INITIAL "0"
+  LABEL "Comisión Porcentual"
+  POSITION 6
+  MAX-WIDTH 17
+  COLUMN-LABEL "Comisión!Porcentual"
+  HELP "Comisión porcentual"
+  DECIMALS 2
+  ORDER 110
+
+ADD FIELD "Seguro-Invalidez-AFP" OF "PL-AFPS" AS decimal 
+  FORMAT "ZZ9.99"
+  INITIAL "0"
+  LABEL "% Seguro de Invalidez"
+  POSITION 7
+  MAX-WIDTH 17
+  COLUMN-LABEL "% Seguro!Invalidez"
+  HELP "Porcentaje seguro de invalidez"
+  DECIMALS 2
+  ORDER 120
+
+ADD FIELD "ctacte-afp" OF "PL-AFPS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "Cta. Cte. AFP"
+  POSITION 8
+  MAX-WIDTH 30
+  LENGTH 0
+  ORDER 130
+
+ADD FIELD "ctacte-fondo" OF "PL-AFPS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "Cta. Cte Fondo"
+  POSITION 9
+  MAX-WIDTH 30
+  LENGTH 0
+  ORDER 140
+
+ADD FIELD "banco" OF "PL-AFPS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Banco"
+  POSITION 10
+  MAX-WIDTH 60
+  LENGTH 0
+  ORDER 150
+
+ADD INDEX "IDX01" ON "PL-AFPS" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "codafp" ASCENDING 
+
+ADD TABLE "PL-BOLE"
+  AREA "Schema Area"
+  LABEL "Boleta"
+  DUMP-NAME "pl-bole"
+
+ADD FIELD "CodPer" OF "PL-BOLE" AS character 
+  FORMAT "x(6)"
+  INITIAL ""
+  LABEL "Personal"
+  POSITION 2
+  MAX-WIDTH 12
+  COLUMN-LABEL "Personal"
+  LENGTH 0
+  ORDER 10
+
+ADD FIELD "CodMov-Rem" OF "PL-BOLE" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Rem"
+  POSITION 3
+  MAX-WIDTH 4
+  COLUMN-LABEL "Rem"
+  ORDER 20
+
+ADD FIELD "DesMov-Rem" OF "PL-BOLE" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Remuneraciones"
+  POSITION 4
+  MAX-WIDTH 60
+  COLUMN-LABEL "Remuneraciones"
+  LENGTH 0
+  ORDER 30
+
+ADD FIELD "ValMov-Rem" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZZ,ZZZ,ZZZ.99"
+  INITIAL "0"
+  LABEL "Importe"
+  POSITION 5
+  MAX-WIDTH 17
+  COLUMN-LABEL "Importe"
+  DECIMALS 2
+  ORDER 40
+
+ADD FIELD "ValRef-Rem" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZ,ZZZ.99"
+  INITIAL "0"
+  POSITION 6
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 50
+
+ADD FIELD "CodMov-Des" OF "PL-BOLE" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Rem"
+  POSITION 7
+  MAX-WIDTH 4
+  COLUMN-LABEL "Rem"
+  ORDER 60
+
+ADD FIELD "DesMov-Des" OF "PL-BOLE" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Remuneraciones"
+  POSITION 8
+  MAX-WIDTH 60
+  COLUMN-LABEL "Remuneraciones"
+  LENGTH 0
+  ORDER 70
+
+ADD FIELD "ValMov-Des" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZZ,ZZZ,ZZZ.99"
+  INITIAL "0"
+  LABEL "Importe"
+  POSITION 9
+  MAX-WIDTH 17
+  COLUMN-LABEL "Importe"
+  DECIMALS 2
+  ORDER 80
+
+ADD FIELD "ValRef-Des" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZ,ZZZ.99"
+  INITIAL "0"
+  POSITION 10
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 90
+
+ADD FIELD "CodMov-Apo" OF "PL-BOLE" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Rem"
+  POSITION 11
+  MAX-WIDTH 4
+  COLUMN-LABEL "Rem"
+  ORDER 100
+
+ADD FIELD "DesMov-Apo" OF "PL-BOLE" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Remuneraciones"
+  POSITION 12
+  MAX-WIDTH 60
+  COLUMN-LABEL "Remuneraciones"
+  LENGTH 0
+  ORDER 110
+
+ADD FIELD "ValMov-Apo" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZZ,ZZZ,ZZZ.99"
+  INITIAL "0"
+  LABEL "Importe"
+  POSITION 13
+  MAX-WIDTH 17
+  COLUMN-LABEL "Importe"
+  DECIMALS 2
+  ORDER 120
+
+ADD FIELD "ValRef-Apo" OF "PL-BOLE" AS decimal 
+  FORMAT "-ZZ,ZZZ.99"
+  INITIAL "0"
+  POSITION 14
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 130
+
+ADD INDEX "IDX01" ON "PL-BOLE" 
+  AREA "Schema Area"
+  PRIMARY
+  INDEX-FIELD "CodPer" ASCENDING 
+
+ADD TABLE "PL-CFG"
+  AREA "Schema Area"
+  LABEL "Configuración de Planilla"
+  DUMP-NAME "pl-cfg"
+
+ADD FIELD "NroSem" OF "PL-CFG" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Semana"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Sem"
+  ORDER 30
+
+ADD FIELD "NroMes" OF "PL-CFG" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Mes"
+  POSITION 3
+  MAX-WIDTH 4
+  COLUMN-LABEL "Mes"
+  ORDER 40
+
+ADD FIELD "Fecha-Desde" OF "PL-CFG" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Desde"
+  POSITION 4
+  MAX-WIDTH 4
+  COLUMN-LABEL "Desde"
+  ORDER 60
+
+ADD FIELD "Fecha-Hasta" OF "PL-CFG" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Hasta"
+  POSITION 5
+  MAX-WIDTH 4
+  COLUMN-LABEL "Hasta"
+  ORDER 70
+
+ADD FIELD "CodPln" OF "PL-CFG" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Planilla"
+  POSITION 6
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cód!Pln"
+  ORDER 80
+
+ADD FIELD "CodCia" OF "PL-CFG" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Compañia"
+  POSITION 7
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cias"
+  HELP "Código de Compañia"
+  ORDER 10
+
+ADD FIELD "Periodo" OF "PL-CFG" AS integer 
+  FORMAT "9999"
+  INITIAL "0"
+  LABEL "Año"
+  POSITION 8
+  MAX-WIDTH 4
+  COLUMN-LABEL "Año"
+  ORDER 20
+
+ADD FIELD "DesPln" OF "PL-CFG" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Planilla"
+  POSITION 9
+  MAX-WIDTH 60
+  COLUMN-LABEL "Planilla"
+  LENGTH 0
+  ORDER 90
+
+ADD FIELD "Nombre-Mes" OF "PL-CFG" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  POSITION 10
+  MAX-WIDTH 60
+  LENGTH 0
+  ORDER 50
+
+ADD FIELD "Fecha-Desde-1" OF "PL-CFG" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Desde"
+  POSITION 11
+  MAX-WIDTH 4
+  COLUMN-LABEL "Desde"
+  ORDER 100
+
+ADD FIELD "Fecha-Hasta-1" OF "PL-CFG" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Hasta"
+  POSITION 12
+  MAX-WIDTH 4
+  COLUMN-LABEL "Hasta"
+  ORDER 110
+
+ADD FIELD "NroSem-1" OF "PL-CFG" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Semana"
+  POSITION 13
+  MAX-WIDTH 4
+  COLUMN-LABEL "Sem"
+  ORDER 120
+
+ADD FIELD "NroSem-2" OF "PL-CFG" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Semana"
+  POSITION 14
+  MAX-WIDTH 4
+  COLUMN-LABEL "Sem"
+  ORDER 130
+
+ADD FIELD "NROREG-TOT" OF "PL-CFG" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  POSITION 15
+  MAX-WIDTH 4
+  ORDER 140
+
+ADD FIELD "NROREG-ACT" OF "PL-CFG" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  POSITION 16
+  MAX-WIDTH 4
+  ORDER 150
+
+ADD TABLE "PL-PERS"
+  AREA "Schema Area"
+  LABEL "Personal"
+  DUMP-NAME "pl-pers"
+
+ADD FIELD "codper" OF "PL-PERS" AS character 
+  FORMAT "X(6)"
+  INITIAL ""
+  LABEL "Código"
+  POSITION 2
+  MAX-WIDTH 12
+  COLUMN-LABEL "Código"
+  HELP "Código del personal"
+  LENGTH 0
+  ORDER 10
+
+ADD FIELD "titulo" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Título"
+  POSITION 3
+  MAX-WIDTH 40
+  VIEW-AS "view-as combo-box
+   list-items "" ""
+   inner-lines 5
+   sort"
+  COLUMN-LABEL "Título"
+  HELP "Título del personal"
+  LENGTH 0
+  ORDER 60
+
+ADD FIELD "profesion" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Profesión"
+  POSITION 4
+  MAX-WIDTH 40
+  VIEW-AS "view-as combo-box
+   list-items "" ""
+   inner-lines 5
+   sort"
+  COLUMN-LABEL "Profesión"
+  HELP "Profesión del personal"
+  LENGTH 0
+  ORDER 70
+
+ADD FIELD "nomper" OF "PL-PERS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Nombres"
+  POSITION 5
+  MAX-WIDTH 60
+  COLUMN-LABEL "Nombres"
+  HELP "Nombres del personal"
+  LENGTH 0
+  ORDER 40
+
+ADD FIELD "dirper" OF "PL-PERS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Dirección"
+  POSITION 6
+  MAX-WIDTH 60
+  COLUMN-LABEL "Dirección"
+  HELP "Dirección del personal"
+  LENGTH 0
+  ORDER 80
+
+ADD FIELD "localidad" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Localidad"
+  POSITION 7
+  MAX-WIDTH 40
+  COLUMN-LABEL "Localidad"
+  HELP "Localidad"
+  LENGTH 0
+  ORDER 90
+
+ADD FIELD "sexper" OF "PL-PERS" AS character 
+  FORMAT "X(9)"
+  INITIAL ""
+  LABEL "Sexo"
+  POSITION 8
+  MAX-WIDTH 18
+  VIEW-AS "view-as combo-box
+  list-items ""Femenino"",""Masculino""
+  inner-lines 2
+  sort
+"
+  COLUMN-LABEL "Sexo"
+  HELP "Sexo del personal"
+  LENGTH 0
+  ORDER 100
+
+ADD FIELD "distri" OF "PL-PERS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Distrito"
+  POSITION 9
+  MAX-WIDTH 60
+  COLUMN-LABEL "Distrito"
+  HELP "Distrito del personal"
+  LENGTH 0
+  ORDER 110
+
+ADD FIELD "provin" OF "PL-PERS" AS character 
+  FORMAT "X(30)"
+  INITIAL ""
+  LABEL "Provincia"
+  POSITION 10
+  MAX-WIDTH 60
+  COLUMN-LABEL "Provincia"
+  HELP "Provincia del personal"
+  LENGTH 0
+  ORDER 120
+
+ADD FIELD "telefo" OF "PL-PERS" AS character 
+  FORMAT "X(7)"
+  INITIAL ""
+  LABEL "Teléfono"
+  POSITION 11
+  MAX-WIDTH 14
+  COLUMN-LABEL "Teléfono"
+  HELP "Teléfono del personal"
+  LENGTH 0
+  ORDER 130
+
+ADD FIELD "ecivil" OF "PL-PERS" AS character 
+  FORMAT "X(10)"
+  INITIAL ""
+  LABEL "E. civil"
+  POSITION 12
+  MAX-WIDTH 20
+  COLUMN-LABEL "E. civil"
+  HELP "Estado civil del personal"
+  LENGTH 0
+  ORDER 140
+
+ADD FIELD "ctipss" OF "PL-PERS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "C. IPSS"
+  POSITION 13
+  MAX-WIDTH 30
+  COLUMN-LABEL "C. IPSS"
+  HELP "Numero de carnet del IPSS"
+  LENGTH 0
+  ORDER 150
+
+ADD FIELD "nacion" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Nacionalidad"
+  POSITION 14
+  MAX-WIDTH 40
+  COLUMN-LABEL "Nacionalidad"
+  HELP "Nacionalidad del personal"
+  LENGTH 0
+  ORDER 160
+
+ADD FIELD "lelect" OF "PL-PERS" AS character 
+  FORMAT "99999999"
+  INITIAL ""
+  LABEL "L.E."
+  POSITION 15
+  MAX-WIDTH 16
+  COLUMN-LABEL "L.E."
+  HELP "Libreta Electoral del personal"
+  LENGTH 0
+  ORDER 170
+
+ADD FIELD "lmilit" OF "PL-PERS" AS character 
+  DESCRIPTION "				"
+  FORMAT "X(10)"
+  INITIAL ""
+  LABEL "L.M."
+  POSITION 16
+  MAX-WIDTH 20
+  COLUMN-LABEL "L.M."
+  HELP "Libreta Militar del personal"
+  LENGTH 0
+  ORDER 180
+
+ADD FIELD "fecnac" OF "PL-PERS" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "F. nacimiento"
+  POSITION 17
+  MAX-WIDTH 4
+  COLUMN-LABEL "Fecha de!nacimiento"
+  HELP "Fecha de nacimiento del personal"
+  ORDER 50
+
+ADD FIELD "patper" OF "PL-PERS" AS character 
+  DESCRIPTION "	"
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Ap. paterno"
+  POSITION 18
+  MAX-WIDTH 40
+  COLUMN-LABEL "Apellido paterno"
+  HELP "Apellido paterno del personal"
+  LENGTH 0
+  ORDER 20
+
+ADD FIELD "matper" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Ap. materno"
+  POSITION 19
+  MAX-WIDTH 40
+  COLUMN-LABEL "Apellido materno"
+  HELP "Apellido materno del personal"
+  LENGTH 0
+  ORDER 30
+
+ADD FIELD "CodBar" OF "PL-PERS" AS character 
+  FORMAT "X(10)"
+  INITIAL ""
+  LABEL "Código de barra"
+  POSITION 20
+  MAX-WIDTH 20
+  COLUMN-LABEL "Código de barra"
+  HELP "Código de barra"
+  ORDER 190
+
+ADD FIELD "TpoPer" OF "PL-PERS" AS logical 
+  FORMAT "Empleado/Obrero"
+  INITIAL "Empleado"
+  LABEL "Tipo de personal"
+  POSITION 21
+  MAX-WIDTH 1
+  HELP "Tipo de personal (Empleado/Obrero)"
+  ORDER 200
+
+ADD FIELD "codpln" OF "PL-PERS" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Planilla"
+  POSITION 22
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cód.!Pln"
+  ORDER 210
+
+ADD FIELD "CodCia" OF "PL-PERS" AS integer 
+  FORMAT "999"
+  INITIAL "0"
+  LABEL "Compañia"
+  POSITION 23
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cias"
+  HELP "Código de Compañia"
+  ORDER 220
+
+ADD FIELD "cnpago" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Canal Pago"
+  POSITION 24
+  MAX-WIDTH 40
+  VIEW-AS "view-as combo-box
+  list-items "" ""
+  inner-lines 5
+  sort"
+  LENGTH 0
+  ORDER 230
+
+ADD FIELD "codafp" OF "PL-PERS" AS integer 
+  FORMAT "99"
+  INITIAL "0"
+  LABEL "Cód. AFP."
+  POSITION 25
+  MAX-WIDTH 4
+  ORDER 240
+
+ADD FIELD "cargos" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Cargo"
+  POSITION 26
+  MAX-WIDTH 40
+  VIEW-AS "view-as combo-box
+  list-items "" ""
+  inner-lines 5
+  sort"
+  LENGTH 0
+  ORDER 260
+
+ADD FIELD "seccion" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL ""
+  LABEL "Sección"
+  POSITION 27
+  MAX-WIDTH 40
+  VIEW-AS "view-as combo-box
+  list-items "" ""
+  inner-lines 5
+  sort"
+  LENGTH 0
+  ORDER 270
+
+ADD FIELD "nroafp" OF "PL-PERS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "Nro. AFP."
+  POSITION 28
+  MAX-WIDTH 30
+  LENGTH 0
+  ORDER 251
+
+ADD FIELD "fecing" OF "PL-PERS" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "F.Ingreso"
+  POSITION 29
+  MAX-WIDTH 4
+  ORDER 290
+
+ADD FIELD "vcontr" OF "PL-PERS" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "V.Contrato"
+  POSITION 30
+  MAX-WIDTH 4
+  ORDER 300
+
+ADD FIELD "inivac" OF "PL-PERS" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Inicio Vacaciones"
+  POSITION 31
+  MAX-WIDTH 4
+  ORDER 310
+
+ADD FIELD "finvac" OF "PL-PERS" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Fin Vacaciones"
+  POSITION 32
+  MAX-WIDTH 4
+  ORDER 320
+
+ADD FIELD "ccosto" OF "PL-PERS" AS character 
+  FORMAT "x(5)"
+  INITIAL ""
+  LABEL "C.Costo"
+  POSITION 33
+  MAX-WIDTH 10
+  ORDER 330
+
+ADD FIELD "CTS" OF "PL-PERS" AS character 
+  FORMAT "x(40)"
+  INITIAL ""
+  LABEL "CTS"
+  POSITION 34
+  MAX-WIDTH 80
+  VIEW-AS "VIEW-AS COMBO-BOX
+  LIST-ITEMS "" ""
+  INNER-LINES 5
+  SORT"
+  COLUMN-LABEL ""
+  LENGTH 0
+  ORDER 340
+
+ADD FIELD "Clase" OF "PL-PERS" AS character 
+  FORMAT "x(30)"
+  INITIAL ""
+  LABEL "Clase"
+  POSITION 35
+  MAX-WIDTH 60
+  VIEW-AS "VIEW-AS COMBO-BOX
+  LIST-ITEMS "" ""
+  INNER-LINES 5
+  SORT"
+  HELP "Clase de Categoria"
+  ORDER 370
+
+ADD FIELD "Proyecto" OF "PL-PERS" AS character 
+  FORMAT "x(40)"
+  INITIAL ""
+  LABEL "Proyecto"
+  POSITION 36
+  MAX-WIDTH 80
+  VIEW-AS "VIEW-AS COMBO-BOX
+  LIST-ITEMS "" ""
+  INNER-LINES 5
+  SORT"
+  ORDER 380
+
+ADD FIELD "SitAct" OF "PL-PERS" AS character 
+  FORMAT "X(20)"
+  INITIAL "Activo"
+  LABEL "Situación"
+  POSITION 37
+  MAX-WIDTH 40
+  VIEW-AS "VIEW-AS COMBO-BOX
+  LIST-ITEMS ""Activo"",""Vacaciones"",""Descanso médico"",
+  ""Descanso Pre-natal"",""Descanso Post-natal"",""Licencia con goce"",
+  ""Licencia sin goce"",""Inactivo""
+  INNER-LINES 5
+"
+  COLUMN-LABEL "Situación"
+  HELP "Situación"
+  ORDER 400
+
+ADD FIELD "Conyugue" OF "PL-PERS" AS logical 
+  FORMAT "Si/No"
+  INITIAL "Si"
+  LABEL "Tiene cónyugue?"
+  POSITION 38
+  MAX-WIDTH 1
+  HELP "Tiene cónyugue? (Si/No)"
+  ORDER 410
+
+ADD FIELD "Nro-de-Hijos" OF "PL-PERS" AS integer 
+  FORMAT "Z9"
+  INITIAL "0"
+  LABEL "Número de hijos"
+  POSITION 39
+  MAX-WIDTH 4
+  HELP "Número de hijos"
+  ORDER 420
+
+ADD FIELD "CodDiv" OF "PL-PERS" AS character 
+  FORMAT "X(5)"
+  INITIAL ""
+  LABEL "División"
+  POSITION 40
+  MAX-WIDTH 10
+  COLUMN-LABEL "División"
+  ORDER 430
+
+ADD FIELD "NroDpt-CTS" OF "PL-PERS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "No."
+  POSITION 42
+  MAX-WIDTH 30
+  COLUMN-LABEL "No."
+  LENGTH 0
+  ORDER 350
+
+ADD FIELD "Moneda-CTS" OF "PL-PERS" AS integer 
+  FORMAT "9"
+  INITIAL "0"
+  LABEL "Moneda"
+  POSITION 43
+  MAX-WIDTH 4
+  COLUMN-LABEL "Moneda"
+  ORDER 360
+
+ADD FIELD "FlgEst" OF "PL-PERS" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  POSITION 44
+  MAX-WIDTH 1
+  ORDER 450
+
+ADD FIELD "RegPat" OF "PL-PERS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "Registro Patronal"
+  POSITION 45
+  MAX-WIDTH 30
+  LENGTH 0
+  ORDER 390
+
+ADD FIELD "AFP" OF "PL-PERS" AS character 
+  FORMAT "X(40)"
+  INITIAL ""
+  LABEL "AFP"
+  POSITION 46
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 250
+
+ADD FIELD "NroDpt" OF "PL-PERS" AS character 
+  FORMAT "X(15)"
+  INITIAL ""
+  LABEL "No."
+  POSITION 47
+  MAX-WIDTH 30
+  COLUMN-LABEL "No."
+  LENGTH 0
+  ORDER 231
+
+ADD FIELD "IMPORTE_V1" OF "PL-PERS" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  POSITION 48
+  MAX-WIDTH 16
+  LENGTH 0
+  ORDER 460
+
+ADD FIELD "FECHA_V" OF "PL-PERS" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  POSITION 49
+  MAX-WIDTH 170
+  EXTENT 5
+  LENGTH 0
+  ORDER 470
+
+ADD FIELD "V" OF "PL-PERS" AS decimal 
+  FORMAT "->>,>>9.99"
+  INITIAL "0"
+  LABEL "VALOR"
+  POSITION 50
+  MAX-WIDTH 2200
+  COLUMN-LABEL "VALOR"
+  EXTENT 100
+  DECIMALS 2
+  ORDER 480
+
+ADD INDEX "IDX01" ON "PL-PERS" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "codper" ASCENDING 
+
+.
+PSC
+cpstream=ISO8859-1
+.
+0000018543

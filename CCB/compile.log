@@ -1,0 +1,1263 @@
+09:16:01 Looking for CCB\*.p in d:\newsie\on_in_co\APLIC
+Compiling CCB\act-fecha-ret.p
+Compiling CCB\actualiza-renovacion.p
+Compiling CCB\BOLCONTA.P
+Compiling CCB\boleta_auxiliar.p
+Compiling CCB\calcula-saldo-comprobantes.p
+Compiling CCB\CAMBIO.P
+Compiling CCB\Canc_bch.p
+Compiling CCB\CANC_PED.P
+Compiling CCB\canc_ped12.p
+Compiling CCB\carga-letras-cissac.p
+Compiling CCB\ccbboldep.p
+Compiling CCB\ccbboldep4.p
+Compiling CCB\ccbboldep5.p
+Compiling CCB\cjeaprob-01.p
+Compiling CCB\cjeaprob-02.p
+Compiling CCB\CJEAPROB.P
+Compiling CCB\CJECLPV.P
+Compiling CCB\control-cierre-caja.p
+Compiling CCB\control-prepercepcion-abonos.p
+Compiling CCB\control-prepercepcion-cargos.p
+Compiling CCB\control-prepercepcion-final.p
+Compiling CCB\Copia (2) de r-tick500.p
+Compiling CCB\Copia de cjeaprob-01.p
+Compiling CCB\Copia de p-eeccgeneral.p
+Compiling CCB\Copia de R-BOLE01-1.P
+Compiling CCB\Copia de r-fact02-1.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\Copia de r-tick500.p
+Compiling CCB\FACCONTA.P
+Compiling CCB\genera-prepercepciones.p
+Compiling CCB\GLOBAL.P
+Compiling CCB\INGCAJA1.P
+Compiling CCB\INGCAJA2.P
+Compiling CCB\INGCAJAB.P
+Compiling CCB\Ingcob1.p
+Compiling CCB\letras-cissac.p
+Nombre de Base de Datos cissac desconocida. (855)
+Nombre de Base de Datos cissac desconocida. (855)
+Nombre de tabla desconocido o ambiguo faccpedi (545)
+** d:\newsie\on_in_co\APLIC\CCB\letras-cissac.p No se entiende línea 17. (196)
+Compiling CCB\libreria-ccb.p
+Compiling CCB\MENUCAJA.P
+Compiling CCB\p-bgrbd.p
+Compiling CCB\p-cliente-master.p
+Compiling CCB\p-ctrl-fac-adel.p
+Compiling CCB\p-eeccaplicacion.p
+Compiling CCB\p-eeccgeneral.p
+Compiling CCB\p-eeccsaldo.p
+Compiling CCB\p-estado-bd.p
+Compiling CCB\p-implc.p
+Compiling CCB\p-implc02.p
+Compiling CCB\p-implet.p
+Compiling CCB\p-inicio-02.p
+Compiling CCB\p-rep020.p
+Compiling CCB\p-rep021.p
+Compiling CCB\p-saldo-actual-cliente.p
+Compiling CCB\p-vermtoic.p
+Compiling CCB\R-BOLE01-1.P
+Compiling CCB\R-BOLE01-1m.P
+Compiling CCB\R-BOLE01-2.P
+Compiling CCB\R-BOLE01.P
+Compiling CCB\R-boleBK.p
+Compiling CCB\R-BOVBC1.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " TRANSFERENCIA DE BOVEDA A BANCO Nro.  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Hecho por : " fue ignorado. (3077)
+Compiling CCB\R-BOVBCO.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " TRANSFERENCIA DE BOVEDA A BANCO Nro.  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Hecho por : " fue ignorado. (3077)
+Compiling CCB\R-CJABOV.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " TRANSFERENCIA DE DINERO DE CAJA A BOVEDA Nro.  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Hecho por : " fue ignorado. (3077)
+Compiling CCB\R-CONCLI.P
+Compiling CCB\r-docxcob-01.p
+Compiling CCB\r-docXcob-res.p
+Compiling CCB\r-docXcob.p
+Compiling CCB\r-docXcob2.p
+Compiling CCB\r-docXcobcissac.p
+Nombre de Base de Datos cissac desconocida. (855)
+** d:\newsie\on_in_co\APLIC\CCB\r-docXcobcissac.p No se entiende línea 24. (196)
+Compiling CCB\r-docXcobr.p
+Compiling CCB\r-fact00005.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-FACT01-1.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-FACT01-Utilex.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-FACT01.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\r-fact02-1.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "  Monto Cobrado   Importe de la Percepción " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\r-fact02-1m.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\r-fact02.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-factBK.p
+Compiling CCB\R-guides.p
+Compiling CCB\r-implet-1.p
+Compiling CCB\r-implet.p
+Compiling CCB\R-IMPNOT.P
+Compiling CCB\R-impnot2-1.p
+Compiling CCB\R-impnot2.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " N.I.T. 20100038146 " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Observaciones :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Observaciones :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-impnot3-2.p
+Compiling CCB\R-impnot3-2a.p
+Compiling CCB\r-impnot3.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " N.I.T. 20100038146 " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Observaciones :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Observaciones :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\r-letform.p
+Compiling CCB\r-letform2.p
+Compiling CCB\r-letform3.p
+Compiling CCB\R-LETRAS.P
+**No cabe FILL-IN C-NomCli con AT dentro de FRAME F-HdrCJE. (4027)
+Ignorando la información de posición del AT (2054)
+Compiling CCB\R-letras2.p
+Compiling CCB\R-liqcob.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " TOTAL IMPORTE   ----------> " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " No RUC   :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " REMITO No:  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DIVISION :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " FECHA      :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " COBRADOR   :  " fue ignorado. (3077)
+Compiling CCB\R-motanu.p
+Compiling CCB\r-notban.p
+Compiling CCB\R-NOTCRE.P
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DEVOLUCION DE MERCADERIA " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Imp.Brt:  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DSCTO.:  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "  % " fue ignorado. (3077)
+Compiling CCB\R-notcre00005.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DEVOLUCION DE MERCADERIA " fue ignorado. (3077)
+Compiling CCB\R-notcre2.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DEVOLUCION DE MERCADERIA " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " % " fue ignorado. (3077)
+Compiling CCB\R-notcre3.p
+Compiling CCB\R-odeBK.p
+Compiling CCB\R-ODES2.P
+Compiling CCB\R-ODESP.P
+Compiling CCB\R-RECIBO.P
+Compiling CCB\R-recibo1.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Fecha : " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " T/C   : " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Efectivo           " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Cheque             " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Cheque Diferido    " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Nota de Credito    " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Deposito           " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante "   Vuelto             " fue ignorado. (3077)
+Compiling CCB\R-recibo2.p
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " TOTAL IMPORTE   ----------> " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Efectivo        " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Cheque del Dia  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Cheque Diferido " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Nota de Credito " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Depositos       " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Anticipo        " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Comision        " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Retenciones     " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Este Documento no tiene Validez sin la Firma y Sello de Caja " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " No RUC   :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " RECIBO No:  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " DIVISION :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " CAJERO   :  " fue ignorado. (3077)
+Compiling CCB\R-recibo3.p
+Compiling CCB\R-RELETR.P
+Compiling CCB\R-remesa.p
+** Imposible entender la continuación de -- "Por_Dsctos[1]". (247)
+** d:\newsie\on_in_co\src\adm\method\browser.i No se entiende línea 2. (198)
+** Nombre de campo o variable desconocido - FRAME. (201)
+** d:\newsie\on_in_co\src\adm\method\tableio.i No se entiende línea 1407. (196)
+Compiling CCB\r-renlet.P
+Compiling CCB\r-rep003.p
+Compiling CCB\r-rep030.p
+Compiling CCB\R-tick01.p
+Compiling CCB\r-tick500.p
+Compiling CCB\rcanjexletra.P
+Compiling CCB\recepcion-letras-anticipadas-stock.p
+Compiling CCB\rimpletras.p
+Compiling CCB\VER1.P
+Compiling CCB\VERCLI.P
+Compiling CCB\xyz.p
+09:16:37 Looking for CCB\*.w in d:\newsie\on_in_co\APLIC
+Compiling CCB\B-ABOCAR.W
+Compiling CCB\b-abocar2.w
+Compiling CCB\b-ac-correccion.w
+Compiling CCB\b-ac-porcentaje.w
+Compiling CCB\b-aderec.w
+Compiling CCB\B-AGEBCO.W
+Compiling CCB\B-AGREGA.W
+Compiling CCB\B-AINCJA.W
+Compiling CCB\b-anticipos-detalle.w
+Compiling CCB\b-anula-ic-anticipo.w
+Compiling CCB\b-anulacion-pnc-dif-precio-ind.w
+Compiling CCB\b-anu_ic-01.w
+Compiling CCB\b-anu_ic-01a.w
+Compiling CCB\b-anu_ic-02.w
+Compiling CCB\b-anu_ic-02a.w
+Compiling CCB\b-anu_ic-03-2.w
+Compiling CCB\b-anu_ic-03.w
+Compiling CCB\b-anu_ic-03b.w
+Compiling CCB\b-anu_ic-04.w
+Compiling CCB\B-ANU_IC.W
+Compiling CCB\b-aprnco.w
+Compiling CCB\b-aprob-rem-bov.w
+Compiling CCB\b-aprobacion-pre-notas-de-credito-hdr-tt-tempo.w
+Compiling CCB\b-aprobacion-pre-notas-de-credito-hdr.w
+Compiling CCB\b-aprobaciones-con-que-pago.w
+Compiling CCB\B-ASIGNA.W
+Compiling CCB\b-audilc.w
+Compiling CCB\b-autbol-02.w
+Compiling CCB\b-autbol-v02.w
+** Tipos de datos incompatibles en expresión o asignación. (223)
+** d:\newsie\on_in_co\APLIC\CCB\b-autbol-v02.w No se entiende línea 163. (196)
+Compiling CCB\b-autboldep.w
+Compiling CCB\B-BOLADM.W
+Compiling CCB\B-BOLD99.W
+Compiling CCB\B-BOLDE1.W
+Compiling CCB\b-boldep-1.w
+Compiling CCB\b-boldep-1a.w
+Compiling CCB\b-boldep-1b-copia.w
+Compiling CCB\b-boldep-1b.w
+Compiling CCB\b-boldep-2.w
+Compiling CCB\b-bovbco-11.w
+Compiling CCB\b-bovbco-12.w
+Compiling CCB\B-BOVBCO.W
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Hecho por : " fue ignorado. (3077)
+Compiling CCB\B-CAJA01.W
+Compiling CCB\b-campanas.w
+Compiling CCB\b-canc-mayorista-cont-v2 (2).w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\b-canc-mayorista-cont-v2.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\b-canc-mayorista-cont-v3.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\b-canc-mayorista-cont.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\B-CANNC.W
+Compiling CCB\b-castig.w
+Compiling CCB\b-castigado.w
+Compiling CCB\b-ccb-pendientes.w
+Nombre de tabla desconocido o ambiguo ccb_pendientes (545)
+** d:\newsie\on_in_co\APLIC\CCB\b-ccb-pendientes.w No se entiende línea 10. (196)
+Compiling CCB\b-ccbcbd-2.w
+Compiling CCB\b-ccbcbd-4.w
+Compiling CCB\b-ccbcbd-ac.w
+Compiling CCB\B-CCBCBD.W
+Compiling CCB\b-ccbcfgcbd.w
+Compiling CCB\b-ccbtabla-conceptos.w
+Compiling CCB\b-cfg-nc-ac.w
+Compiling CCB\b-cfg-nc-cr.w
+Compiling CCB\b-cfg-nc-edg.w
+Compiling CCB\b-cfg-nc-grupo-c.w
+Compiling CCB\b-cfg-nc-grupo-d.w
+Compiling CCB\b-cfg-nc-ra.w
+Compiling CCB\b-cfg-nc-rm.w
+Compiling CCB\b-chqdifcbd.w
+Compiling CCB\b-ciefacant.w
+Compiling CCB\B-CJACB2.W
+Compiling CCB\b-cjacbd-01.w
+Compiling CCB\b-cjacbd-2-03.w
+Compiling CCB\b-cjacbd-2-03a.w
+Compiling CCB\b-cjacbd-3.w
+Compiling CCB\B-CJACBD.W
+Compiling CCB\b-cjapl-3.w
+Compiling CCB\B-CJLET1.W
+Compiling CCB\B-CJLET2.W
+Compiling CCB\b-cjlet3.w
+Compiling CCB\B-CLINCR.W
+Compiling CCB\b-cobrador.w
+Compiling CCB\b-cobrador2.w
+Compiling CCB\b-con002-01.w
+Compiling CCB\b-con002-01v2.w
+Compiling CCB\b-con002-02.w
+Compiling CCB\b-con002-02v2.w
+Compiling CCB\b-con003.w
+Compiling CCB\b-concepto-exclusiones-concepto.w
+Compiling CCB\b-concepto-exclusiones.w
+Compiling CCB\b-conceptos-nc-dif-precio-ind.w
+Compiling CCB\b-confdep-cons.w
+Compiling CCB\b-confdep.w
+Compiling CCB\b-confg-pl-julio-cab.w
+Compiling CCB\b-confg-preletra-cab.w
+Compiling CCB\b-confg-preletra-det.w
+Compiling CCB\b-confg-preletra.w
+Compiling CCB\b-config-aprobacion-pedidos-docs.w
+Compiling CCB\b-config-aprobacion-pedidos.w
+Compiling CCB\b-configurador-textos.w
+Compiling CCB\B-CONSU1.W
+Compiling CCB\b-consu1v2.w
+Compiling CCB\b-consu2-02.w
+Compiling CCB\b-consu2-02v2.w
+Compiling CCB\b-consu2-02zzz.w
+Compiling CCB\B-CONSU2.W
+Compiling CCB\B-CONSU3.W
+Compiling CCB\b-consu4.w
+Compiling CCB\b-consu5-1.w
+Compiling CCB\b-consu5.w
+Compiling CCB\b-consul-cct2a.w
+Compiling CCB\b-consul-cctv3.w
+Compiling CCB\b-consulbd-v02.w
+Compiling CCB\b-corrvcmto.w
+Compiling CCB\B-CTERMI.W
+Compiling CCB\b-cuotas-vta-credito-dtl.w
+Compiling CCB\b-cuotas-vta-credito.w
+Compiling CCB\B-DCAJA1.W
+Compiling CCB\b-dcgoc.w
+Compiling CCB\b-dcto-ppago.w
+Compiling CCB\B-DEPBCO.W
+Compiling CCB\B-DEPBO1.W
+Compiling CCB\B-DEPBOV.W
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Hecho por : " fue ignorado. (3077)
+Compiling CCB\b-depxap-02.w
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " RESUMEN DE BOLETAS DE DEPOSITO X APLICAR " fue ignorado. (3077)
+Compiling CCB\B-DEPXAP.W
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " RESUMEN DE BOLETAS DE DEPOSITO X APLICAR " fue ignorado. (3077)
+Compiling CCB\b-detcob.w
+Compiling CCB\b-difcja-sustento-a.w
+Compiling CCB\b-difcja-sustento-b - copia.w
+Compiling CCB\b-difcja-sustento-b.w
+Compiling CCB\b-difcja.w
+Compiling CCB\b-dircobr.w
+Compiling CCB\b-division-canje.w
+Compiling CCB\b-documentos-validos-para-refinanciar.w
+Compiling CCB\B-DTERMI.W
+Compiling CCB\b-dudoso.w
+Compiling CCB\b-dudoso2.w
+Compiling CCB\b-estdoc.w
+Compiling CCB\b-extorna-nb-aprobada.w
+Compiling CCB\b-generacion-nc-dif-precio-ind-detalle.w
+Compiling CCB\b-generacion-nc-dif-precio-ind.w
+Compiling CCB\b-ingcja-01.w
+Compiling CCB\b-ingcja-02.w
+Compiling CCB\B-INGCJA.W
+Compiling CCB\b-lc-gn-cliel-v2.w
+Compiling CCB\b-lc-gn-cliel.w
+Compiling CCB\B-LETBCO.W
+Compiling CCB\B-LINEAS.W
+Compiling CCB\B-LINUSR.W
+Compiling CCB\b-liqcob1.w
+Compiling CCB\b-listado-pnc-dif-precio-ind-detalle-borrar.w
+Compiling CCB\b-listado-pnc-dif-precio-ind-detalle.w
+Compiling CCB\b-listado-pnc-dif-precio-ind.w
+Compiling CCB\b-migra-saldos-01.w
+Compiling CCB\b-motanu.w
+Compiling CCB\B-NOTBAN.W
+Compiling CCB\B-NOTBAT.W
+Compiling CCB\b-notcre-3.w
+Compiling CCB\B-NOTCRE.W
+Compiling CCB\b-obs-analista-consulta.w
+Compiling CCB\b-obs-analista.w
+Compiling CCB\b-pedpBK.w
+Compiling CCB\b-pedpen-01.w
+Compiling CCB\b-pedpen-02.w
+Compiling CCB\b-pedpen-02a.w
+Compiling CCB\b-pedpen-03-1.w
+Compiling CCB\b-pedpen-03-2.w
+Compiling CCB\b-pedpen-03.w
+Compiling CCB\b-pedpen-04.w
+Compiling CCB\B-PEDPEN.W
+Compiling CCB\b-pedpenAQ.w
+** d:\newsie\on_in_co\APLIC\CCB\b-pedpenAQ.w Linea 1499.  ':' seguido de un espacio en blanco termina la instrucción. (199)
+Compiling CCB\b-pendep-01.w
+Compiling CCB\b-pendep-02.w
+Compiling CCB\B-PENDEP.W
+Compiling CCB\b-pendval.w
+Compiling CCB\B-PMXCAN.W
+Compiling CCB\b-politica-lc-2021.w
+Compiling CCB\b-pre-ncredito-dif-precio-individual - copia.w
+* AVISO- palabra TRANSACTION dentro de una transacción actual. (214)
+Compiling CCB\b-pre-ncredito-dif-precio-individual.w
+* AVISO- palabra TRANSACTION dentro de una transacción actual. (214)
+Compiling CCB\b-pre-ncredito-dif-precio-referencias-borrar.w
+Compiling CCB\b-pre-ncredito-dif-precio-referencias.w
+Compiling CCB\b-preletraadelantada.w
+Compiling CCB\b-prenco.w
+Compiling CCB\B-PRUEBA.W
+Compiling CCB\b-rcgoc.w
+Compiling CCB\b-recepcion-letras-anticipdas.w
+Compiling CCB\b-rembov.w
+Compiling CCB\B-RENLET.W
+Compiling CCB\b-retenc.w
+Compiling CCB\b-retenc2.w
+Compiling CCB\B-TABCON.W
+Compiling CCB\B-TABLA-.W
+Compiling CCB\B-TMPBCO.W
+Compiling CCB\b-tmpcj-2.w
+Compiling CCB\b-tmpcj-3.w
+Compiling CCB\B-TMPCJ1.W
+Compiling CCB\B-TMPCJ2.W
+Compiling CCB\B-TMPCNC.W
+Compiling CCB\B-TMPNOD.W
+Compiling CCB\B-TMPNODB.W
+Compiling CCB\B-TMPNOT.W
+Compiling CCB\b-tmpnot2.w
+Compiling CCB\B-TMPNOTB.W
+Compiling CCB\B-TMPPRO.W
+Compiling CCB\B-TMPREN.W
+Compiling CCB\B-TM_BB1.W
+Compiling CCB\B-TM_BB2.W
+Compiling CCB\B-TRFBCO.W
+Compiling CCB\B-TRFBOV.W
+Compiling CCB\b-tvvale.w
+Compiling CCB\b-usrcjb.w
+Compiling CCB\B-VTAMOS.W
+Compiling CCB\baprobarncndotros.w
+Compiling CCB\baprobarncndotrosv2-borrar.w
+Compiling CCB\baprobarncndotrosv2.w
+Compiling CCB\bcanjesxletras.w
+Compiling CCB\bcanjexaprobar.w
+Compiling CCB\bcanjexletra-01.w
+Compiling CCB\bcanjexletra-01b.w
+Compiling CCB\bcanjexletra-02.w
+Compiling CCB\bcanjexpagare.W
+Compiling CCB\bcompbpercepcab.w
+Compiling CCB\bcompbpercepdet.w
+Compiling CCB\bcomprobantesxcliente.w
+Compiling CCB\bconsultaletras.w
+Compiling CCB\benvletbco.w
+Compiling CCB\bletbcocob.w
+Compiling CCB\bncmesaredonda.w
+Compiling CCB\bncxdevolucion.w
+Compiling CCB\bncxhojatrabajo-02.w
+Compiling CCB\bncxhojatrabajo.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta\graba-totales-abono.i No se entiende línea 89. (198)
+Compiling CCB\bnotabancaria.w
+Compiling CCB\borrame01.w
+Compiling CCB\C-CAJA01.W
+Compiling CCB\C-CAJA02.W
+Compiling CCB\C-CAJA03.W
+Compiling CCB\C-CLINCR.W
+Compiling CCB\C-DEPBCO.W
+Compiling CCB\C-DOCTIP-02.W
+Compiling CCB\c-notcrepen.w
+Compiling CCB\canjevalesutilex.w
+Compiling CCB\CJCCMENU.W
+Compiling CCB\Copia (2) de b-consu2-02.w
+Compiling CCB\Copia (2) de W-cjacbd-2-03.w
+Compiling CCB\Copia de b-canc-mayorista-cont-v2.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\Copia de b-consu2-02.w
+Compiling CCB\Copia de D-ciecja2-01.w
+Compiling CCB\Copia de r-difcie.w
+Compiling CCB\Copia de t-canjexnc.w
+Compiling CCB\Copia de t-genera-preletra.w
+Compiling CCB\Copia de v-consul-cctv3.w
+Compiling CCB\Copia de w-avicob.w
+Compiling CCB\Copia de W-cjacbd-2-03.w
+Compiling CCB\D-actchq.w
+Compiling CCB\D-AINCJA.W
+Compiling CCB\D-AMOVI.W
+Nombre de Base de Datos reporte desconocida. (855)
+Tabla desconocida o ambigua w-report (725)
+** d:\newsie\on_in_co\APLIC\CCB\D-AMOVI.W No se entiende línea 340. (196)
+Compiling CCB\D-ANTICIP-01.W
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " R E S U M E N    A N T I C I P O S " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Pag.  : " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Desde : " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Fecha : " fue ignorado. (3077)
+Compiling CCB\D-ANTICIP.W
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " R E S U M E N     A N T I C I P O S " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Pag.  :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Desde :  " fue ignorado. (3077)
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " Fecha :  " fue ignorado. (3077)
+Compiling CCB\D-ANTXD2.W
+Compiling CCB\D-ANTXDC.W
+Compiling CCB\D-antxdc2.w
+Compiling CCB\D-antxdc2prueba.w
+Compiling CCB\D-antxdc3.w
+Compiling CCB\D-ANXCLI.W
+Nombre de Base de Datos reporte desconocida. (855)
+Tabla desconocida o ambigua w-report (725)
+** d:\newsie\on_in_co\APLIC\CCB\D-ANXCLI.W No se entiende línea 358. (196)
+Compiling CCB\D-aplinc.w
+Compiling CCB\d-autbol.w
+Compiling CCB\D-AVCOB.W
+** Tabla W-REPORT no existe o no puede ser accedida. (962)
+** d:\newsie\on_in_co\APLIC\CCB\D-AVCOB.W No se entiende línea 429. (196)
+Compiling CCB\D-AVICOB.W
+Compiling CCB\D-CAJA01.W
+Compiling CCB\d-canc-mayorista-cont-v2.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\d-canc-mayorista-cont.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\D-CANC01.W
+Compiling CCB\D-CANC02.W
+Compiling CCB\D-canc03.w
+Compiling CCB\D-canc04.w
+** Imposible entender la continuación de -- "*/". (247)
+** d:\newsie\on_in_co\APLIC\CCB\D-canc04.w No se entiende línea 7. (198)
+** Nombre de campo o variable desconocido - FRAME. (201)
+** d:\newsie\on_in_co\src\adm-vm\method\vmviewer.i No se entiende línea 45. (196)
+Compiling CCB\D-canc10.w
+Compiling CCB\D-CANC11.W
+Compiling CCB\D-canc12.w
+Compiling CCB\D-canc20.w
+Compiling CCB\D-CANC22.W
+Compiling CCB\D-canc30.w
+Compiling CCB\D-CANC99.W
+Compiling CCB\D-CANCB.W
+Compiling CCB\D-CANCPR.W
+Compiling CCB\d-canjexnc.w
+Compiling CCB\d-canped-01.w
+Compiling CCB\d-canped-02.w
+Compiling CCB\d-canped-02a - copia.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\d-canped-02a-bak.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\d-canped-02a.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\d-canped-02b.w
+**No cabe FILL-IN Tipo Cambio Venta con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+**No cabe FILL-IN Tipo Cambio Compra con COLON-ALIGNED dentro de FRAME f-TpoCmb. (4027)
+Ignorando la información de posición del COLON-ALIGNED (2054)
+Compiling CCB\d-carta.w
+Compiling CCB\d-carta2a.w
+Compiling CCB\d-castig.w
+Compiling CCB\D-chcdep.w
+Compiling CCB\D-cheque.w
+Compiling CCB\D-CHQDE.W
+Compiling CCB\d-chqdep.w
+Compiling CCB\d-ciecja-utilex-old.w
+Compiling CCB\d-ciecja-utilex.w
+Compiling CCB\D-CIECJA.W
+Compiling CCB\D-ciecja2-01.w
+Compiling CCB\D-ciecja2.w
+* AVISO- palabra TRANSACTION dentro de una transacción actual. (214)
+Compiling CCB\D-CIEDIA.W
+Compiling CCB\d-cjlet2.w
+Compiling CCB\D-CLIE.W
+** Tabla W-Report no existe o no puede ser accedida. (962)
+** d:\newsie\on_in_co\APLIC\CCB\D-CLIE.W No se entiende línea 339. (196)
+Compiling CCB\D-clie2.w
+** Tabla W-Report no existe o no puede ser accedida. (962)
+** d:\newsie\on_in_co\APLIC\CCB\D-clie2.w No se entiende línea 389. (196)
+Compiling CCB\D-CLINEA.W
+Compiling CCB\D-CLIVEN.W
+Compiling CCB\D-CONSCL.W
+Nombre de Base de Datos reporte desconocida. (855)
+Tabla desconocida o ambigua w-report (725)
+** d:\newsie\on_in_co\APLIC\CCB\D-CONSCL.W No se entiende línea 348. (196)
+Compiling CCB\D-CTACTE.W
+Compiling CCB\D-CXCOB.W
+Nombre de Base de Datos reporte desconocida. (855)
+Tabla desconocida o ambigua w-report (725)
+** d:\newsie\on_in_co\APLIC\CCB\D-CXCOB.W No se entiende línea 395. (196)
+Compiling CCB\d-deposito-02.w
+Compiling CCB\d-deposito.w
+Compiling CCB\D-DOCVEN.W
+Compiling CCB\d-dudoso.w
+Compiling CCB\D-DXCLI.W
+Compiling CCB\d-efectivo.w
+Compiling CCB\d-estcta-02.w
+Compiling CCB\d-estcta.w
+Compiling CCB\d-genera-nc-desde-pnc.w
+* AVISO- palabra TRANSACTION dentro de una transacción actual. (214)
+Compiling CCB\D-GUIAP.W
+Compiling CCB\d-inconsistencias-pnc.w
+Compiling CCB\D-INGCJA-01.W
+Compiling CCB\D-INGCJA.W
+Compiling CCB\d-lc-gn-cliel.w
+Compiling CCB\D-LETRAS.W
+** Tabla W-Report no existe o no puede ser accedida. (962)
+** d:\newsie\on_in_co\APLIC\CCB\D-LETRAS.W No se entiende línea 493. (196)
+Compiling CCB\D-liqegr.w
+Compiling CCB\D-liqing-vta.w
+Compiling CCB\D-LIQING.W
+Compiling CCB\d-liquidacion-caja.w
+Compiling CCB\d-liquidaciones-cct2a.w
+Compiling CCB\d-motanu-2.w
+Compiling CCB\d-motanu.w
+Compiling CCB\d-msgblo.w
+Compiling CCB\d-notcre-3.w
+Compiling CCB\d-preletraadelantada.w
+Compiling CCB\D-PRYCOB.W
+Compiling CCB\D-prycob2.w
+Compiling CCB\D-PRYDOC.W
+Compiling CCB\D-RENOV.W
+Compiling CCB\d-rep001.w
+**FILL-IN Razon Social no cabrá en FRAME F-REPORTE en PROGRAMA d:\newsie\on_in_co\APLIC\CCB\d-rep001.w. (4028)
+** d:\newsie\on_in_co\APLIC\CCB\d-rep001.w No se entiende línea 392. (196)
+Compiling CCB\d-repo06.w
+Compiling CCB\D-RESLI1.W
+Compiling CCB\D-RESLIN.W
+Compiling CCB\d-retenc-01.w
+Compiling CCB\D-retigv-01.w
+Compiling CCB\D-retigv.w
+Compiling CCB\d-rndn-a.w
+Compiling CCB\d-tvvale.w
+Compiling CCB\d-valeresp.w
+Compiling CCB\dpidedatos.w
+Compiling CCB\f-print-canje-adelantado.w
+Compiling CCB\f-print-canje.w
+Compiling CCB\f-print-refinanciacion.w
+Compiling CCB\gncpendxcliente.w
+Compiling CCB\iniziaLIZE.w
+Compiling CCB\L-AINCJA.W
+Compiling CCB\L-AUTCLI.W
+Compiling CCB\L-CAJA01.W
+Compiling CCB\L-CAJA02.W
+Compiling CCB\L-CAJA03.W
+Compiling CCB\l-chcdep-1.w
+Compiling CCB\l-chcdep.w
+Compiling CCB\l-chqact.w
+Compiling CCB\L-CLINCR.W
+Compiling CCB\L-DEPBCO.W
+Compiling CCB\l-ingcja-01.w
+Compiling CCB\L-INGCJA.W
+Compiling CCB\L-INGCJX.W
+Compiling CCB\L-VENDE-.W
+Compiling CCB\lreimpcmpbte-selectivo.w
+Compiling CCB\MAINMENU.W
+Compiling CCB\probando.w
+Compiling CCB\PRUEBA.w
+Compiling CCB\Q-ABOCAR.W
+Compiling CCB\q-abocar2.w
+Compiling CCB\Q-ABOCARB.W
+Compiling CCB\Q-AGEBCO.W
+Compiling CCB\Q-AGREGA.W
+Compiling CCB\q-asigna-2.w
+Compiling CCB\Q-ASIGNA.W
+Compiling CCB\Q-BOLADM.W
+Compiling CCB\q-boldep-01.W
+Compiling CCB\Q-BOLDEP.W
+Compiling CCB\Q-CAJA01-01.W
+Compiling CCB\Q-CAJA01.W
+Compiling CCB\Q-CAJAB.W
+Compiling CCB\Q-CANNC.W
+Compiling CCB\q-ccbtabla.w
+Compiling CCB\q-ccgoc.w
+Compiling CCB\q-ccgoreg.w
+Compiling CCB\q-cfgcja-2.w
+Compiling CCB\Q-CFGCJA.W
+Compiling CCB\q-CheDif.w
+Compiling CCB\Q-CHQDEV.W
+Compiling CCB\Q-CJAPL.W
+Compiling CCB\q-cjlet-2.w
+Compiling CCB\Q-CJLET.W
+Compiling CCB\q-con003.w
+Compiling CCB\q-consu2-02v2.w
+Compiling CCB\q-consul-cctv3.w
+Compiling CCB\Q-DEPBCO.W
+Compiling CCB\q-docmto-02.w
+Compiling CCB\q-docmto-02a.w
+Compiling CCB\q-docmto-3.w
+Compiling CCB\Q-DOCMTO.W
+Compiling CCB\q-gncob.w
+Compiling CCB\q-liqcob.w
+Compiling CCB\q-liquidacion-caja.w
+Compiling CCB\q-notbac.w
+Compiling CCB\Q-NOTBAN.W
+Compiling CCB\q-notcre-2-1.w
+Compiling CCB\q-notcre-4.w
+Compiling CCB\Q-NOTCRE.W
+Compiling CCB\Q-NOTCREB.W
+Compiling CCB\q-pre-ncredito-dif-precio-individual.w
+Compiling CCB\q-prenco.w
+Compiling CCB\q-remesa-01.w
+Compiling CCB\q-remesa.w
+Compiling CCB\q-renlet.w
+Compiling CCB\Q-retigv.w
+Compiling CCB\q-t1.w
+Compiling CCB\q-tsatet.w
+Tabla desconocida o ambigua State (725)
+** d:\newsie\on_in_co\APLIC\CCB\q-tsatet.w No se entiende línea 120. (196)
+Compiling CCB\q-valeresp.w
+Compiling CCB\q-vencom.w
+Compiling CCB\Q-VTAMOS.W
+Compiling CCB\qcanjesxletras.w
+Compiling CCB\qcanjexletra-extorno.w
+Compiling CCB\qcanjexletra-v2.w
+Compiling CCB\qcanjexletra.w
+Compiling CCB\qconsultaletras.w
+Compiling CCB\qncmesaredonda.w
+Compiling CCB\qnotacreditodebito-anular.w
+Compiling CCB\qnotacreditodebito.w
+Compiling CCB\r-anexcc-01.w
+Compiling CCB\r-anexcc-02.w
+Compiling CCB\r-antxdc2.w
+Compiling CCB\r-antxdc3.w
+Compiling CCB\r-antxdc4.w
+Compiling CCB\r-cargodoc.w
+Compiling CCB\r-ccb-pendientes.w
+Compiling CCB\r-chqdep-01.w
+Compiling CCB\R-CIERRE.W
+Compiling CCB\R-cierre2.w
+Compiling CCB\r-cierre3-01.w
+Compiling CCB\r-cierre3-02.w
+Compiling CCB\R-cierre3.w
+Compiling CCB\r-cierrecja.w
+WARNING: modificador diferente a AT, TO, BGCOLOR, DCOLOR, FGCOLOR, FONT, o VIEW-AS TEXT para la constante " REPORTE CIERRE DE CAJA DEL " fue ignorado. (3077)
+Compiling CCB\r-con001.w
+Compiling CCB\r-con002.w
+Compiling CCB\r-con003.w
+Compiling CCB\r-con004.w
+Compiling CCB\r-dcaja1-01.w
+Compiling CCB\r-dcaja1-02.w
+Compiling CCB\r-difcie.w
+Compiling CCB\r-docpend.w
+Compiling CCB\r-eecc.w
+Compiling CCB\r-egresos-devo-efec.w
+Compiling CCB\r-egresos-remebov.w
+Compiling CCB\r-fchcob2.w
+Compiling CCB\r-ingresos-aplic-nc.w
+Compiling CCB\r-letxcli.w
+Compiling CCB\r-nc0001.w
+Compiling CCB\R-PRECIE-01.W
+Compiling CCB\R-PRECIE.W
+Compiling CCB\r-rep001.w
+Compiling CCB\r-rep001a.w
+Compiling CCB\r-rep002.w
+Compiling CCB\r-rep004.w
+Compiling CCB\r-rep005.w
+Compiling CCB\r-rep006.w
+Compiling CCB\r-rep007.w
+Compiling CCB\r-rep008.w
+Compiling CCB\r-rep009-02.w
+Compiling CCB\r-rep009.w
+Compiling CCB\r-rep010.w
+Compiling CCB\r-rep011.w
+Compiling CCB\r-rep012.w
+Compiling CCB\r-rep013.w
+Compiling CCB\r-rep014-v2.w
+Compiling CCB\r-rep014.w
+Compiling CCB\r-rep015.w
+Compiling CCB\r-rep016.w
+Compiling CCB\r-rep017.w
+Compiling CCB\r-rep018.w
+Compiling CCB\r-rep019.w
+Compiling CCB\r-rep020.w
+Nombre de Base de Datos cissac desconocida. (855)
+Nombre de Base de Datos cissac desconocida. (855)
+Tabla desconocida o ambigua ccbcdocu (725)
+** d:\newsie\on_in_co\APLIC\CCB\r-rep020.w No se entiende línea 454. (196)
+Compiling CCB\r-rep021.w
+Compiling CCB\r-rep022.w
+Compiling CCB\r-rep023.w
+Compiling CCB\r-rep024.w
+Compiling CCB\r-rep025-copia.w
+Compiling CCB\r-rep025.w
+Compiling CCB\r-rep025v2.w
+Compiling CCB\r-rep026.w
+Compiling CCB\r-rep027.w
+Compiling CCB\r-rep028.w
+Compiling CCB\r-rep029.w
+Compiling CCB\r-rep30.w
+** Nombre de tabla gn-pro desconocido. (200)
+** d:\newsie\on_in_co\APLIC\CCB\r-rep30.w No se entiende línea 506. (196)
+Compiling CCB\r-retenc.w
+Compiling CCB\r-retenc2.w
+Compiling CCB\r-valeresp.w
+Compiling CCB\r-valuti-01.w
+Compiling CCB\rarqueoutilex.w
+Compiling CCB\rletsincanje.w
+Compiling CCB\t-canc-mayorista-cont-v2.w
+Compiling CCB\t-canjexnc.w
+Compiling CCB\T-CIEPEN.W
+Compiling CCB\T-DCAJA1-01.W
+Compiling CCB\t-dcaja1-02.w
+Compiling CCB\T-DCAJA1.W
+Compiling CCB\T-DEPBCO.W
+** d:\newsie\on_in_co\APLIC\CCB\T-DEPBCO.W No se entiende línea 40. (196)
+Compiling CCB\t-devbco.w
+Compiling CCB\t-gen-preletra-julio.w
+Compiling CCB\t-genera-preletra.w
+Compiling CCB\t-liqcob1.w
+Compiling CCB\t-notcre-3.w
+Compiling CCB\t-prenco.w
+Compiling CCB\T-VTAMOS.W
+Compiling CCB\tcanjevalesutilexc.w
+Compiling CCB\tcanjevalesutilexd.w
+Compiling CCB\tcanjexletra-01.w
+Compiling CCB\tcanjexletra-02.w
+Compiling CCB\tcanjexletra-03.w
+Compiling CCB\tcanjexpagare02.W
+Compiling CCB\tcanjexpagare03.W
+Compiling CCB\tdevletbco.w
+Compiling CCB\tenvletbco.w
+Compiling CCB\tletbcocob.w
+Compiling CCB\tletprotestada.w
+Compiling CCB\tletraadelantada-02.w
+Compiling CCB\tncxdevolucion.w
+Compiling CCB\tnotabancaria-v2.w
+Compiling CCB\tnotabancaria.w
+Compiling CCB\trefixletra-01.w
+Compiling CCB\trenovacionletra.w
+Compiling CCB\V-ABOCAR.W
+Compiling CCB\v-abocar2.w
+Compiling CCB\V-ABOCARB.W
+Compiling CCB\V-AGEBCO.W
+Compiling CCB\v-antrec-01.w
+Compiling CCB\v-antrec-v2 - copia.w
+Compiling CCB\v-antrec-v2.w
+Compiling CCB\v-antrec.w
+Compiling CCB\v-asigna-2.w
+Compiling CCB\V-ASIGNA.W
+Compiling CCB\v-autcli-2.w
+Compiling CCB\V-AUTCLI.W
+Compiling CCB\v-Avales.w
+Compiling CCB\v-avales2.w
+Compiling CCB\V-BOLADM.W
+Compiling CCB\v-boldep-01.W
+Compiling CCB\v-boldep-02.w
+Compiling CCB\v-boldep-v02.w
+Compiling CCB\v-boldep-v02a.w
+Compiling CCB\V-BOLDEP.W
+Compiling CCB\v-caja01-01.w
+Compiling CCB\V-CAJA01-02.W
+Compiling CCB\V-CAJA01.W
+Compiling CCB\V-CAJA02.W
+Compiling CCB\V-CAJA99.W
+Compiling CCB\v-cajaB.w
+Compiling CCB\v-canjexnc.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta\graba-totales-abono.i No se entiende línea 89. (198)
+Compiling CCB\V-CANNC.W
+Compiling CCB\v-ccgoc.w
+Compiling CCB\v-cfg-nc-ac.w
+Compiling CCB\v-cfg-nc-edg.w
+Compiling CCB\v-cfgcja-2.w
+Compiling CCB\V-CFGCJA.W
+Compiling CCB\v-chcdep-1.w
+Compiling CCB\v-CheDif.w
+Compiling CCB\V-CHQDEV.W
+Compiling CCB\v-cjlet-2.w
+Compiling CCB\v-cjlet-3.w
+Compiling CCB\V-CJLET.W
+Compiling CCB\v-CliAva.w
+Compiling CCB\V-CLINCR.W
+Compiling CCB\v-con002a.w
+Compiling CCB\v-config-ic-let.w
+Compiling CCB\V-CONSU2.W
+Compiling CCB\v-consul-cct2a.w
+Compiling CCB\v-consul-cctv3.w
+Compiling CCB\V-DATCLI.W
+Compiling CCB\v-datcliv2.w
+Compiling CCB\V-DATDOC.W
+Compiling CCB\v-datos-analista.w
+Compiling CCB\V-DEPBCO.W
+Compiling CCB\v-detcob.w
+Compiling CCB\v-devbco.w
+Compiling CCB\v-doccobranza.w
+Compiling CCB\v-fmacan-01.w
+Compiling CCB\V-FMACAN.W
+Compiling CCB\v-fmacan2.w
+** d:\newsie\on_in_co\APLIC\CCB\v-fmacan2.w Linea 2.  ':' seguido de un espacio en blanco termina la instrucción. (199)
+Compiling CCB\v-gncob.w
+Compiling CCB\v-icaja-02.w
+Compiling CCB\V-LETBCO.W
+Compiling CCB\V-LETPRO.W
+Compiling CCB\v-liqcob.w
+Compiling CCB\v-notbac.w
+Compiling CCB\V-NOTBAN.W
+Compiling CCB\V-NOTCAR.W
+Compiling CCB\v-notcr1.w
+Compiling CCB\v-notcre-2-1.w
+Compiling CCB\v-notcre-2.w
+Compiling CCB\v-notcre-3.w
+Compiling CCB\v-notcre-4.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta\graba-totales-abono.i No se entiende línea 89. (198)
+Compiling CCB\V-NOTCRE.W
+Compiling CCB\V-NOTCREB.W
+Compiling CCB\v-obscre.w
+Compiling CCB\v-obsvta.w
+Compiling CCB\v-pre-ncredito-dif-precio-individual.w
+Compiling CCB\v-preletraadelantada.w
+Compiling CCB\v-prenco.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta2\graba-totales-cotizacion-cred.i No se entiende línea 118. (198)
+Compiling CCB\v-remenc-01.w
+Compiling CCB\v-remenc.w
+Compiling CCB\v-remesa-01.w
+Compiling CCB\v-remesa-x.w
+Compiling CCB\v-remesa.w
+Compiling CCB\v-remesas-01.w
+Compiling CCB\V-RENLET.W
+Compiling CCB\V-retigv.w
+Compiling CCB\v-sencja.w
+Compiling CCB\v-tCUSNUM.w
+** Nombre de campo o variable desconocido - Cust-Num. (201)
+** d:\newsie\on_in_co\APLIC\CCB\v-tCUSNUM.w No se entiende línea 115. (196)
+Compiling CCB\V-TOTMOS.W
+Compiling CCB\v-tsatet.w
+Tabla desconocida o ambigua State (725)
+** d:\newsie\on_in_co\APLIC\CCB\v-tsatet.w No se entiende línea 59. (196)
+Compiling CCB\v-valeresp.w
+Compiling CCB\V-VENCOM.W
+Compiling CCB\V-VTAMOS.W
+Compiling CCB\vcanjevalesutilex.w
+Compiling CCB\vcanjexletra.w
+Compiling CCB\vcanjexpagare.W
+Compiling CCB\vconsultaletras.w
+Compiling CCB\vdevletbco.w
+Compiling CCB\venvletbco.w
+Compiling CCB\vletprotestada.w
+Compiling CCB\vletraadelantada.w
+Compiling CCB\vncmesaredonda-02.w
+Compiling CCB\vncmesaredonda.w
+Compiling CCB\vncndxpncpnd-anular.w
+Compiling CCB\vncndxpncpnd-item.w
+Compiling CCB\vncndxpncpnd.w
+Compiling CCB\vncxdevolucion-tot.w
+Compiling CCB\vncxdevolucion.w
+Compiling CCB\vnotabancaria-v2.w
+Compiling CCB\vnotabancaria.w
+** libre_dec es ambiguo entre CcbCMvto.Libre_dec y estrac_bancario.libre_dec. (72)
+** d:\newsie\on_in_co\APLIC\CCB\vnotabancaria.w No se entiende línea 977. (196)
+Compiling CCB\vnotacreditodebito-borrar.w
+Compiling CCB\vnotacreditodebito.w
+Compiling CCB\vrefinanciacionletras.w
+Compiling CCB\vrenovacionletra.w
+Compiling CCB\W-ABOCAR.W
+Compiling CCB\w-abocar2.w
+Compiling CCB\w-abocar3.w
+Compiling CCB\W-ABOCARB.W
+Compiling CCB\w-ac-correccion-v2.w
+Compiling CCB\w-ac-correccion.w
+Compiling CCB\w-ac-porcentaje.w
+Compiling CCB\W-AGEBCO.W
+Compiling CCB\W-AGREGA.W
+Compiling CCB\w-anticipos-aplicaciones.w
+Compiling CCB\w-anticipos-aplicaciones_boirrame.w
+Compiling CCB\w-antrec-01.w
+Compiling CCB\w-antrec-v2.w
+Compiling CCB\w-antrec.w
+Compiling CCB\w-anuctr.w
+Imposible entender instrucción ME-NAME. (3583)
+** d:\newsie\on_in_co\APLIC\CCB\w-anuctr.w No se entiende línea 1. (196)
+Compiling CCB\w-anula-ic-anticipo.w
+Compiling CCB\w-anulacion-pnc-dif-precio-ind.w
+Compiling CCB\W-ANU_IC-01.W
+Compiling CCB\W-ANU_IC-01a.W
+Compiling CCB\W-ANU_IC-02.W
+Compiling CCB\W-ANU_IC-02a.W
+Compiling CCB\w-anu_ic-03-2.w
+Compiling CCB\w-anu_ic-03.w
+Compiling CCB\w-anu_ic-04.w
+Compiling CCB\W-ANU_IC.W
+Compiling CCB\w-aprnco.w
+Compiling CCB\w-aprob-rem-bov.w
+Compiling CCB\w-aprobacion-nc-otros.w
+Compiling CCB\w-aprobacion-pre-notas-de-credito-tt-tempo.w
+Compiling CCB\w-aprobacion-pre-notas-de-credito.w
+Compiling CCB\w-asigna-2.w
+Compiling CCB\W-ASIGNA.W
+Compiling CCB\w-audilc.w
+Compiling CCB\w-autbol-02.W
+Compiling CCB\w-autbol-v02.w
+Compiling CCB\w-autboldep.w
+Compiling CCB\W-AUTCLI.W
+Compiling CCB\w-autlincre.w
+Compiling CCB\w-avales-consulta.w
+Compiling CCB\w-avales.w
+Compiling CCB\w-avicob-v2.w
+Compiling CCB\w-avicob.w
+Compiling CCB\w-bd-masivos.w
+Compiling CCB\W-BOLADM.W
+Compiling CCB\W-BOLD99.W
+Compiling CCB\W-BOLDE1.W
+Compiling CCB\w-boldep-01.w
+Compiling CCB\w-boldep-02.w
+Compiling CCB\w-boldep-1.w
+Compiling CCB\w-boldep-1a.w
+Compiling CCB\w-boldep-1b.w
+Compiling CCB\w-boldep-2.w
+Compiling CCB\w-boldep-v02.w
+Compiling CCB\w-boldep-v02a.w
+Compiling CCB\W-BOLDEP.W
+Compiling CCB\w-bovbco-1.w
+Compiling CCB\W-BOVBCO.W
+Compiling CCB\W-CAJA99.W
+Compiling CCB\w-canc-mayorista-cont-v2.w
+Compiling CCB\w-canc-mayorista-cont-v3.w
+Compiling CCB\w-canc-mayorista-cont.w
+Compiling CCB\w-canc12.w
+Compiling CCB\w-canjexnc.w
+Compiling CCB\W-CANNC.W
+Compiling CCB\W-canpBK.w
+Compiling CCB\W-CANPED-01.W
+Compiling CCB\W-CANPED-02.W
+Compiling CCB\W-CANPED-02a.W
+Compiling CCB\w-canped-03-1.w
+Compiling CCB\w-canped-03-2.w
+Compiling CCB\w-canped-03.w
+Compiling CCB\w-canped-04.w
+Compiling CCB\W-CANPED.W
+Compiling CCB\w-carga-bd-excel.w
+Compiling CCB\w-cartanotaria-v2.w
+Compiling CCB\w-cartanotaria-v2l.w
+Compiling CCB\w-cartanotarial-v2.w
+Compiling CCB\w-cartanotarial.w
+Compiling CCB\w-cartanotarialw.w
+Compiling CCB\w-castig.w
+Compiling CCB\w-castigado.w
+Compiling CCB\w-cbd001-01.w
+Compiling CCB\w-cbd001-01m.w
+Compiling CCB\w-cbd001.w
+Compiling CCB\w-cbd002.w
+Compiling CCB\w-ccbcbd-01a.w
+Compiling CCB\w-ccbcbd-01am.w
+Compiling CCB\w-ccbcbd-01b.w
+Compiling CCB\w-ccbcbd-1.w
+Compiling CCB\w-ccbcbd-2.w
+Compiling CCB\w-ccbcbd-3.w
+Compiling CCB\w-ccbcbd-3a.w
+Compiling CCB\W-CCBCBD-3am.w
+Compiling CCB\w-ccbcbd-4.w
+Compiling CCB\w-ccbcbd-5.w
+Compiling CCB\w-ccbcbd-ac.w
+Compiling CCB\W-CCBCBD.W
+Compiling CCB\w-ccbcfgcbd.w
+Compiling CCB\w-ccbtabla-conceptos.w
+Compiling CCB\w-cfg-nc-campana.w
+Compiling CCB\w-cfgcja-2.w
+Compiling CCB\W-CFGCJA.W
+Compiling CCB\w-cgocob.w
+Compiling CCB\w-chcdep-1.W
+Compiling CCB\W-CHCDEP.W
+Compiling CCB\W-CheDif.w
+Compiling CCB\W-CHQACT.W
+Compiling CCB\W-CHQDEV.W
+Compiling CCB\w-chqdifcbd.w
+Compiling CCB\w-ciefacant.w
+Compiling CCB\w-ciesdo-02.w
+Compiling CCB\W-CJABOV.W
+Compiling CCB\W-CJACB2.W
+Compiling CCB\W-CJACB3.W
+Compiling CCB\W-cjacbd-2-01.w
+Compiling CCB\W-cjacbd-2-02.w
+Compiling CCB\W-CJACBD-2-03-dia.w
+Compiling CCB\W-cjacbd-2-03.w
+Compiling CCB\W-cjacbd-2-03a.w
+Compiling CCB\W-cjacbd-2.w
+Compiling CCB\w-cjacbd-3-01-dia.w
+Compiling CCB\W-cjacbd-3-01.w
+Compiling CCB\W-cjacbd-3-01a.w
+Compiling CCB\W-cjacbd-3.w
+Compiling CCB\W-CJACBD-chalacaso.w
+Compiling CCB\W-CJACBD.W
+Compiling CCB\w-cjapl-3.w
+Compiling CCB\W-CJAPL.W
+Compiling CCB\w-cjlet-2.w
+Compiling CCB\w-cjlet-3.w
+Compiling CCB\W-CJLET.W
+Compiling CCB\w-cjlet3.w
+Compiling CCB\w-clientes-deudas.w
+Compiling CCB\W-CLINCR.W
+Compiling CCB\w-cobrador.w
+Compiling CCB\w-cobrdir.w
+Compiling CCB\w-con-corrvcmto.w
+Compiling CCB\w-con001.w
+Compiling CCB\w-con001a.w
+Compiling CCB\w-con002.w
+Compiling CCB\w-con002v2.w
+Compiling CCB\w-con003.w
+Compiling CCB\w-concepto-exclusiones.w
+Compiling CCB\w-confdep-cons.w
+Compiling CCB\w-confdep.w
+Compiling CCB\w-confg-prelet-julio.w
+Compiling CCB\w-confg-preletra.w
+Compiling CCB\w-config-aprobacion-pedidos-docs.w
+Compiling CCB\w-config-aprobacion-pedidos.w
+Compiling CCB\w-config-ic-let.w
+Compiling CCB\w-configurador-textos.w
+Compiling CCB\w-consolidado-ic.w
+** Nombre de tabla gn-pro desconocido. (200)
+** d:\newsie\on_in_co\APLIC\CCB\w-consolidado-ic.w No se entiende línea 395. (196)
+Compiling CCB\W-CONSUL-02.W
+Compiling CCB\W-CONSUL-02v2.-backupW.w
+Compiling CCB\W-CONSUL-02v2.W
+Compiling CCB\W-CONSUL-02zzz.W
+Compiling CCB\w-consul-autlincre.w
+Compiling CCB\w-consul-cct2a.w
+Compiling CCB\w-consul-cctv3.w
+Compiling CCB\W-CONSUL.W
+Compiling CCB\w-consulbd-v02.w
+Compiling CCB\w-consulta-anticipo-letra.w
+Compiling CCB\w-consulta-stock-letras.w
+Compiling CCB\w-consuta-egresos-boveda.w
+Compiling CCB\w-corrvcmto.w
+Compiling CCB\w-cuotas-vta-credito.w
+Compiling CCB\w-dcto-ppago.w
+Compiling CCB\W-DEPBCO.W
+Compiling CCB\w-deptarjcbd.w
+Compiling CCB\w-depvalesbd.w
+Compiling CCB\W-DEPXAP-02.W
+Compiling CCB\W-DEPXAP.W
+Compiling CCB\w-detcob.w
+Compiling CCB\w-devbco.w
+Compiling CCB\w-difcja-consulta.w
+Compiling CCB\w-difcja-sustento - copia.w
+Compiling CCB\w-difcja-sustento.w
+Compiling CCB\w-difcja.w
+Compiling CCB\w-docanulados.w
+Compiling CCB\w-doccobranza.w
+Compiling CCB\w-documentos-validos-para-refinanciar.w
+Compiling CCB\w-documtos.w
+Compiling CCB\w-dudoso.w
+Compiling CCB\w-dudoso2.w
+Compiling CCB\w-eecc.w
+Compiling CCB\w-estdoc.w
+Compiling CCB\w-extorna-nb-aprobada.w
+Compiling CCB\w-gen-preletra-julio.w
+Compiling CCB\w-genera-preletra-v2.w
+Compiling CCB\w-genera-preletra.w
+Compiling CCB\w-generacion-nc-dif-precio-ind.w
+Compiling CCB\w-generar-nc-masivo-detallado.w
+Compiling CCB\w-icaja-02.w
+Compiling CCB\W-ICAJA1-01.W
+Compiling CCB\W-ICAJA1-02.W
+Compiling CCB\W-ICAJA1.W
+Compiling CCB\W-ICAJAB.W
+Compiling CCB\w-imp-doc-lote.w
+Compiling CCB\W-LETBCO.W
+Compiling CCB\W-LETPRO.W
+Compiling CCB\w-letras-cod-unico.w
+Compiling CCB\w-linea-credito-2021.w
+Compiling CCB\w-linea-credito-v2.w
+Compiling CCB\w-linea-credito.w
+Compiling CCB\W-LINEAS.W
+Compiling CCB\W-LINUSR.W
+Compiling CCB\W-liqcob.w
+Compiling CCB\w-listado-pnc-dif-precio-ind.w
+Compiling CCB\w-migra-saldos-01.w
+Compiling CCB\w-motanu.w
+Compiling CCB\W-NOTBAC.W
+Compiling CCB\W-NOTBAN.W
+Compiling CCB\w-notcre-2-1.w
+Compiling CCB\w-notcre-2.w
+Compiling CCB\w-notcre-3.w
+Compiling CCB\w-notcre-4.w
+Compiling CCB\W-NOTCRE.W
+Compiling CCB\W-NOTCREB.W
+Compiling CCB\W-NOTCREBO.W
+Compiling CCB\w-pendBOV.w
+Compiling CCB\w-pendTCR.w
+Compiling CCB\w-pendval.w
+Compiling CCB\W-PMXCAN.W
+Compiling CCB\w-politica-lc-2021.w
+Compiling CCB\w-pre-ncredito-dif-precio-individual.w
+Compiling CCB\w-preletraadelantada.w
+Compiling CCB\w-prenco.w
+Compiling CCB\w-rebate-01.w
+Compiling CCB\w-rebate-02.w
+Compiling CCB\w-rebate-03.w
+Compiling CCB\w-rebate-03a-v2.w
+Compiling CCB\w-rebate-03a.w
+Compiling CCB\w-recepcion-letras-anticipadas.w
+Compiling CCB\w-regcgoc.w
+Compiling CCB\w-rembov.w
+Compiling CCB\w-remeBOV.w
+Compiling CCB\w-remeCJC.w
+Compiling CCB\w-remenc-01.w
+Compiling CCB\w-remenc-02.w
+Compiling CCB\w-remenc.w
+Compiling CCB\w-remesa.w
+Compiling CCB\w-remesen.w
+Compiling CCB\w-reme_c-01.w
+Compiling CCB\w-remi_c-01.w
+Compiling CCB\W-RENLET.W
+Compiling CCB\w-repleg.w
+Compiling CCB\w-retenc.w
+Compiling CCB\W-retigv.w
+Compiling CCB\w-rpt-eecc-clientes.w
+Compiling CCB\W-SALDOC.W
+Compiling CCB\w-sencja.w
+Compiling CCB\w-sentinel-rcrediticio.w
+Compiling CCB\w-state.w
+Compiling CCB\W-TABCON.W
+Compiling CCB\W-TABSER.W
+Compiling CCB\W-TERMIN.W
+Compiling CCB\W-TOTLIN.W
+**El tamaño especificado en la frase del BROWSE BROWSE-2 no es suficiente. (4023)
+Compiling CCB\w-trasdo-02.w
+Compiling CCB\w-trasdo-1.w
+Compiling CCB\w-trasdo-2.w
+Compiling CCB\W-TRFBCO.W
+Compiling CCB\W-TRFBOV.W
+Compiling CCB\w-usrcjb.w
+Compiling CCB\w-valeresp.w
+Compiling CCB\w-valresp.w
+Compiling CCB\W-VENCOM.W
+Compiling CCB\w-win1.w
+Compiling CCB\w-wintowin-configuracion.w
+Compiling CCB\w.w
+Compiling CCB\wactualizalineacred-v2.w
+Compiling CCB\wactualizalineacred.w
+Compiling CCB\wanexovales01.w
+Compiling CCB\waprobarcanjexletra.w
+Compiling CCB\waprobarncndotros-div-v2.w
+Compiling CCB\waprobarncndotros.w
+Compiling CCB\waprobarncndotrosv2.w
+Compiling CCB\waprobarncotros-borrar.w
+Compiling CCB\waprobarncotros.w
+Compiling CCB\waprobarpagare.w
+Compiling CCB\wcambiofacturas.w
+** Nombre de campo o variable desconocido - x-articulo-ICBPER. (201)
+** d:\newsie\on_in_co\APLIC\vta\graba-totales-abono.i No se entiende línea 89. (198)
+Compiling CCB\wcanjevalesutilex.w
+Compiling CCB\wcanjexletra-01.w
+Compiling CCB\wcanjexletra-extorno.w
+Compiling CCB\wcanjexletra-v2.w
+Compiling CCB\wcanjexletra.w
+Compiling CCB\wcanjexpagare.W
+Compiling CCB\wcbdcjeletrm.w
+Compiling CCB\wcomprobantesdepercepcion.w
+Compiling CCB\wcomprobantesxcliente.w
+Compiling CCB\wconsultageneraldecanjesxletras.w
+Compiling CCB\wconsultaletras.w
+Compiling CCB\wdevletbco.w
+Compiling CCB\wenvletbco-01.w
+Compiling CCB\wenvletbco.w
+Compiling CCB\wgenerarncndotros.w
+Compiling CCB\wletbcocob.w
+Compiling CCB\wletprotestada.w
+Compiling CCB\wletraadelantada-v2.w
+Compiling CCB\wletraadelantada.w
+Compiling CCB\wliqvalesutilex.w
+Compiling CCB\wliqvalesutilexv2.w
+Compiling CCB\wmigraraopenorange.w
+Compiling CCB\wncmesaredonda.w
+Compiling CCB\wncndxpncpnd.w
+Compiling CCB\wncxdevolucion.w
+Compiling CCB\wncxhojatrabajo.w
+Compiling CCB\wnotabancaria-v2.w
+Compiling CCB\wnotabancaria.w
+Compiling CCB\wnotacreditodebito.w
+Compiling CCB\wrefinanciacionletras-v2.w
+Compiling CCB\wrefinanciacionletras.w
+Compiling CCB\wreimpcmpbte-selectivo.w
+Compiling CCB\wrenovacionletra-v2.w
+Compiling CCB\wrenovacionletra.w
+Compiling CCB\xxx.w

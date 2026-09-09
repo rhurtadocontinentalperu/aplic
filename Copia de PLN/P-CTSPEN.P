@@ -1,0 +1,97 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT  PARAMETER D-FchSal AS DATE.
+DEFINE OUTPUT PARAMETER I-MesPen AS INTEGER.
+DEFINE OUTPUT PARAMETER I-DiaPen AS INTEGER.
+DEFINE VARIABLE D-FchCts AS DATE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2.01
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+CASE MONTH(D-FchSal):
+     WHEN 11 OR WHEN 12 THEN 
+          D-FchCts = DATE("31/10/" + STRING(year(D-FchSal))).
+     WHEN 1 OR WHEN 2 OR WHEN 3 OR WHEN 4 THEN
+          D-FchCts = DATE("31/10/" + STRING(year(D-FchSal) - 1)).
+     WHEN 5 OR WHEN 6 OR WHEN 7 OR WHEN 8 OR WHEN 9 OR WHEN 10 THEN
+          D-FchCts = DATE("30/04/" + STRING(year(D-FchSal))).
+END CASE.
+CASE DAY(D-FchSal):
+     WHEN 31 THEN I-DiaPen = 0.
+     WHEN 30 THEN DO:
+          IF LOOKUP(STRING(MONTH(D-FchSal)),"4,6,9,11") > 0 THEN I-DiaPen = 0.
+          ELSE I-DiaPen = DAY(D-FchSal).
+     END.
+     WHEN 28 OR WHEN 29 THEN DO:
+          IF MONTH(D-FchSal) = 2  THEN I-DiaPen = 0.
+          ELSE I-DiaPen = DAY(D-FchSal).
+     END.
+     OTHERWISE I-DiaPen = DAY(D-FchSal).
+END CASE.
+I-MesPen = INTEGER((D-FchSal - D-FchCts - I-DiaPen )/ 30).
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

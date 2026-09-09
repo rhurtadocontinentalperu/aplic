@@ -1,0 +1,116 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ----------------------------------------------------------------------*/
+/*          This .W file was created with the Progress AppBuilder.      */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+/*
+-----
+dia.p
+-----
+    Entrega el string del dia de la semana.
+
+Formato:
+             RUN dia.p (INPUT <INTEGER1>, <INTEGER2>, OUTPUT <VARIABLE>)
+ 
+      donde:
+             INTEGER1  : Numero de la semana     1 Domingo, 2 Lunes, ...., 7 Sabado
+             INTEGER2  : Presentacion            1 Mayusculas, 2 Minusculas, 3 Propio.
+            
+             VARIABLE  : Variable de tipo CHARACTER donde graba el valor de retorno.        
+
+
+Observaciones :
+
+             WEEKDAY(<var-date>)  -> Entrega el numero de la semana de una variable fecha.
+*/
+
+
+DEFINE INPUT  PARAMETER NumDia   AS INTEGER.
+DEFINE INPUT  PARAMETER TpoPre   AS INTEGER.
+DEFINE OUTPUT PARAMETER DiaTexto AS CHARACTER.
+
+
+CASE NumDia:
+    WHEN 1 THEN DiaTexto = "domingo".
+    WHEN 2 THEN DiaTexto = "lunes".
+    WHEN 3 THEN DiaTexto = "martes".
+    WHEN 4 THEN DiaTexto = "miercoles".
+    WHEN 5 THEN DiaTexto = "jueves".
+    WHEN 6 THEN DiaTexto = "viernes".
+    WHEN 7 THEN DiaTexto = "sabado".
+    OTHERWISE   DiaTexto = " ".
+END CASE.
+
+CASE TpoPre:
+    WHEN 1 THEN DiaTexto = CAPS(DiaTexto).
+    WHEN 3 THEN DiaTexto = CAPS( SUBSTRING(DiaTexto, 1, 1) ) + SUBSTRING(DiaTexto, 2).
+END CASE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.62
+         WIDTH              = 60.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

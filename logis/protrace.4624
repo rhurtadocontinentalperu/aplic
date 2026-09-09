@@ -1,0 +1,87 @@
+ ===================================================
+PROGRESS stack trace as of Fri Dec 18 15:29:44 2020
+=====================================================
+Startup parameters:
+-pf C:\Progress\OpenEdge\startup.pf,-cpinternal ISO8859-1,-cpstream ISO8859-1,-cpcoll Spanish9,-cpcase Basic,-d dmy,-numsep 44,-numdec 46,-Mm 16384,(end .pf),-pf on_in_db_210qa.pf,-lng Spanish,-cpcase Basic,-cpcoll Basic,-rereadnolock,-evtlevel none,-cpinternal iSO8859-1,-cpstream ISO8859-1,-cpprint ibm850,-d dmy,-T c:\sie\tmp,-nb 255,-inp 32000,-rand 2,-db INTEGRAL,-ld INTEGRAL,-H 192.168.100.209,-N TCP,-S 65010,-TB 31,-TM 32,-tmpbsize 8,-mmax 65534,-Mm 16384,-D 500,-l 2000000000,-s 327680,-Bt 12500,(end .pf),-ininame on_in_co_213qa.ini,-p src/bin/_inicio.p
+
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  10313C24 01:00312C24 C:\Progress\OpenEdge\bin\prow32.dll
+
+Registers:
+EAX:2EC73ABC
+EBX:2D610868
+ECX:75A2BCAC
+EDX:00000028
+ESI:2D610858
+EDI:2EC73A94
+CS:EIP:0023:10313C24
+SS:ESP:002B:0018F92C  EBP:00000084
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210206
+
+Call Stack:
+Address   Frame
+10313C24  00000000  dbut_firstByte+103D34
+101A1C86  00000000  dbut_utsetuid+4916
+
+
+** ABL Stack Trace **
+
+--> frame-startboxselect adeuib/_uibmain.p (adeuib/_uibmain.r) at line 11253
+    adeuib/_uibmain.p (adeuib/_uibmain.r) at line 17218
+    _ab.p (C:\Progress\OpenEdge\gui\_ab.r) at line 394
+
+** Persistent procedures/Classes **
+
+Handle  File Name
+005031  d:\newsie\on_in_co\aplic\logis\v-hoja-de-ruta.r
+004975  d:\newsie\on_in_co\aplic\logis\q-hr-unico.r
+004713  d:\newsie\on_in_co\SRC\adm-vm\objects\p-updv12.r
+004689  d:\newsie\on_in_co\APLIC\logis\b-hoja-de-ruta-dg.r
+004662  d:\newsie\on_in_co\src\adm-vm\objects\p-updv12.r
+004637  d:\newsie\on_in_co\APLIC\logis\b-hoja-de-ruta-g.r
+004610  d:\newsie\on_in_co\SRC\adm-vm\objects\p-updv12.r
+004585  d:\newsie\on_in_co\APLIC\logis\b-hoja-de-ruta-d.r
+004560  d:\newsie\on_in_co\aplic\alm\q-dirutac.r
+004538  d:\newsie\on_in_co\SRC\adm\objects\folder.r
+004515  d:\newsie\on_in_co\APLIC\logis\v-hoja-de-ruta.r
+004488  d:\newsie\on_in_co\SRC\adm\objects\p-navico.r
+004457  d:\newsie\on_in_co\SRC\adm-vm\objects\p-updv04.r
+004363  d:\newsie\on_in_co\aplic\logis\q-comprobante-unico.r
+004339  d:\newsie\on_in_co\aplic\vta2\b-guias-manuales.r
+004316  d:\newsie\on_in_co\aplic\logis\v-mantto-gr-aut-cred.r
+002538  C:\Progress\OpenEdge\gui\adm2\containr.r
+002537  C:\Progress\OpenEdge\gui\adm2\visual.r
+002532  C:\Progress\OpenEdge\gui\adm2\smart.r
+001880  d:\newsie\on_in_co\APLIC\vta2\b-consulta-pickings.r
+001859  d:\newsie\on_in_co\SRC\adm\objects\broker.r
+001855  d:\newsie\on_in_co\aplic\logis\b-consulta-de-ordenes.r
+001798  adeuib/_semain.r
+001717  adecomm/as-utils.r
+001124  adecomm/_winmenu.r
+001123  adeshar/_mlmgr.r
+001001  adeuib/_abfuncs.r
+
+//=====================================================
+PROGRESS stack trace as of Fri Dec 18 15:29:45 2020
+//=====================================================
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  10313C24 01:00312C24 C:\Progress\OpenEdge\bin\prow32.dll
+
+Registers:
+EAX:2EC73ABC
+EBX:2D610868
+ECX:75A2BCAC
+EDX:00000028
+ESI:2D610858
+EDI:2EC73A94
+CS:EIP:0023:10313C24
+SS:ESP:002B:0018F9E8  EBP:00000084
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210206
+
+Call Stack:
+Address   Frame
+10313C24  0018F9FC  dbut_firstByte+103D34
+101276CB  0018FA2C  DllStartup+B3BDB
+

@@ -1,0 +1,16 @@
+DEFINE INPUT PARAMETER file-name AS CHARACTER.
+
+DEFINE VARIABLE x-WinExe AS CHARACTER.
+
+&IF "{&WINDOW-SYSTEM}" = "TTY" &THEN
+    READKEY PAUSE 0.
+    OS-COMMAND SILENT vcat VALUE(file-name).
+&ELSE                            
+    
+    x-WinExe ="pfe.exe " + file-name.
+    RUN WinExec( x-WinExe, 1). 
+    PROCEDURE WinExec EXTERNAL "krnl386.exe":
+        DEFINE INPUT PARAMETER prog_name  AS CHARACTER.
+        DEFINE INPUT PARAMETER prog_style AS SHORT.
+    END PROCEDURE.    
+&ENDIF

@@ -1,0 +1,8 @@
+for each facdpedi by codmat:
+display nroped codmat canped .
+end. 
+
+/*for each ccbcdocu  where coddoc = "FAC":
+display coddoc nrodoc CcbCDocu.ImpBrt CcbCDocu.ImpDto CcbCDocu.ImpIgv 
+CcbCDocu.ImpVta CcbCDocu.TpoCmb CcbCDocu.ImpTot codmon.
+end.*/

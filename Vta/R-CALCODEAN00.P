@@ -1,0 +1,165 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-ImpPed.p
+    Purpose     : Impresion de Pedidos y Cotizaciones
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER xCodBarr AS CHARACTER.
+DEFINE OUTPUT PARAMETER xCodEAN AS CHARACTER.
+
+DEFINE VARIABLE cCodigo AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE iInt    AS INTEGER     NO-UNDO.
+DEFINE VARIABLE iChksum AS INTEGER     NO-UNDO.
+DEFINE VARIABLE iNbr    AS INTEGER     NO-UNDO.
+DEFINE VARIABLE iDigito AS INTEGER     NO-UNDO.
+DEFINE VARIABLE cCodBarra AS CHARACTER NO-UNDO.
+DEFINE VARIABLE iFirst  AS INTEGER     NO-UNDO.
+DEFINE VARIABLE iCont   AS INTEGER     NO-UNDO.
+DEFINE VARIABLE lTableA AS LOGICAL     NO-UNDO.
+DEFINE VARIABLE cChkSum AS CHARACTER   NO-UNDO.
+
+
+
+DEF SHARED VAR S-USER-ID AS CHAR. 
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR cl-CODCIA AS INTEGER.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+cCodigo = SUBSTRING(xCodBarr,1,12).
+IF LENGTH(cCodigo) = 12 THEN DO:
+    DO iInt = 1 TO 12:
+        IF ASC(SUBSTR(cCodigo,iInt,1)) < 48 OR ASC(SUBSTR(cCodigo,iInt,1)) > 57 THEN DO:
+            iInt = 0.
+        END.
+    END.
+    IF iInt = 13 THEN DO:
+        iChkSum = 0.
+        iInt = 2.
+        DO iInt = 2 TO 12 : 
+            iChkSum = iChkSum + INTEGER(SUBSTRING(cCodigo,iInt,1)).
+            iInt = iInt + 1.
+        END.
+        iChkSum = iChkSum * 3.
+        DO iInt = 1 TO 11 : 
+            iChkSum = iChkSum + INTEGER(SUBSTRING(cCodigo,iInt,1)).
+            iInt = iInt + 1.
+        END.
+
+        cChkSum = STRING(iChkSum).
+        IF LENGTH(cChkSum) < 3 THEN DO:
+            cChkSum = " " + cChkSum.            
+        END.
+        ELSE cChkSum = SUBSTRING(cChkSum,LENGTH(cChkSum) - 2).
+               
+        iNbr = (INTEGER(SUBSTRING(cChkSum,1,2)) + 1) * 10.
+        iDigito   = iNbr - iChkSum.
+        cCodigo   = TRIM(cCodigo) + SUBSTRING(STRING(iDigito),LENGTH(STRING(iDigito))).
+        /*
+        cCodBarra = SUBSTRING(cCodigo,1,1).
+        iFirst = INTEGER(SUBSTRING(cCodigo,1,1)).
+        DO iCont = 2 TO 7:
+            lTableA = FALSE.
+            CASE iCont:
+                WHEN 2 THEN lTableA = True.
+                WHEN 3 THEN DO:
+                    IF iFirst >= 0 AND iFirst <= 3 THEN lTableA = True.
+                END.
+                WHEN 4 THEN DO:
+                    IF iFirst = 0 OR iFirst = 4 OR iFirst = 7 OR iFirst = 8 THEN lTableA = True.
+                END.
+                WHEN 5 THEN DO:
+                    IF iFirst = 0 OR iFirst = 1 OR iFirst = 4 OR iFirst = 5 
+                        OR iFirst = 9 THEN lTableA = True.
+                END.
+                WHEN 6 THEN DO:
+                    IF iFirst = 0 OR iFirst = 2 OR iFirst = 5 OR iFirst = 6 
+                        OR iFirst = 7 THEN lTableA = True.
+                END.
+                WHEN 7 THEN DO:
+                    IF iFirst = 0 OR iFirst = 3 OR iFirst = 6 OR iFirst = 8 
+                        OR iFirst = 9 THEN lTableA = True.
+                END.
+            END CASE.
+            IF lTableA THEN
+                cCodBarra = cCodBarra + CHR(65 + INTEGER(SUBSTRING(cCodigo,iCont,1))).
+            ELSE cCodBarra = cCodBarra + CHR(75 + INTEGER(SUBSTRING(cCodigo,iCont,1))).       
+        END.
+        cCodBarra = cCodBarra + "*".
+        DO iInt = 8 TO 13:
+            cCodBarra = cCodBarra + CHR(97 + INTEGER(SUBSTRING(cCodigo,iInt,1))).
+        END.
+        cCodBarra = cCodBarra + "+".*/
+        xCodEAN = cCodigo.
+    END.        
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

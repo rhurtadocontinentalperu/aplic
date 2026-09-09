@@ -1,0 +1,3 @@
+for each facdocum:
+display FacDocum.TpoDoc FacDocum.CodDoc FacDocum.CodCia FacDocum.NomDoc.
+end.

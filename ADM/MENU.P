@@ -1,0 +1,4 @@
+for each pf-g002 where aplic-id = "act":
+    display pf-g002 with 1 column.
+
+end.

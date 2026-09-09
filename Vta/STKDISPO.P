@@ -1,0 +1,201 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*------------------------------------------------------------------------
+    File        : STKDISPO.P
+    Description : CALCULA EL STOCK DISPONIBLE POR ARTICULO
+  ------------------------------------------------------------------------*/
+/*           This .W file was created with the Progress UIB.              */
+/*------------------------------------------------------------------------*/
+/* ***************************  Definitions  **************************** */
+DEFINE INPUT PARAMETER s-codcia AS INT.
+DEFINE INPUT PARAMETER s-codalm AS CHAR.
+DEFINE INPUT PARAMETER s-codmat AS CHAR.
+DEFINE INPUT PARAMETER s-candes AS DEC.
+DEFINE OUTPUT PARAMETER s-ok AS LOG.
+DEFINE OUTPUT PARAMETER s-stkdis AS DEC. 
+/*
+DEFINE OUTPUT PARAMETER s-stkcom AS DEC. 
+*/
+
+DEFINE VAR X-CanPed AS DEC NO-UNDO.
+DEFINE VAR X-PedCon AS DEC NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.85
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  **************************/
+/****      
+    Si Ud. hace alguna modificacion en este programa haga lo mismo en 
+    los siguientes programas :
+    - lkup\l-uniabc.w
+    - 
+****/
+
+ASSIGN  X-CanPed = 0
+        X-PedCon = 0.
+
+/************* Ubica Almmmatg correspondiente al codigo  **************/
+FIND Almmmatg WHERE 
+     Almmmatg.CodCia = S-CODCIA AND  
+     Almmmatg.codmat = S-CODMAT 
+     NO-LOCK NO-ERROR.
+
+/******* Ubica Almmmate correspondiente al codigo y al almacen  *******/
+FIND Almmmate WHERE 
+     Almmmate.CodCia = s-codcia AND  
+     Almmmate.CodAlm = s-codalm AND  
+     Almmmate.codmat = s-codmat 
+     NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE Almmmate THEN DO:
+    MESSAGE 'EL código' s-codmat 'NO está asignado al almacén' s-codalm SKIP
+        VIEW-AS ALERT-BOX ERROR.
+    s-ok = NO. 
+    s-stkdis = 0.
+    RETURN. 
+END.
+
+
+/************   Barremos para los pedidos de credito    ***************/ 
+/*********         AND  FacDPedi.almdes = s-codalm          ***********/
+
+/*FOR EACH FacDPedi NO-LOCK WHERE 
+ *          FacDPedi.CodCia = s-codcia AND  
+ *          FacDPedi.almdes = s-codalm AND  
+ *          FacDPedi.codmat = s-codmat AND  
+ *          FacDPedi.CodDoc = 'PED'    AND  
+ *          FacDPedi.FlgEst = 'P':
+ *     FIND FIRST FacCPedi OF FacDPedi WHERE 
+ *                FacCPedi.codcia = FacDPedi.CodCia AND  
+ *                FacCPedi.CodAlm = FacDPedi.almdes AND  
+ *                Faccpedi.FlgEst = "P"             AND  
+ *                Faccpedi.TpoPed = "1"
+ *                NO-LOCK NO-ERROR.
+ *     IF NOT AVAIL Faccpedi THEN NEXT.
+ *     X-CanPed = X-CanPed + FacDPedi.Factor * (FacDPedi.CanPed - FacDPedi.canate ).
+ * END.*/
+
+/*********   Barremos las O/D que son parciales y totales    **********/
+
+FOR EACH FacDPedi WHERE 
+         FacDPedi.CodCia = s-codcia AND  
+         FacDPedi.Almdes = s-codalm AND  
+         FacDPedi.codmat = s-codmat AND  
+         FacDPedi.CodDoc = 'O/D'    AND  
+         FacDPedi.FlgEst = 'P' :
+       
+    FIND FIRST FacCPedi OF FacDPedi WHERE 
+               FacCPedi.codcia = FacDPedi.CodCia AND  
+               FacCPedi.CodAlm = s-codalm        AND  
+               Faccpedi.FlgEst = "P" 
+               NO-LOCK NO-ERROR.
+      IF NOT AVAIL FacCPedi THEN NEXT.
+      X-CanPed = X-CanPed + FacDPedi.Factor * (FacDPedi.CanPed - FacDPedi.canate ).
+
+END.
+/* Segundo barremos los pedidos de mostrador de acuerdo a la vigencia */
+DEF VAR TimeOut AS INTEGER NO-UNDO.
+DEF VAR TimeNow AS INTEGER NO-UNDO.
+FIND FacCfgGn WHERE faccfggn.codcia = s-codcia NO-LOCK.
+TimeOut = (FacCfgGn.Dias-Res * 24 * 3600) +
+          (FacCfgGn.Hora-Res * 3600) + 
+          (FacCfgGn.Minu-Res * 60).
+FOR EACH Facdpedm WHERE 
+         Facdpedm.CodCia = s-codcia  AND  
+         Facdpedm.AlmDes = S-CODALM  AND  
+         Facdpedm.codmat = s-codmat  AND  
+         Facdpedm.FlgEst = "P" : 
+    
+    FIND FIRST Faccpedm OF Facdpedm WHERE 
+               Faccpedm.CodCia = Facdpedm.CodCia AND
+               Faccpedm.CodAlm = s-codalm        AND
+               Faccpedm.FlgEst = "P"  
+               NO-LOCK NO-ERROR. 
+    IF NOT AVAIL Faccpedm THEN NEXT.
+    
+    TimeNow = (TODAY - FacCPedm.FchPed) * 24 * 3600.
+    TimeNow = TimeNow + TIME - ( (INTEGER(SUBSTRING(FacCPedm.Hora, 1, 2)) * 3600) +
+              (INTEGER(SUBSTRING(FacCPedm.Hora, 4, 2)) * 60) ).
+              
+    IF TimeOut > 0 THEN DO:
+       IF TimeNow <= TimeOut THEN DO:  /* Dentro de la valides cantidad en reservacion */   
+            X-CanPed = X-CanPed + FacDPedm.Factor * FacDPedm.CanPed.
+       END.
+    END.
+END.
+X-PedCon = X-CanPed.  
+
+/*
+s-stkcom = X-PedCon.
+*/
+
+/***************** Tercero buscamos el stock actual *******************/
+FIND almmmate WHERE 
+     Almmmate.CodCia = s-codcia  AND  
+     Almmmate.CodAlm = s-codalm  AND  
+     Almmmate.codmat = s-codmat 
+     NO-LOCK NO-ERROR.
+IF AVAILABLE almmmate THEN DO:
+   IF Almmmate.StkAct <= X-CanPed THEN DO:
+      Message "Artículo " s-codmat skip
+              "El stock comprometido supera el stock físico" skip
+              "El acumulado en O/D pendientes y P/M vigentes por atender (" X-CanPed ")" skip
+              "Stock Físico (" Almmmate.StkAct ")".
+      s-ok = NO. 
+      s-stkdis = Almmmate.StkAct - X-PedCon.
+      RETURN. 
+   END. 
+   X-CanPed = Almmmate.StkAct - X-CanPed.
+END.
+
+s-ok = IF s-candes > X-CanPed THEN NO ELSE YES.
+s-stkdis = Almmmate.StkAct - X-PedCon.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

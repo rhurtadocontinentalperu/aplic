@@ -1,0 +1,22 @@
+DEFINE VAR X-Total as decimal initial 0. 
+define var x-total1 as decimal initial 0.
+
+for each pl-mov-mes where  PL-MOV-MES.CodCia = 10 AND
+                           PL-MOV-MES.Periodo = 1997 AND
+                            PL-MOV-MES.codpln = 1 and
+                            PL-MOV-MES.NroMes = 7 and
+                            PL-MOV-MES.codcal = 1 and
+                            PL-MOV-MES.CodMov = 221:
+      FIND PL-FLG-MES WHERE PL-FLG-MES.CODCIA = PL-MOV-MES.CODCIA AND
+                            PL-FLG-MES.PERIODO = PL-MOV-MES.PERIODO AND
+                            PL-FLG-MES.CODPLN  = PL-MOV-MES.CODPLN AND
+                            PL-FLG-MES.NROMES  = PL-MOV-MES.NROMES AND
+                            PL-FLG-MES.CODPER  = PL-MOV-MES.CODPER NO-LOCK.
+      IF PL-FLG-MES.codafp > 0 THEN DO:
+        DISPLAY PL-FLG-MES.CODPER PL-FLG-MES.CODAFP
+                PL-MOV-MES.CODPER PL-MOV-MES.VALCAL-MES.                              
+        assign x-total = x-total + PL-MOV-MES.valcal-mes.
+      END.  
+END.
+display x-total. 
+     

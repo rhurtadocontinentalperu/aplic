@@ -1,0 +1,1344 @@
+ADD SEQUENCE "chat_id"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+
+ADD TABLE "crud_agent"
+  AREA "Table Area"
+  LABEL "CRUD Agent"
+  DUMP-NAME "crud_agent"
+
+ADD FIELD "session_id" OF "crud_agent" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Session ID"
+  POSITION 2
+  MAX-WIDTH 64
+  ORDER 20
+
+ADD FIELD "request_id" OF "crud_agent" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Request ID"
+  POSITION 3
+  MAX-WIDTH 64
+  ORDER 30
+
+ADD FIELD "agent_pid" OF "crud_agent" AS integer 
+  FORMAT "->>>>>>>>>9"
+  INITIAL "0"
+  LABEL "Agent PID"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "last_hit" OF "crud_agent" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Hit"
+  POSITION 7
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "time_out" OF "crud_agent" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Timeout"
+  POSITION 8
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "input_param" OF "crud_agent" AS character 
+  FORMAT "x(3000)"
+  INITIAL ""
+  LABEL "Input Parameter"
+  POSITION 9
+  MAX-WIDTH 6000
+  VIEW-AS "VIEW-AS EDITOR SIZE 80 by 10 SCROLLBAR-VERTICAL"
+  ORDER 70
+
+ADD FIELD "service_name" OF "crud_agent" AS character 
+  FORMAT "x(48)"
+  INITIAL ""
+  LABEL "Service Name"
+  POSITION 10
+  MAX-WIDTH 96
+  ORDER 40
+
+ADD FIELD "request_cnt" OF "crud_agent" AS integer 
+  FORMAT ">,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Request Count"
+  POSITION 11
+  MAX-WIDTH 4
+  ORDER 90
+
+ADD FIELD "request_total_time" OF "crud_agent" AS decimal 
+  FORMAT ">>>,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Request Total Time"
+  POSITION 12
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 100
+
+ADD FIELD "agent_start_time" OF "crud_agent" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Agent Start Time"
+  POSITION 13
+  MAX-WIDTH 12
+  ORDER 80
+
+ADD INDEX "agent_pid" ON "crud_agent" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "agent_pid" ASCENDING 
+
+ADD TABLE "crud_app"
+  AREA "Table Area"
+  LABEL "CRUD Application Settings"
+  DUMP-NAME "crud_app"
+
+ADD FIELD "log_history_days" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "30"
+  LABEL "Log History Days"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 80
+
+ADD FIELD "default_locale" OF "crud_app" AS character 
+  FORMAT "!(2)"
+  INITIAL "US"
+  LABEL "Default Locale"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "password_expiry_days" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "90"
+  LABEL "Password Expiry Days"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "login_history_days" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "10"
+  LABEL "Login History Days"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 110
+
+ADD FIELD "complex_passwords" OF "crud_app" AS logical 
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Complex Passwords"
+  POSITION 6
+  MAX-WIDTH 1
+  ORDER 20
+
+ADD FIELD "show_login_history" OF "crud_app" AS logical 
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Show Login History"
+  POSITION 7
+  MAX-WIDTH 1
+  ORDER 120
+
+ADD FIELD "block_try_cnt" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "5"
+  LABEL "Block Try Cnt"
+  POSITION 8
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "block_timeout" OF "crud_app" AS integer 
+  DESCRIPTION "Block IP timeout in minutes"
+  FORMAT ">>9"
+  INITIAL "15"
+  LABEL "Block Timeout"
+  POSITION 9
+  MAX-WIDTH 4
+  ORDER 50
+
+ADD FIELD "session_timeout" OF "crud_app" AS integer 
+  DESCRIPTION "Session timeout in minutes"
+  FORMAT ">>9"
+  INITIAL "5"
+  LABEL "Session Timeout"
+  POSITION 10
+  MAX-WIDTH 4
+  ORDER 60
+
+ADD FIELD "block_access" OF "crud_app" AS logical 
+  DESCRIPTION "Blocks access to the application to everyone except administrators"
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Block Access"
+  POSITION 11
+  MAX-WIDTH 1
+  ORDER 130
+
+ADD FIELD "fixed_ip_address" OF "crud_app" AS character 
+  DESCRIPTION "Only allows access to these IP addresses. Wildcards can be used."
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Fixed IP Addresses"
+  POSITION 12
+  MAX-WIDTH 128
+  ORDER 140
+
+ADD FIELD "exclude_ip_address" OF "crud_app" AS character 
+  DESCRIPTION "Do not allows access to these IP addresses. Wildcards can be used."
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Exclude IP Addresses"
+  POSITION 13
+  MAX-WIDTH 128
+  ORDER 150
+
+ADD FIELD "session_lock_timeout" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "15"
+  LABEL "Session Lock Timeout"
+  POSITION 14
+  MAX-WIDTH 4
+  ORDER 70
+
+ADD FIELD "chat_history_days" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Chat History Days"
+  POSITION 15
+  MAX-WIDTH 4
+  ORDER 90
+
+ADD FIELD "alert_history_days" OF "crud_app" AS integer 
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Alert History Days"
+  POSITION 16
+  MAX-WIDTH 4
+  ORDER 100
+
+ADD TABLE "crud_audit"
+  AREA "Table Area"
+  LABEL "CRUD Audit"
+  DUMP-NAME "crud_audit"
+
+ADD FIELD "service_name" OF "crud_audit" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Service Name"
+  POSITION 2
+  MAX-WIDTH 64
+  ORDER 10
+
+ADD FIELD "audit_datetime" OF "crud_audit" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Audit Datetime"
+  POSITION 3
+  MAX-WIDTH 8
+  ORDER 20
+
+ADD FIELD "audit_operation" OF "crud_audit" AS character 
+  DESCRIPTION "(c)reate, (u)pdate, (d)elete"
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Audit Operation"
+  POSITION 4
+  MAX-WIDTH 12
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEM-PAIRS ""Create"", ""c"", ""Update"", ""u"", ""Delete"", ""d"""
+  COLUMN-LABEL "Op."
+  ORDER 30
+
+ADD FIELD "username" OF "crud_audit" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "User Name"
+  POSITION 5
+  MAX-WIDTH 32
+  ORDER 40
+
+ADD FIELD "ip_address" OF "crud_audit" AS character 
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "IP Address"
+  POSITION 6
+  MAX-WIDTH 64
+  ORDER 50
+
+ADD FIELD "changed_fields" OF "crud_audit" AS character 
+  FORMAT "x(48)"
+  INITIAL ""
+  LABEL "Changed Fields"
+  POSITION 7
+  MAX-WIDTH 96
+  ORDER 80
+
+ADD FIELD "before_change" OF "crud_audit" AS character 
+  FORMAT "x(3000)"
+  INITIAL ""
+  LABEL "Before Change"
+  POSITION 8
+  MAX-WIDTH 512
+  VIEW-AS "VIEW-AS EDITOR SIZE 40 by 5 SCROLLBAR-VERTICAL"
+  ORDER 90
+
+ADD FIELD "after_change" OF "crud_audit" AS character 
+  FORMAT "x(3000)"
+  INITIAL ""
+  LABEL "After Change"
+  POSITION 9
+  MAX-WIDTH 512
+  VIEW-AS "VIEW-AS EDITOR SIZE 40 by 5 SCROLLBAR-VERTICAL"
+  ORDER 100
+
+ADD FIELD "trans_id" OF "crud_audit" AS integer 
+  FORMAT "->>>>>>>>>9"
+  INITIAL "0"
+  LABEL "Transaction ID"
+  POSITION 10
+  MAX-WIDTH 4
+  COLUMN-LABEL "Trans ID"
+  ORDER 60
+
+ADD FIELD "esign" OF "crud_audit" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "E-Sign"
+  POSITION 11
+  MAX-WIDTH 1
+  ORDER 70
+
+ADD INDEX "service_datetime" ON "crud_audit" 
+  AREA "Index Area"
+  PRIMARY
+  INDEX-FIELD "service_name" ASCENDING 
+  INDEX-FIELD "audit_datetime" ASCENDING 
+
+ADD INDEX "username_datetime" ON "crud_audit" 
+  AREA "Index Area"
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "audit_datetime" ASCENDING 
+
+ADD TABLE "crud_block_list"
+  AREA "Table Area"
+  LABEL "CRUD IP Block List"
+  DUMP-NAME "crud_block_list"
+
+ADD FIELD "ip_address" OF "crud_block_list" AS character 
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "IP Address"
+  POSITION 2
+  MAX-WIDTH 30
+  ORDER 10
+
+ADD FIELD "try_cnt" OF "crud_block_list" AS integer 
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Tries"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 20
+
+ADD FIELD "ip_blocked" OF "crud_block_list" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Blocked"
+  POSITION 4
+  MAX-WIDTH 1
+  ORDER 30
+
+ADD FIELD "last_hit" OF "crud_block_list" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Hit"
+  POSITION 5
+  MAX-WIDTH 8
+  ORDER 40
+
+ADD INDEX "ip_address" ON "crud_block_list" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ip_address" ASCENDING 
+
+ADD INDEX "last_hit" ON "crud_block_list" 
+  AREA "Index Area"
+  INDEX-FIELD "last_hit" ASCENDING 
+
+ADD TABLE "crud_chat"
+  AREA "Table Area"
+  LABEL "CRUD Chat"
+  DUMP-NAME "crud_chat"
+
+ADD FIELD "usernames" OF "crud_chat" AS character 
+  DESCRIPTION "Comma separated list of usernames. Usernames are sorted alphabetically for uniqueness."
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Usernames"
+  POSITION 2
+  MAX-WIDTH 64
+  ORDER 20
+
+ADD FIELD "chat_id" OF "crud_chat" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Chat ID"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD INDEX "usernames" ON "crud_chat" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "usernames" ASCENDING 
+
+ADD INDEX "chat_id" ON "crud_chat" 
+  AREA "Index Area"
+  UNIQUE
+  INDEX-FIELD "chat_id" ASCENDING 
+
+ADD TABLE "crud_chat_msg"
+  AREA "Table Area"
+  LABEL "CRUD Chat Messages"
+  DUMP-NAME "crud_chat_msg"
+
+ADD FIELD "msg_datetime" OF "crud_chat_msg" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Datetime"
+  POSITION 2
+  MAX-WIDTH 12
+  ORDER 20
+
+ADD FIELD "msg_username" OF "crud_chat_msg" AS character 
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Username"
+  POSITION 3
+  MAX-WIDTH 16
+  ORDER 30
+
+ADD FIELD "msg_text" OF "crud_chat_msg" AS character 
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 4
+  MAX-WIDTH 2000
+  VIEW-AS "VIEW-AS EDITOR SIZE 40 by 5 SCROLLBAR-VERTICAL"
+  ORDER 40
+
+ADD FIELD "chat_id" OF "crud_chat_msg" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Chat ID"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD INDEX "id_datetime_username" ON "crud_chat_msg" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "chat_id" ASCENDING 
+  INDEX-FIELD "msg_datetime" ASCENDING 
+  INDEX-FIELD "msg_username" ASCENDING 
+
+ADD TABLE "crud_chat_user"
+  AREA "Index Area"
+  LABEL "CRUD User Chat"
+  DUMP-NAME "crud_chat_user"
+
+ADD FIELD "chat_id" OF "crud_chat_user" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Chat ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "last_hit" OF "crud_chat_user" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Hit"
+  POSITION 3
+  MAX-WIDTH 12
+  ORDER 50
+
+ADD FIELD "username" OF "crud_chat_user" AS character 
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Username"
+  POSITION 4
+  MAX-WIDTH 16
+  ORDER 20
+
+ADD FIELD "last_seen" OF "crud_chat_user" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Seen"
+  POSITION 5
+  MAX-WIDTH 12
+  ORDER 40
+
+ADD FIELD "unseen_cnt" OF "crud_chat_user" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Unseen Messages"
+  POSITION 6
+  MAX-WIDTH 4
+  COLUMN-LABEL "Unseen"
+  ORDER 30
+
+ADD INDEX "chat_id_username" ON "crud_chat_user" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "chat_id" ASCENDING 
+  INDEX-FIELD "username" ASCENDING 
+
+ADD INDEX "username_last_hit" ON "crud_chat_user" 
+  AREA "Index Area"
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "last_hit" DESCENDING 
+
+ADD INDEX "username_unseen_cnt" ON "crud_chat_user" 
+  AREA "Index Area"
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "unseen_cnt" DESCENDING 
+
+ADD TABLE "crud_export_file"
+  AREA "Table Area"
+  LABEL "CRUD Export File"
+  DUMP-NAME "crud_export_file"
+
+ADD FIELD "session_id" OF "crud_export_file" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Session ID"
+  POSITION 2
+  MAX-WIDTH 64
+  ORDER 10
+
+ADD FIELD "request_id" OF "crud_export_file" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Request ID"
+  POSITION 3
+  MAX-WIDTH 64
+  ORDER 20
+
+ADD FIELD "export_file" OF "crud_export_file" AS character 
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Export File"
+  POSITION 4
+  MAX-WIDTH 128
+  ORDER 30
+
+ADD INDEX "session_request" ON "crud_export_file" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "session_id" ASCENDING 
+  INDEX-FIELD "request_id" ASCENDING 
+
+ADD TABLE "crud_log"
+  AREA "Table Area"
+  LABEL "CRUD Log"
+  DUMP-NAME "crud_log"
+
+ADD FIELD "username" OF "crud_log" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "User Name"
+  POSITION 2
+  MAX-WIDTH 32
+  ORDER 10
+
+ADD FIELD "start_time" OF "crud_log" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Start Time"
+  POSITION 3
+  MAX-WIDTH 12
+  ORDER 20
+
+ADD FIELD "end_time" OF "crud_log" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "End Time"
+  POSITION 4
+  MAX-WIDTH 12
+  ORDER 30
+
+ADD FIELD "ip_address" OF "crud_log" AS character 
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "IP Address"
+  POSITION 5
+  MAX-WIDTH 30
+  ORDER 40
+
+ADD FIELD "service_name" OF "crud_log" AS character 
+  FORMAT "x(48)"
+  INITIAL ""
+  LABEL "Service Name"
+  POSITION 6
+  MAX-WIDTH 96
+  ORDER 60
+
+ADD FIELD "input_param" OF "crud_log" AS character 
+  FORMAT "x(3000)"
+  INITIAL ""
+  LABEL "Input Parameter"
+  POSITION 7
+  MAX-WIDTH 6000
+  VIEW-AS "VIEW-AS EDITOR SIZE 80 by 10 SCROLLBAR-VERTICAL"
+  ORDER 70
+
+ADD FIELD "user_agent" OF "crud_log" AS character 
+  FORMAT "x(80)"
+  INITIAL ""
+  LABEL "User Agent"
+  POSITION 8
+  MAX-WIDTH 160
+  ORDER 50
+
+ADD INDEX "username_time" ON "crud_log" 
+  AREA "Index Area"
+  PRIMARY
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "start_time" ASCENDING 
+
+ADD TABLE "crud_login_history"
+  AREA "Table Area"
+  LABEL "CRUD Login History"
+  DUMP-NAME "crud_login_history"
+
+ADD FIELD "username" OF "crud_login_history" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "User Name"
+  POSITION 2
+  MAX-WIDTH 32
+  ORDER 10
+
+ADD FIELD "ip_address" OF "crud_login_history" AS character 
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "IP Address"
+  POSITION 4
+  MAX-WIDTH 30
+  ORDER 30
+
+ADD FIELD "user_agent" OF "crud_login_history" AS character 
+  FORMAT "x(80)"
+  INITIAL ""
+  LABEL "User Agent"
+  POSITION 5
+  MAX-WIDTH 160
+  ORDER 40
+
+ADD FIELD "start_time" OF "crud_login_history" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Start Time"
+  POSITION 6
+  MAX-WIDTH 12
+  ORDER 50
+
+ADD FIELD "last_hit" OF "crud_login_history" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Hit"
+  POSITION 7
+  MAX-WIDTH 12
+  ORDER 60
+
+ADD FIELD "request_cnt" OF "crud_login_history" AS integer 
+  FORMAT ">,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Request Count"
+  POSITION 8
+  MAX-WIDTH 4
+  ORDER 70
+
+ADD FIELD "request_total_time" OF "crud_login_history" AS decimal 
+  FORMAT ">>>,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Request Total Time"
+  POSITION 9
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 80
+
+ADD INDEX "user_ip_start" ON "crud_login_history" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "ip_address" ASCENDING 
+  INDEX-FIELD "start_time" ASCENDING 
+
+ADD INDEX "user_start" ON "crud_login_history" 
+  AREA "Index Area"
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "start_time" ASCENDING 
+
+ADD TABLE "crud_menu"
+  AREA "Table Area"
+  LABEL "CRUD Menu"
+  DUMP-NAME "crud_menu"
+
+ADD FIELD "menu_id" OF "crud_menu" AS integer 
+  DESCRIPTION "0 reserved for main menu and -1 for shortcuts/favorites"
+  FORMAT "->,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Menu ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "item_id" OF "crud_menu" AS integer 
+  FORMAT "->,>>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Item ID"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 20
+
+ADD FIELD "sort_order" OF "crud_menu" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Sort Order"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "item_type" OF "crud_menu" AS character 
+  DESCRIPTION "(q)uery, (u)pdate/maintenance, (r)eport, (d)ashboard, (m)enu"
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Item Type"
+  POSITION 5
+  MAX-WIDTH 2
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEM-PAIRS ""Query"", ""q"", ""Update"", ""u"", ""Report"", ""r"", ""Menu"", ""m"""
+  COLUMN-LABEL "Type"
+  ORDER 40
+
+ADD FIELD "item_label" OF "crud_menu" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Label"
+  POSITION 6
+  MAX-WIDTH 64
+  ORDER 60
+
+ADD FIELD "item_window" OF "crud_menu" AS character 
+  DESCRIPTION "The Javascript CRUD window class to instantiate"
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Window"
+  POSITION 7
+  MAX-WIDTH 128
+  ORDER 70
+
+ADD FIELD "item_roles" OF "crud_menu" AS character 
+  DESCRIPTION "Not for menus"
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Roles"
+  POSITION 8
+  MAX-WIDTH 128
+  ORDER 80
+
+ADD FIELD "item_exclude_roles" OF "crud_menu" AS character 
+  DESCRIPTION "Not for menus"
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Exclude Roles"
+  POSITION 9
+  MAX-WIDTH 128
+  ORDER 90
+
+ADD FIELD "icon_cls" OF "crud_menu" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Icon Cls"
+  POSITION 12
+  MAX-WIDTH 16
+  ORDER 50
+
+ADD INDEX "menu_sort" ON "crud_menu" 
+  AREA "Index Area"
+  PRIMARY
+  INDEX-FIELD "menu_id" ASCENDING 
+  INDEX-FIELD "sort_order" ASCENDING 
+
+ADD INDEX "item_id" ON "crud_menu" 
+  AREA "Index Area"
+  UNIQUE
+  INDEX-FIELD "item_id" ASCENDING 
+
+ADD INDEX "item_label" ON "crud_menu" 
+  AREA "Index Area"
+  INDEX-FIELD "item_label" ASCENDING 
+
+ADD TABLE "crud_role"
+  AREA "Table Area"
+  LABEL "CRUD Roles"
+  DUMP-NAME "crud_role"
+
+ADD FIELD "role_id" OF "crud_role" AS character 
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Role"
+  POSITION 2
+  MAX-WIDTH 16
+  ORDER 10
+
+ADD FIELD "role_desc" OF "crud_role" AS character 
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Description"
+  POSITION 3
+  MAX-WIDTH 128
+  ORDER 20
+
+ADD FIELD "role_exclude_services" OF "crud_role" AS character 
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Exclude Services"
+  POSITION 4
+  MAX-WIDTH 128
+  ORDER 400
+
+ADD FIELD "role_services" OF "crud_role" AS character 
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "User Services"
+  POSITION 5
+  MAX-WIDTH 128
+  ORDER 30
+
+ADD INDEX "role_id" ON "crud_role" 
+  AREA "Index Area"
+  PRIMARY
+  INDEX-FIELD "role_id" ASCENDING 
+
+ADD TABLE "crud_session"
+  AREA "Table Area"
+  LABEL "CRUD Session"
+  DUMP-NAME "crud_session"
+
+ADD FIELD "session_id" OF "crud_session" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Session ID"
+  POSITION 2
+  MAX-WIDTH 64
+  ORDER 10
+
+ADD FIELD "username" OF "crud_session" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "User Name"
+  POSITION 3
+  MAX-WIDTH 32
+  ORDER 20
+
+ADD FIELD "last_hit" OF "crud_session" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Hit"
+  POSITION 4
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "ip_address" OF "crud_session" AS character 
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "IP Address"
+  POSITION 5
+  MAX-WIDTH 30
+  ORDER 30
+
+ADD FIELD "start_time" OF "crud_session" AS datetime-tz 
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Start Time"
+  POSITION 6
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "user_agent" OF "crud_session" AS character 
+  FORMAT "x(80)"
+  INITIAL ""
+  LABEL "User Agent"
+  POSITION 7
+  MAX-WIDTH 160
+  ORDER 40
+
+ADD FIELD "is_online" OF "crud_session" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Online"
+  POSITION 8
+  MAX-WIDTH 1
+  ORDER 80
+
+ADD FIELD "is_busy" OF "crud_session" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Busy"
+  POSITION 9
+  MAX-WIDTH 1
+  ORDER 70
+
+ADD INDEX "session_id" ON "crud_session" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "session_id" ASCENDING 
+
+ADD INDEX "ip_username" ON "crud_session" 
+  AREA "Index Area"
+  INDEX-FIELD "ip_address" ASCENDING 
+  INDEX-FIELD "username" ASCENDING 
+
+ADD INDEX "last_hit" ON "crud_session" 
+  AREA "Index Area"
+  INDEX-FIELD "last_hit" ASCENDING 
+
+ADD INDEX "username_start" ON "crud_session" 
+  AREA "Index Area"
+  INDEX-FIELD "username" ASCENDING 
+  INDEX-FIELD "start_time" ASCENDING 
+
+ADD TABLE "crud_state_field"
+  AREA "Table Area"
+  LABEL "CRUD State Field Table"
+  DUMP-NAME "crud_state_field"
+
+ADD FIELD "session_id" OF "crud_state_field" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Session ID"
+  POSITION 2
+  MAX-WIDTH 32
+  ORDER 10
+
+ADD FIELD "field_name" OF "crud_state_field" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "Field Name"
+  POSITION 3
+  MAX-WIDTH 32
+  ORDER 20
+
+ADD FIELD "field_value" OF "crud_state_field" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Field Value"
+  POSITION 4
+  MAX-WIDTH 64
+  ORDER 30
+
+ADD INDEX "session_field" ON "crud_state_field" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "session_id" ASCENDING 
+  INDEX-FIELD "field_name" ASCENDING 
+
+ADD TABLE "crud_state_table"
+  AREA "Table Area"
+  LABEL "CRUD State Temp-Table"
+  DUMP-NAME "crud_state_table"
+
+ADD FIELD "session_id" OF "crud_state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Session ID"
+  POSITION 2
+  MAX-WIDTH 32
+  ORDER 10
+
+ADD FIELD "table_name" OF "crud_state_table" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "Table Name"
+  POSITION 3
+  MAX-WIDTH 32
+  ORDER 20
+
+ADD FIELD "table_key1" OF "crud_state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key1"
+  POSITION 4
+  MAX-WIDTH 64
+  ORDER 30
+
+ADD FIELD "table_key2" OF "crud_state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key2"
+  POSITION 5
+  MAX-WIDTH 64
+  ORDER 40
+
+ADD FIELD "table_key3" OF "crud_state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key3"
+  POSITION 6
+  MAX-WIDTH 64
+  ORDER 50
+
+ADD FIELD "char_field" OF "crud_state_table" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "Char Field"
+  POSITION 7
+  MAX-WIDTH 270
+  EXTENT 15
+  ORDER 60
+
+ADD FIELD "dec_field" OF "crud_state_table" AS decimal 
+  FORMAT "->>,>>9.99"
+  INITIAL "0"
+  LABEL "Dec Field"
+  POSITION 8
+  MAX-WIDTH 110
+  EXTENT 5
+  DECIMALS 2
+  ORDER 70
+
+ADD FIELD "date_field" OF "crud_state_table" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Date Field"
+  POSITION 9
+  MAX-WIDTH 90
+  EXTENT 5
+  ORDER 80
+
+ADD FIELD "log_field" OF "crud_state_table" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Log Field"
+  POSITION 10
+  MAX-WIDTH 40
+  EXTENT 5
+  ORDER 90
+
+ADD INDEX "table_key1" ON "crud_state_table" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "session_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key1" ASCENDING 
+
+ADD INDEX "table_key2" ON "crud_state_table" 
+  AREA "Index Area"
+  INDEX-FIELD "session_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key2" ASCENDING 
+
+ADD INDEX "table_key3" ON "crud_state_table" 
+  AREA "Index Area"
+  INDEX-FIELD "session_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key3" ASCENDING 
+
+ADD TABLE "crud_user"
+  AREA "Table Area"
+  LABEL "CRUD Users"
+  DUMP-NAME "crud_user"
+
+ADD FIELD "username" OF "crud_user" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "User Name"
+  POSITION 2
+  MAX-WIDTH 32
+  ORDER 10
+
+ADD FIELD "password" OF "crud_user" AS character 
+  DESCRIPTION "Hashed Password"
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Password"
+  POSITION 3
+  MAX-WIDTH 32
+  ORDER 20
+
+ADD FIELD "first_name" OF "crud_user" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "First Name"
+  POSITION 4
+  MAX-WIDTH 64
+  ORDER 70
+
+ADD FIELD "password_expiry" OF "crud_user" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Password Expiry"
+  POSITION 5
+  MAX-WIDTH 4
+  COLUMN-LABEL "Expiry"
+  ORDER 40
+
+ADD FIELD "failed_logins" OF "crud_user" AS integer 
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Failed Logins"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 250
+
+ADD FIELD "account_locked" OF "crud_user" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Account Locked"
+  POSITION 7
+  MAX-WIDTH 1
+  COLUMN-LABEL "Locked"
+  ORDER 260
+
+ADD FIELD "user_roles" OF "crud_user" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "User Roles"
+  POSITION 8
+  MAX-WIDTH 64
+  ORDER 120
+
+ADD FIELD "user_locale" OF "crud_user" AS character 
+  FORMAT "!(2)"
+  INITIAL ""
+  LABEL "Locale"
+  POSITION 9
+  MAX-WIDTH 4
+  ORDER 110
+
+ADD FIELD "work_phone" OF "crud_user" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Work Phone"
+  POSITION 10
+  MAX-WIDTH 32
+  ORDER 190
+
+ADD FIELD "mobile_phone" OF "crud_user" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Mobile Phone"
+  POSITION 11
+  MAX-WIDTH 32
+  ORDER 200
+
+ADD FIELD "home_phone" OF "crud_user" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Home Phone"
+  POSITION 12
+  MAX-WIDTH 32
+  ORDER 210
+
+ADD FIELD "email_address" OF "crud_user" AS character 
+  FORMAT "x(48)"
+  INITIAL ""
+  LABEL "Email"
+  POSITION 13
+  MAX-WIDTH 64
+  ORDER 230
+
+ADD FIELD "comments" OF "crud_user" AS character 
+  FORMAT "x(1000)"
+  INITIAL ""
+  LABEL "Comments"
+  POSITION 14
+  MAX-WIDTH 2000
+  VIEW-AS "VIEW-AS EDITOR SIZE 40 by 5 SCROLLBAR-VERTICAL"
+  ORDER 240
+
+ADD FIELD "address" OF "crud_user" AS character 
+  FORMAT "x(1000)"
+  INITIAL ""
+  LABEL "Address"
+  POSITION 15
+  MAX-WIDTH 2000
+  VIEW-AS "VIEW-AS EDITOR SIZE 40 by 5 SCROLLBAR-VERTICAL"
+  ORDER 160
+
+ADD FIELD "country" OF "crud_user" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Country"
+  POSITION 16
+  MAX-WIDTH 64
+  ORDER 170
+
+ADD FIELD "state" OF "crud_user" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "State"
+  POSITION 17
+  MAX-WIDTH 64
+  ORDER 180
+
+ADD FIELD "activate_log" OF "crud_user" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Activate Log"
+  POSITION 18
+  MAX-WIDTH 1
+  ORDER 270
+
+ADD FIELD "never_expires" OF "crud_user" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Never Expires"
+  POSITION 19
+  MAX-WIDTH 1
+  ORDER 60
+
+ADD FIELD "password_history" OF "crud_user" AS character 
+  DESCRIPTION "Hashed Password History"
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Password History"
+  POSITION 20
+  MAX-WIDTH 340
+  EXTENT 10
+  ORDER 30
+
+ADD FIELD "change_password" OF "crud_user" AS logical 
+  DESCRIPTION "Forces the user to change password on next login"
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Change Password"
+  POSITION 21
+  MAX-WIDTH 1
+  ORDER 50
+
+ADD FIELD "fixed_ip_address" OF "crud_user" AS character 
+  DESCRIPTION "Only allows access to these IP addresses. Wildcards can be used."
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Fixed IP Addresses"
+  POSITION 24
+  MAX-WIDTH 128
+  ORDER 280
+
+ADD FIELD "exclude_ip_address" OF "crud_user" AS character 
+  DESCRIPTION "Do not allows access to these IP addresses. Wildcards can be used."
+  FORMAT "x(64)"
+  INITIAL ""
+  LABEL "Exclude IP Addresses"
+  POSITION 25
+  MAX-WIDTH 128
+  ORDER 290
+
+ADD FIELD "office" OF "crud_user" AS character 
+  DESCRIPTION "Office location. Displayed in most user details together with full name and phone numbers."
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Office"
+  POSITION 26
+  MAX-WIDTH 64
+  ORDER 150
+
+ADD FIELD "phones" OF "crud_user" AS character 
+  DESCRIPTION "Aggregation from the home, work and mobile phones. Field is read-only."
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Phone Numbers"
+  POSITION 27
+  MAX-WIDTH 64
+  ORDER 220
+
+ADD FIELD "listing_roles" OF "crud_user" AS character 
+  DESCRIPTION "Tells what roles can see this user. Mostly used in messaging."
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Listing Roles"
+  POSITION 28
+  MAX-WIDTH 64
+  ORDER 130
+
+ADD FIELD "last_name" OF "crud_user" AS character 
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Last Name"
+  POSITION 29
+  MAX-WIDTH 64
+  ORDER 80
+
+ADD FIELD "full_name" OF "crud_user" AS character 
+  DESCRIPTION "Calculated field from first and last names. Field is read-only."
+  FORMAT "x(32)"
+  INITIAL ""
+  LABEL "Full Name"
+  POSITION 30
+  MAX-WIDTH 64
+  ORDER 90
+
+ADD FIELD "birth_date" OF "crud_user" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Birth Date"
+  POSITION 31
+  MAX-WIDTH 4
+  COLUMN-LABEL "Birth"
+  ORDER 100
+
+ADD FIELD "export_to_excel" OF "crud_user" AS logical 
+  DESCRIPTION "Specifies whether to allow or disable export to Excel. Default is to allow."
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Export to Excel"
+  POSITION 32
+  MAX-WIDTH 1
+  ORDER 300
+
+ADD FIELD "unseen_cnt" OF "crud_user" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Unseen Messages"
+  POSITION 33
+  MAX-WIDTH 4
+  COLUMN-LABEL "Unseen"
+  ORDER 140
+
+ADD INDEX "username" ON "crud_user" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "username" ASCENDING 
+
+ADD INDEX "last_first_birth" ON "crud_user" 
+  AREA "Index Area"
+  INDEX-FIELD "last_name" ASCENDING 
+  INDEX-FIELD "first_name" ASCENDING 
+  INDEX-FIELD "birth_date" ASCENDING 
+
+.
+PSC
+cpstream=ISO8859-1
+.
+0000029106

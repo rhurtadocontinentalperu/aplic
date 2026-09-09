@@ -1,0 +1,644 @@
+/* Control de Impresion */
+
+&IF OPSYS = "msdos" &THEN
+    &GLOBAL-DEFINE SEPARADOR "\"
+&ELSE
+    &GLOBAL-DEFINE SEPARADOR "/"
+&ENDIF
+
+&IF "{&WINDOW-SYSTEM}" = "MS-WINDOWS" &THEN
+    DEFINE FRAME f-msg
+        " Cancelar"                             AT ROW 1 COL 59
+        " F5 "          BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 56
+        " Continuar"                            AT ROW 1 COL 47
+        " F2 "          BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 44 
+        " Aceptar"                              AT ROW 1 COL 36
+        " Space "       BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 31
+        " Ant.Campo"                            AT ROW 1 COL 21
+        " S.Tab "       BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 16
+        " Sig.Campo"                            AT ROW 1 COL 6
+        " Tab "         BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 2       
+        WITH COLUMN 2 ROW CURRENT-WINDOW:SCREEN-LINES - 0.1
+        WIDTH 88 FONT 8 BGCOLOR 2.
+            
+&ELSEIF "{&WINDOW-SYSTEM}" = "OSF/MOTIF" &THEN
+    DEFINE FRAME f-msg
+        " Cancelar"                             AT ROW 1 COL 79
+        " F5 "          BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 75
+        " Continuar"                            AT ROW 1 COL 62
+        " F2 "          BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 58 
+        " Aceptar"                              AT ROW 1 COL 47
+        " Space "       BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 40
+        " Ant.Campo"                            AT ROW 1 COL 27
+        " S.Tab "       BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 20
+        " Sig.Campo"                            AT ROW 1 COL 7
+        " Tab "         BGCOLOR 0 FGCOLOR 15    AT ROW 1 COL 2
+        WITH COLUMN 2 ROW CURRENT-WINDOW:SCREEN-LINES 
+        WIDTH 102 FONT 8 USE-TEXT BGCOLOR 2.
+&ELSEIF "{&WINDOW-SYSTEM}" = "TTY" &THEN
+    DEFINE VARIABLE msg-ayuda AS CHARACTER 
+       INITIAL "[Tab] Sig.Campo  [S-Tab] Ant.Campo  [Enter] Acepta  [F2] Continua  [F5] Cancelar".
+&ENDIF
+
+DEFINE STREAM dirlist.
+
+DEFINE SHARED VARIABLE P-pagini   AS INTEGER   FORMAT ">>>9".
+DEFINE SHARED VARIABLE P-pagfin   AS INTEGER   FORMAT ">>>9".
+DEFINE SHARED VARIABLE P-copias   AS INTEGER   FORMAT ">9".
+DEFINE SHARED VARIABLE P-select   AS INTEGER   FORMAT "9".
+DEFINE SHARED VARIABLE P-archivo  AS CHARACTER FORMAT "x(30)".
+DEFINE SHARED VARIABLE P-Largo    AS INTEGER.
+DEFINE SHARED VARIABLE XTerm      AS CHARACTER.
+DEFINE SHARED VARIABLE P-detalle  LIKE integral.TermImp.Detalle.
+DEFINE SHARED VARIABLE P-comando  LIKE integral.TermImp.Comando.
+DEFINE SHARED VARIABLE P-device   LIKE integral.TermImp.Device.
+DEFINE SHARED VARIABLE P-name     LIKE integral.TermImp.P-Name.
+DEFINE SHARED VARIABLE P-Reset    AS CHARACTER.
+DEFINE SHARED VARIABLE P-Flen     AS CHARACTER.
+DEFINE SHARED VARIABLE P-6lpi     AS CHARACTER.
+DEFINE SHARED VARIABLE P-8lpi     AS CHARACTER.
+DEFINE SHARED VARIABLE P-10cpi    AS CHARACTER.
+DEFINE SHARED VARIABLE P-12cpi    AS CHARACTER.
+DEFINE SHARED VARIABLE P-15cpi    AS CHARACTER.
+DEFINE SHARED VARIABLE P-20cpi    AS CHARACTER.
+DEFINE SHARED VARIABLE P-Landscap AS CHARACTER.
+DEFINE SHARED VARIABLE P-Portrait AS CHARACTER.
+DEFINE SHARED VARIABLE P-DobleOn  AS CHARACTER.
+DEFINE SHARED VARIABLE P-DobleOff AS CHARACTER.
+DEFINE SHARED VARIABLE P-BoldOn   AS CHARACTER.
+DEFINE SHARED VARIABLE P-BoldOff  AS CHARACTER.
+DEFINE SHARED VARIABLE P-UlineOn  AS CHARACTER.
+DEFINE SHARED VARIABLE P-UlineOff AS CHARACTER.
+DEFINE SHARED VARIABLE P-ItalOn   AS CHARACTER.
+DEFINE SHARED VARIABLE P-ItalOff  AS CHARACTER.
+DEFINE SHARED VARIABLE P-SuperOn  AS CHARACTER.
+DEFINE SHARED VARIABLE P-SuperOff AS CHARACTER.
+DEFINE SHARED VARIABLE P-SubOn    AS CHARACTER.
+DEFINE SHARED VARIABLE P-SubOff   AS CHARACTER.
+DEFINE SHARED VARIABLE P-Proptnal AS CHARACTER.
+DEFINE SHARED VARIABLE P-Lpi      AS CHARACTER.
+
+DEFINE VARIABLE P-auxilia AS CHARACTER FORMAT "x(30)".
+DEFINE VARIABLE contenido AS CHARACTER FORMAT "x(200)".
+DEFINE VARIABLE P-direc   AS CHARACTER FORMAT "x(20)".
+
+&IF "{&WINDOW-SYSTEM}" <> "TTY" &THEN
+    DEFINE BUTTON b-cancel  AUTO-ENDKEY LABEL " Cancelar "
+                                               SIZE-CHARS 12 BY 0.9.
+    DEFINE BUTTON b-acepta  AUTO-GO     LABEL " Aceptar  "
+                                               SIZE-CHARS 12 BY 0.9.
+    DEFINE BUTTON b-config              LABEL "Configurar"
+                                               SIZE-CHARS 12 BY 0.9.
+    DEFINE BUTTON b-impreso LABEL "Impresoras" SIZE-CHARS 12 BY 0.9.
+    DEFINE BUTTON b-archivo LABEL " Archivos " SIZE-CHARS 12 BY 0.9.
+&ELSE
+    DEFINE BUTTON b-cancel  AUTO-ENDKEY LABEL " Cancelar ".
+    DEFINE BUTTON b-acepta  AUTO-GO     LABEL " Aceptar ".
+    DEFINE BUTTON b-config              LABEL "Configurar".
+    DEFINE BUTTON b-impreso             LABEL "Impresoras".
+    DEFINE BUTTON b-archivo             LABEL " Archivos ".
+&ENDIF
+P-pagini  = 0001.
+P-pagfin  = 9999.
+P-copias  = 01.
+P-select  = 1.
+P-archivo = "".
+
+P-direc   = SUBSTR( DBNAME, 1, R-INDEX(DBNAME, {&SEPARADOR}) ) + "txt".
+
+IF P-detalle = "" OR P-detalle = ?
+THEN DO:
+    FIND FIRST integral.TermImp WHERE integral.TermImp.Nodo = XTerm NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE integral.TermImp
+    THEN DO: /* Valores por Defecto */
+        P-detalle = "Impresora Local (EPSON)".
+        P-name  = "Epson E/F/J/RX/LQ".
+        &IF OPSYS = "msdos" &THEN
+            P-comando = "".
+            P-device  = "PRN".
+        &ELSE
+            P-comando = "lp -s -o nopage".
+            P-device  = "".
+        &ENDIF
+    END.
+    ELSE DO:
+        P-detalle = integral.TermImp.Detalle.
+        P-comando = integral.TermImp.Comando.
+        P-device  = integral.TermImp.Device.
+        P-name    = integral.TermImp.P-Name.
+    END.
+END.
+
+/*------------------------DEFINIMOS QUERY DE IMPRESORAS-----------------------*/
+
+DEFINE QUERY  q-impresora FOR integral.TermImp.
+DEFINE BROWSE brw-impresora QUERY q-impresora 
+    DISPLAY Detalle 
+        WITH 5 DOWN NO-LABEL.    
+
+DEFINE FRAME f-impresora
+    &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN    
+        brw-impresora
+        HELP "Seleccione impresora y pulse [ENTER]." SKIP
+        SPACE(3) b-acepta 
+        HELP "Presione [SPACE] para aceptar."
+        SPACE(7) b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        WITH VIEW-AS DIALOG-BOX ROW 11 
+    &ELSE
+        brw-impresora
+        HELP "Seleccione impresora y pulse [ENTER]." SKIP(.5)
+        SPACE(2) b-acepta
+        HELP "Presione [SPACE] para aceptar."
+        SPACE(5) b-cancel
+        HELP "Presione [SPACE] para cancelar." SKIP(.5)
+        WITH VIEW-AS DIALOG-BOX ROW 11
+    &ENDIF
+    CENTERED
+    TITLE " IMPRESORAS CONECTADAS " NO-LABEL.
+
+/*----------------------DEFINIMOS LA SALIDA DEL REPORTE-----------------------*/
+
+DEFINE VARIABLE r-select AS INTEGER INITIAL 1 
+    VIEW-AS RADIO-SET RADIO-BUTTONS "Impresora",1,
+                                    "Pantalla",2,
+                                    "Archivo",3.
+DEFINE FRAME f-salimp     
+    &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN
+        SPACE(2) "Salida a:"
+        SPACE(8) " CONTROL DE IMPRESION " DCOLOR 6    
+        SKIP SPACE(2) r-select 
+        HELP "Seleccione destino con [SPACE]. [ENTER] para continuar."
+        SPACE(2) P-detalle
+        SPACE(2) b-impreso 
+        HELP "Presione [SPACE] para seleccionar impresora."
+        SPACE(2)
+        SKIP(1)
+        P-archivo AT ROW 4 COLUMN 17
+        HELP "De un nombre al archivo salida de impresi¢n." 
+        SPACE(2) b-archivo  
+        HELP "Presione [SPACE] para seleccionar archivo."
+        SKIP(1)
+        SPACE(5) b-acepta  
+        HELP "Presione [SPACE] para impresi¢n."
+        SPACE(8) b-config 
+        HELP "Presione [SPACE] para configurar la impresi¢n."
+        SPACE(8) b-cancel 
+        HELP "Presione [SPACE] para cancelar."
+        WITH VIEW-AS DIALOG-BOX 
+        ROW 14
+    &ELSEIF "{&WINDOW-SYSTEM}" = "OSF/MOTIF" &THEN
+        SPACE(2) "Salida a:"
+        SKIP SPACE(2) r-select 
+        HELP "Seleccione destino con [SPACE]. [ENTER] para continuar."
+        SPACE(2) P-detalle
+        SPACE(2) b-impreso 
+        HELP "Presione [SPACE] para seleccionar impresora."
+        SPACE(2)
+        SKIP(.5)        
+        P-archivo AT ROW 4.4 COLUMN 19             
+        HELP "De un nombre al archivo salida de impresi¢n." 
+        SPACE(2) b-archivo  
+        HELP "Presione [SPACE] para seleccionar archivo."
+        SKIP(.5)
+        SPACE(5) b-acepta  
+        HELP "Presione [SPACE] para impresi¢n."
+        SPACE(10) b-config 
+        HELP "Presione [SPACE] para configurar la impresi¢n."
+        SPACE(10) b-cancel 
+        HELP "Presione [SPACE] para cancelar."
+        SKIP(.5)
+        WITH VIEW-AS DIALOG-BOX     
+        ROW 10.5 TITLE " CONTROL DE IMPRESION "
+    &ELSEIF "{&WINDOW-SYSTEM}" = "MS-WINDOWS" &THEN
+        "Salida a:" AT 4
+        SKIP r-select AT 2
+        HELP "Seleccione destino con [SPACE]. [ENTER] para continuar."
+        P-detalle AT 16
+        b-impreso AT 50
+        HELP "Presione [SPACE] para seleccionar impresora."
+        SPACE(1)
+        SKIP(.5)        
+        P-archivo AT ROW 3.5 COLUMN 16             
+        HELP "De un nombre al archivo salida de impresi¢n." 
+        b-archivo AT 50 
+        HELP "Presione [SPACE] para selccionar archivo."
+        SKIP(.5)
+        SPACE(4) b-acepta  
+        HELP "Presione [SPACE] para impresi¢n."
+        SPACE(9) b-config 
+        HELP "Presione [SPACE] para configurar la impresi¢n."
+        SPACE(9) b-cancel 
+        HELP "Presione [SPACE] para cancelar."
+        SKIP(.5)
+        WITH VIEW-AS DIALOG-BOX     
+        ROW 10.7 TITLE " CONTROL DE IMPRESION "        
+    &ENDIF    
+    CENTERED NO-LABEL OVERLAY.
+
+/*---------------------------SELECCION DE ARCHIVOS----------------------------*/
+
+DEFINE VARIABLE s-listarch AS CHARACTER VIEW-AS SELECTION-LIST
+           INNER-CHARS 14 INNER-LINES 6 SORT SCROLLBAR-VERTICAL. 
+
+DEFINE FRAME f-listarch
+    "   Directorio :" SKIP
+    &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN        
+        SPACE(3) p-direc SKIP
+        SPACE(3) s-listarch 
+        HELP "Seleccione archivo y pulse [ENTER]." 
+        SKIP
+        b-acepta
+        HELP "Presione [SPACE] para confirmar la selecci¢n del archivo."
+        SPACE(1)
+        b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        WITH NO-LABELS 
+        VIEW-AS DIALOG-BOX 
+        AT COLUMN 45 ROW 8
+    &ELSEIF "{&WINDOW-SYSTEM}" = "OSF/MOTIF" &THEN       
+        SPACE(3) p-direc SKIP
+        SPACE(3) s-listarch 
+        HELP "Seleccione archivo y pulse [ENTER]." 
+        SKIP(.5)
+        b-acepta
+        HELP "Presione [SPACE] para confirmar la selecci¢n del archivo."
+        SPACE(1)
+        b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        SKIP(.5)
+        WITH NO-LABELS 
+        VIEW-AS DIALOG-BOX
+        AT ROW 8 COLUMN 59     
+    &ELSEIF "{&WINDOW-SYSTEM}" = "MS-WINDOWS" &THEN
+        SPACE(3) p-direc SKIP
+        SPACE(4) s-listarch 
+        HELP "Seleccione archivo y pulse [ENTER]." 
+        SKIP(.5) SPACE(.5)
+        b-acepta
+        HELP "Presione [SPACE] para confirmar la selecci¢n del archivo."
+        SPACE(1)
+        b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        SPACE(.5)
+        SKIP(.5)
+        WITH NO-LABELS 
+        VIEW-AS DIALOG-BOX         
+        AT COLUMN 63 ROW 8.5
+    &ENDIF
+    TITLE " Archivos ".
+
+/*-------------------------CONFIGURANDO LA IMPRESION-------------------------*/
+
+DEFINE FRAME f-confimp 
+    &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN        
+        SKIP(1)
+        p-copias LABEL "N£mero de copias " COLON 20
+        HELP "Ingrese el n£mero de copias." SKIP
+        p-pagini LABEL "Desde la p gina  " COLON 20
+        HELP "Ingrese la p gina de inicio." SKIP
+        p-pagfin LABEL "Hasta la p gina  " COLON 20
+        HELP "Ingrese la p gina final de impresi¢n."
+        SKIP(1) 
+        SPACE(1) b-acepta  
+        HELP "Presione [SPACE] para confirmar la configuraci¢n."
+        SPACE(2) b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        SPACE(1)
+        WITH VIEW-AS DIALOG-BOX ROW 13
+    &ELSEIF "{&WINDOW-SYSTEM}" = "OSF/MOTIF" &THEN         
+        SKIP(.5)
+        p-copias LABEL "N£mero de copias " BGCOLOR 3 COLON 20
+        HELP "Ingrese el n£mero de copias." SKIP
+        p-pagini LABEL "Desde la p gina  " BGCOLOR 3 COLON 20
+        HELP "Ingrese la p gina de inicio." SKIP
+        p-pagfin LABEL "Hasta la p gina  " BGCOLOR 3 COLON 20
+        HELP "Ingrese la p gina final de impresi¢n."
+        SKIP(.5) 
+        SPACE(1) b-acepta  
+        HELP "Presione [SPACE] para confirmar la configuraci¢n."
+        SPACE(2) b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        SPACE(1) SKIP(.5)
+        WITH VIEW-AS DIALOG-BOX ROW 11
+    &ELSEIF "{&WINDOW-SYSTEM}" = "MS-WINDOWS" &THEN          
+        SKIP(.5)
+        p-copias LABEL "N£mero de copias " BGCOLOR 3 COLON 20
+        HELP "Ingrese el n£mero de copias." SKIP
+        p-pagini LABEL "Desde la p gina " BGCOLOR 3 COLON 18 
+        HELP "Ingrese la p gina de inicio." SKIP
+        p-pagfin LABEL "Hasta la p gina " BGCOLOR 3 COLON 18
+        HELP "Ingrese la p gina final de impresi¢n."
+        SKIP(.5) 
+        SPACE(1) b-acepta  
+        HELP "Presione [SPACE] para confirmar la configuraci¢n."
+        SPACE(2) b-cancel
+        HELP "Presione [SPACE] para cancelar."
+        SPACE(1) SKIP(.5)
+        WITH VIEW-AS DIALOG-BOX ROW 10.7
+    &ENDIF    
+    CENTERED SIDE-LABEL TITLE " CONFIGURACION ".         
+
+ON ENTER OF r-select
+    DO:
+        P-select = INTEGER(r-select:SCREEN-VALUE).
+        APPLY "GO" TO FRAME f-salimp.
+        RETURN NO-APPLY.
+    END.
+
+ON ENTER OF s-listarch
+    DO:
+        APPLY "GO" TO FRAME f-listarch.
+        RETURN NO-APPLY.
+    END.
+
+ON VALUE-CHANGED OF r-select
+    DO:
+        P-select = INTEGER(r-select:SCREEN-VALUE).
+        CASE P-select:        
+            WHEN 1 THEN DO:
+                DISABLE P-archivo b-archivo WITH FRAME f-salimp.
+                ENABLE  b-impreso b-acepta 
+                        b-config  b-cancel WITH FRAME f-salimp.
+            END.    
+            WHEN 2 THEN DO:
+                DISABLE b-impreso P-archivo b-archivo 
+                        WITH FRAME f-salimp.
+            END.    
+            WHEN 3 THEN DO:
+                DISABLE b-impreso WITH FRAME f-salimp.
+                ENABLE  P-archivo b-archivo b-acepta
+                        b-config  b-cancel WITH FRAME f-salimp.
+            END.
+        END CASE.
+    END.
+
+ON CHOOSE , ENTER OF b-config
+    DO:
+        RUN _configura.
+        &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN 
+            MESSAGE msg-ayuda. 
+        &ELSE
+            VIEW FRAME f-msg.
+        &ENDIF
+        RETURN NO-APPLY.
+    END.
+
+ON CHOOSE , ENTER OF b-archivo
+    DO:
+        RUN _listar. 
+        RETURN NO-APPLY.    
+    END.
+
+ON CHOOSE , ENTER OF b-impreso
+    DO:
+        RUN _impresora.
+        RETURN NO-APPLY.
+    END.
+
+ON GO OF FRAME f-salimp
+    DO:
+        P-Select = INTEGER(r-select:SCREEN-VALUE).
+        CASE P-Select:        
+        WHEN 1 THEN DO:
+        
+        END. 
+        WHEN 2 THEN DO:
+            P-archivo = SESSION:TEMP-DIRECTORY + 
+                        STRING(NEXT-VALUE(sec-arc,integral)) + ".scr".
+            P-copias = 1.
+        END.    
+        WHEN 3 THEN DO:
+            IF P-archivo:SCREEN-VALUE = "" THEN DO:
+                BELL.
+                MESSAGE "Nombre de archivo es necesario" 
+                    VIEW-AS ALERT-BOX ERROR.
+                APPLY "ENTRY" TO P-archivo IN FRAME f-salimp.
+                RETURN NO-APPLY.
+            END.
+            ELSE DO:
+                P-archivo = P-archivo:SCREEN-VALUE.
+                IF R-INDEX( P-archivo, {&SEPARADOR} ) = 0
+                THEN DO: 
+                    P-archivo = P-direc + {&SEPARADOR} + P-archivo.
+                    FILE-INFO:FILE-NAME = P-archivo.
+                END.
+                IF R-INDEX(P-archivo, {&SEPARADOR} ) = 0
+                THEN FILE-INFO:FILE-NAME = ".".
+                ELSE FILE-INFO:FILE-NAME =
+                    SUBSTR( P-Archivo, 1,(R-INDEX(P-archivo,{&SEPARADOR}) - 1)).
+                IF FILE-INFO:FILE-TYPE = ? OR 
+                    R-INDEX(FILE-INFO:FILE-TYPE, "D" ) = 0
+                THEN DO:
+                        BELL.
+                        MESSAGE "Invalido directorio a grabar" SKIP
+                                FILE-INFO:FILE-NAME 
+                            VIEW-AS ALERT-BOX ERROR.
+                        APPLY "ENTRY" TO P-archivo.    
+                        RETURN NO-APPLY.
+                END.
+                IF R-INDEX(FILE-INFO:FILE-TYPE, "W" ) = 0
+                THEN DO:
+                        BELL.
+                        MESSAGE "Acceso no autorizado" SKIP
+                                "al directorio " FILE-INFO:FILE-NAME
+                            VIEW-AS ALERT-BOX ERROR.
+                        RETURN NO-APPLY.
+                END.
+                FILE-INFO:FILE-NAME = P-archivo.
+                IF FILE-INFO:PATHNAME <> ? 
+                THEN DO:                  
+                    BELL.
+                    MESSAGE "Archivo ya existe," SKIP
+                        "Desea reemplazar ?" VIEW-AS ALERT-BOX 
+                            BUTTONS YES-NO TITLE " Mensaje " 
+                            UPDATE cfm AS LOGICAL.
+                    IF cfm = NO THEN DO:
+                        APPLY "ENTRY" TO P-archivo IN FRAME f-salimp.
+                        RETURN NO-APPLY.
+                    END.
+                END.
+            END.
+            P-copias = 1.
+        END.
+        END CASE.
+        P-archivo:SCREEN-VALUE = P-archivo.
+    END.
+
+ON LEAVE OF P-pagfin
+    DO:
+        ASSIGN P-pagini P-pagfin.
+        IF P-pagini = 0 THEN P-pagini = 1.
+        IF P-pagfin < P-pagini THEN DO:
+            BELL.
+            MESSAGE " ERROR: Dato invalido ".
+            APPLY "ENTRY" TO P-pagfin.
+            RETURN NO-APPLY.
+        END.
+    END.
+
+ON ANY-PRINTABLE OF P-archivo                                
+    DO:
+        IF R-INDEX( "abcdefghijklmnopqrstuvwxyz1234567890:./\\" ,
+                    LC( CHR( LASTKEY ) ) ) = 0 THEN DO:  
+            BELL.
+            RETURN NO-APPLY.
+        END.
+        APPLY LC(CHR(LASTKEY)).
+        RETURN NO-APPLY.
+    END.
+
+&IF "{&WINDOW-SYSTEM}" = "TTY" &THEN 
+    MESSAGE msg-ayuda. 
+&ELSE
+    VIEW FRAME f-msg.
+&ENDIF
+
+DO ON ENDKEY UNDO, LEAVE:
+    DISPLAY P-detalle WITH FRAME f-salimp. 
+    UPDATE r-select b-impreso b-acepta b-config
+           b-cancel WITH FRAME f-salimp.
+    IF P-pagini = 0 THEN P-pagini = 1.
+    RUN _setup-print.
+    RETURN.
+END.
+RETURN ERROR.
+
+PROCEDURE _configura.
+/*-----------------*/
+    DO ON ENDKEY UNDO, LEAVE:
+        &IF "{&WINDOW-SYSTEM}" = "TTY" &THEN 
+            MESSAGE msg-ayuda. 
+        &ENDIF
+        UPDATE P-copias
+               P-pagini
+               P-pagfin   
+               b-acepta b-cancel WITH FRAME f-confimp.
+    END.
+END PROCEDURE.
+
+/*------------- Captura los archivos de impresion en un select-list ----------*/
+
+PROCEDURE _listar.
+/*--------------*/
+    IF contenido = "" THEN DO:
+        DISPLAY p-direc WITH FRAME f-listarch.
+        INPUT STREAM dirlist FROM OS-DIR (P-direc).
+        REPEAT:    
+            IMPORT STREAM dirlist P-auxilia.
+            IF P-auxilia = "." OR P-auxilia = ".." 
+            THEN DO: 
+                P-auxilia = "".
+                APPLY "RETRY".
+            END.
+            ELSE DO:
+                contenido = P-auxilia.
+                LEAVE.
+            END.
+        END.
+        REPEAT:
+            IMPORT STREAM dirlist P-auxilia.
+            contenido = contenido + "," + P-auxilia.
+        END.
+        INPUT CLOSE.
+        s-listarch:LIST-ITEMS IN FRAME f-listarch = contenido.
+    END.
+    DO ON ENDKEY UNDO,LEAVE ON ERROR UNDO,LEAVE:
+        s-listarch:SCREEN-VALUE = ENTRY(1, contenido).
+        ENABLE s-listarch b-acepta b-cancel WITH FRAME f-listarch.
+        WAIT-FOR GO, MOUSE-SELECT-DBLCLICK OF FRAME f-listarch.
+        IF s-listarch:SCREEN-VALUE <> ? THEN DO:
+            P-archivo = P-direc + {&SEPARADOR} + s-listarch:SCREEN-VALUE.
+            DISPLAY P-archivo WITH FRAME f-salimp.
+            APPLY "ENTRY" TO b-acepta IN FRAME f-salimp.
+        END.
+    END.
+    HIDE FRAME f-listarch.
+END PROCEDURE.
+
+PROCEDURE _impresora.
+/*-----------------*/
+    IF NOT CAN-FIND(FIRST integral.TermImp WHERE nodo = Xterm)
+    THEN DO:    
+        BELL.
+        MESSAGE "Terminal no se ha configurado" SKIP
+                "Impresoras " VIEW-AS ALERT-BOX ERROR.
+        RETURN.
+    END.
+    OPEN QUERY q-impresora FOR EACH integral.TermImp WHERE Nodo = XTerm.
+    DO ON ENDKEY UNDO,LEAVE ON ERROR UNDO,LEAVE:
+        ENABLE ALL WITH FRAME f-impresora.
+        WAIT-FOR ENTER, GO, MOUSE-SELECT-DBLCLICK OF brw-impresora
+            IN FRAME f-impresora OR CHOOSE OF b-acepta IN FRAME f-impresora.
+        P-Detalle = integral.TermImp.Detalle.
+        P-Comando = integral.TermImp.Comando.
+        P-Device  = integral.TermImp.Device.
+        P-Name    = integral.TermImp.P-Name.
+        DISPLAY P-Detalle WITH FRAME f-salimp.
+    END.
+    HIDE FRAME f-impresora.
+    RETURN.
+END PROCEDURE.
+
+PROCEDURE _setup-print.
+/*--------------------*/
+    FIND integral.P-Codes WHERE integral.P-Codes.Name = P-name NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE integral.P-Codes
+    THEN DO:
+        BELL.
+        MESSAGE "Invalido Tabla de Impresora" SKIP
+                "configurado al Terminal" XTerm
+                VIEW-AS ALERT-BOX ERROR.
+        RETURN ERROR.
+    END.
+    /* Configurando Variables de Impresion */
+    RUN RemVar (INPUT integral.P-Codes.Reset,    OUTPUT P-Reset).
+    RUN RemVar (INPUT integral.P-Codes.Flen,     OUTPUT P-Flen).
+    RUN RemVar (INPUT integral.P-Codes.C6lpi,    OUTPUT P-6lpi).
+    RUN RemVar (INPUT integral.P-Codes.C8lpi,    OUTPUT P-8lpi).
+    RUN RemVar (INPUT integral.P-Codes.C10cpi,   OUTPUT P-10cpi).
+    RUN RemVar (INPUT integral.P-Codes.C12cpi,   OUTPUT P-12cpi).
+    RUN RemVar (INPUT integral.P-Codes.C15cpi,   OUTPUT P-15cpi).
+    RUN RemVar (INPUT integral.P-Codes.C20cpi,   OUTPUT P-20cpi).
+    RUN RemVar (INPUT integral.P-Codes.Landscap, OUTPUT P-Landscap).
+    RUN RemVar (INPUT integral.P-Codes.Portrait, OUTPUT P-Portrait).
+    RUN RemVar (INPUT integral.P-Codes.DobleOn,  OUTPUT P-DobleOn).
+    RUN RemVar (INPUT integral.P-Codes.DobleOff, OUTPUT P-DobleOff).
+    RUN RemVar (INPUT integral.P-Codes.BoldOn,   OUTPUT P-BoldOn).
+    RUN RemVar (INPUT integral.P-Codes.BoldOff,  OUTPUT P-BoldOff).
+    RUN RemVar (INPUT integral.P-Codes.UlineOn,  OUTPUT P-UlineOn).
+    RUN RemVar (INPUT integral.P-Codes.UlineOff, OUTPUT P-UlineOff).
+    RUN RemVar (INPUT integral.P-Codes.ItalOn,   OUTPUT P-ItalOn).
+    RUN RemVar (INPUT integral.P-Codes.ItalOff,  OUTPUT P-ItalOff).
+    RUN RemVar (INPUT integral.P-Codes.SuperOn,  OUTPUT P-SuperOn).
+    RUN RemVar (INPUT integral.P-Codes.SuperOff, OUTPUT P-SuperOff).
+    RUN RemVar (INPUT integral.P-Codes.SubOn,    OUTPUT P-SubOn).
+    RUN RemVar (INPUT integral.P-Codes.SubOff,   OUTPUT P-SubOff).
+    RUN RemVar (INPUT integral.P-Codes.Proptnal, OUTPUT P-Proptnal).
+    RUN RemVar (INPUT integral.P-Codes.Lpi,      OUTPUT P-Lpi).
+END PROCEDURE.
+
+PROCEDURE RemVar.
+/*-------------*/    
+    DEFINE INPUT  PARAMETER IN-VAR AS CHARACTER.
+    DEFINE OUTPUT PARAMETER OU-VAR AS CHARACTER.
+    DEFINE VARIABLE P-pos AS INTEGER.
+    OU-VAR = IN-VAR.
+    IF P-select = 2 THEN DO:
+        OU-VAR = "".
+        RETURN.
+    END.
+    P-pos =  INDEX(OU-VAR, "[NULL]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     CHR(0) + SUBSTR(OU-VAR, P-pos + 6).
+    P-pos =  INDEX(OU-VAR, "[#B]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     CHR(P-Largo) + SUBSTR(OU-VAR, P-pos + 4).
+    P-pos =  INDEX(OU-VAR, "[#]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     STRING(P-Largo, ">>9" ) + SUBSTR(OU-VAR, P-pos + 3).
+    RETURN.
+END PROCEDURE.

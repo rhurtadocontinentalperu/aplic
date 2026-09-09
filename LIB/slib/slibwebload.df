@@ -1,0 +1,227 @@
+UPDATE DATABASE "?"
+
+ADD SEQUENCE "state_id"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT yes
+  MIN-VAL 0
+
+ADD TABLE "state_obj"
+  AREA "Table Area"
+  LABEL "State Object Table"
+  DUMP-NAME "stateobj"
+
+ADD FIELD "state_id" OF "state_obj" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "State ID"
+  POSITION 2
+  SQL-WIDTH 32
+  ORDER 20
+
+ADD FIELD "state_type" OF "state_obj" AS character 
+  DESCRIPTION "session/program"
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "State Type"
+  POSITION 3
+  SQL-WIDTH 16
+  ORDER 10
+
+ADD FIELD "user_id" OF "state_obj" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "User ID"
+  POSITION 4
+  SQL-WIDTH 32
+  ORDER 30
+
+ADD FIELD "session_id" OF "state_obj" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "Session State Id"
+  POSITION 5
+  SQL-WIDTH 32
+  COLUMN-LABEL "Session Id"
+  ORDER 40
+
+ADD FIELD "last_hit_date" OF "state_obj" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Last Hit Date"
+  POSITION 6
+  SQL-WIDTH 4
+  COLUMN-LABEL "Last Hit"
+  ORDER 50
+
+ADD FIELD "last_hit_time" OF "state_obj" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Last Hit Time"
+  POSITION 7
+  SQL-WIDTH 4
+  COLUMN-LABEL "Last Hit"
+  ORDER 60
+
+ADD FIELD "timeout_page" OF "state_obj" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Timeout Page"
+  POSITION 8
+  SQL-WIDTH 64
+  ORDER 70
+
+ADD INDEX "state_id" ON "state_obj" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "state_id" ASCENDING 
+
+ADD INDEX "last_hit" ON "state_obj" 
+  AREA "Index Area"
+  INDEX-FIELD "last_hit_date" ASCENDING 
+  INDEX-FIELD "last_hit_time" ASCENDING 
+
+ADD TABLE "state_field"
+  AREA "Table Area"
+  LABEL "State Field Table"
+  DUMP-NAME "statefld"
+
+ADD FIELD "state_id" OF "state_field" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "State ID"
+  POSITION 2
+  SQL-WIDTH 32
+  ORDER 10
+
+ADD FIELD "field_name" OF "state_field" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "Field Name"
+  POSITION 3
+  SQL-WIDTH 32
+  ORDER 20
+
+ADD FIELD "field_value" OF "state_field" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Field Value"
+  POSITION 4
+  SQL-WIDTH 64
+  ORDER 30
+
+ADD INDEX "state_field" ON "state_field" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "state_id" ASCENDING 
+  INDEX-FIELD "field_name" ASCENDING 
+
+ADD TABLE "state_table"
+  AREA "Table Area"
+  LABEL "State Temp Table"
+  DUMP-NAME "statetbl"
+
+ADD FIELD "state_id" OF "state_table" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "State ID"
+  POSITION 2
+  SQL-WIDTH 32
+  ORDER 10
+
+ADD FIELD "table_name" OF "state_table" AS character 
+  FORMAT "X(16)"
+  INITIAL ""
+  LABEL "Table Name"
+  POSITION 3
+  SQL-WIDTH 32
+  ORDER 20
+
+ADD FIELD "table_key1" OF "state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key1"
+  POSITION 4
+  SQL-WIDTH 64
+  ORDER 30
+
+ADD FIELD "table_key2" OF "state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key2"
+  POSITION 5
+  SQL-WIDTH 64
+  ORDER 40
+
+ADD FIELD "table_key3" OF "state_table" AS character 
+  FORMAT "X(32)"
+  INITIAL ""
+  LABEL "Table Key3"
+  POSITION 6
+  SQL-WIDTH 64
+  ORDER 50
+
+ADD FIELD "char_field" OF "state_table" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "Char Field"
+  POSITION 7
+  SQL-WIDTH 270
+  EXTENT 15
+  ORDER 60
+
+ADD FIELD "dec_field" OF "state_table" AS decimal 
+  FORMAT "->>,>>9.99"
+  INITIAL "0"
+  LABEL "Dec Field"
+  POSITION 8
+  SQL-WIDTH 110
+  EXTENT 5
+  DECIMALS 2
+  ORDER 70
+
+ADD FIELD "date_field" OF "state_table" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Date Field"
+  POSITION 9
+  SQL-WIDTH 90
+  EXTENT 5
+  ORDER 80
+
+ADD FIELD "log_field" OF "state_table" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Log Field"
+  POSITION 10
+  SQL-WIDTH 40
+  EXTENT 5
+  ORDER 90
+
+ADD INDEX "table_key1" ON "state_table" 
+  AREA "Index Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "state_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key1" ASCENDING 
+
+ADD INDEX "table_key2" ON "state_table" 
+  AREA "Index Area"
+  INDEX-FIELD "state_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key2" ASCENDING 
+
+ADD INDEX "table_key3" ON "state_table" 
+  AREA "Index Area"
+  INDEX-FIELD "state_id" ASCENDING 
+  INDEX-FIELD "table_name" ASCENDING 
+  INDEX-FIELD "table_key3" ASCENDING 
+
+.
+PSC
+cpstream=iso8859-8
+.
+0000004481

@@ -1,0 +1,19 @@
+ADD TABLE "cb-ctass"
+  DESCRIPTION "Plan de cuentas segun SUNAT"
+  DUMP-NAME "cb-ctass"
+
+ADD FIELD "Codcta" OF "cb-ctass" AS character 
+  FORMAT "x(6)"
+  INITIAL ""
+  ORDER 100
+
+ADD FIELD "Nomcta" OF "cb-ctass" AS character 
+  FORMAT "x(60)"
+  INITIAL ""
+  ORDER 110
+
+.
+PSC
+codepage=ISO8859-1
+.
+0000000285

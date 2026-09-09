@@ -1,0 +1,82 @@
+DOCUMENTO TÉCNICO
+
+Librería lib/json-utils.p
+
+Versión: 1.0 Plataforma: Progress OpenEdge ABL 10.1C Tipo: Structured
+Procedure
+
+1.  OBJETIVO
+
+La librería lib/json-utils.p centraliza el acceso a documentos JSON
+utilizando json10.p. Permite reducir código repetitivo, controlar
+conversiones de datos y estandarizar el consumo de APIs REST.
+
+2.  DEPENDENCIAS
+
+RUN lib/json10.p PERSISTENT SET hJson.
+
+3.  FUNCIONES PRIVADAS
+
+-   NullToBlank()
+-   SafeDecimal()
+-   SafeInteger()
+-   SafeDate()
+-   CurrencyToInteger()
+
+4.  PROCEDIMIENTOS PÚBLICOS
+
+-   JsonInit()
+-   JsonDestroy()
+-   JsonGetItem()
+-   JsonExists()
+-   JsonGetChar()
+-   JsonGetInteger()
+-   JsonGetDecimal()
+-   JsonGetDate()
+-   JsonGetCurrency()
+-   JsonGetLogical()
+
+5.  FLUJO DE USO
+
+Consumir API ↓ Obtener JSON ↓ JsonInit() ↓ Recorrer Items ↓ Leer Campos
+↓ Liberar recursos
+
+6.  EJEMPLO
+
+RUN lib/json10.p PERSISTENT SET hJson. 
+RUN lib/json-utils.p PERSISTENT SET hUtil.
+
+RUN JsonInit IN hUtil( INPUT hJson, INPUT pContent, OUTPUT iArray, OUTPUT iItems, OUTPUT cError).
+
+DO i = 1 TO iItems:
+
+    RUN JsonGetItem IN hUtil(
+        INPUT iArray,
+        INPUT i,
+        OUTPUT itemId,
+        OUTPUT lOk).
+
+    IF NOT lOk THEN NEXT.
+
+    RUN JsonGetChar IN hUtil(
+        INPUT itemId,
+        INPUT "DocumentoNumero",
+        OUTPUT cNumero).
+
+    RUN JsonGetDecimal IN hUtil(
+        INPUT itemId,
+        INPUT "DocumentoTotal",
+        OUTPUT dTotal).
+
+END.
+
+RUN JsonDestroy IN hUtil.
+
+DELETE PROCEDURE hUtil. DELETE PROCEDURE hJson.
+
+7.  RECOMENDACIONES
+
+-   Inicializar siempre con JsonInit().
+-   Validar cError.
+-   Usar las rutinas JsonGetXXX().
+-   Liberar los procedimientos persistentes al finalizar.

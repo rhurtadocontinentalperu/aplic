@@ -1,0 +1,1075 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        :
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+
+
+DEFINE INPUT PARAMETER X-Rowid AS ROWID.
+
+DEFINE STREAM Reporte.
+
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+DEFINE SHARED VAR S-NOMCIA AS CHAR.
+DEFINE SHARED VAR S-CODALM AS CHAR.
+DEFINE SHARED VAR S-DESALM AS CHAR.
+
+DEFINE VAR S-Cliente     AS CHAR FORMAT "X(60)" INIT "".
+DEFINE VAR S-Proveedor   AS CHAR FORMAT "X(55)" INIT "".
+DEFINE VAR S-Moneda      AS CHAR FORMAT "X(7)"  INIT "".
+DEFINE VAR S-Mon         AS CHAR FORMAT "X(4)"  INIT "".
+DEFINE VAR S-Documento   AS CHAR FORMAT "X(19)" INIT "".
+DEFINE VAR S-Referencia2 AS CHAR FORMAT "X(20)" INIT "".
+DEFINE VAR S-Movimiento  LIKE Almtmovm.Desmov INIT "".
+DEFINE VAR S-TOTAL       AS DECIMAL INIT 0.
+DEFINE VAR S-SUBTO       AS DECIMAL INIT 0.
+
+FIND Almacen WHERE Almacen.CodCia = S-CODCIA AND
+     Almacen.CodAlm = S-CODALM NO-LOCK NO-ERROR.
+
+DEFINE VAR s-task-no AS INT.
+DEFINE SHARED VAR s-user-id AS CHAR.
+
+DEFINE BUFFER b-w-report FOR w-report.
+/*
+        DEF VAR RB-REPORT-LIBRARY AS CHAR.  /* Archivo PRL a usar */
+        DEF VAR RB-REPORT-NAME AS CHAR.     /* Nombre del reporte */
+        DEF VAR RB-INCLUDE-RECORDS AS CHAR. /* "O" si necesita filtro */
+        DEF VAR RB-FILTER AS CHAR.  /* Filtro de impresion */
+        DEF VAR RB-OTHER-PARAMETERS AS CHAR INITIAL "".     /* Otros parametros */
+*/
+DEF VAR RB-REPORT-LIBRARY AS CHAR INITIAL "aplic/alm/rbalm.prl".
+DEF VAR RB-REPORT-NAME AS CHAR INITIAL "Hoja Ruta2".
+DEF VAR RB-INCLUDE-RECORDS AS CHAR INITIAL "".
+DEF VAR RB-FILTER AS CHAR INITIAL "".
+DEF VAR RB-OTHER-PARAMETERS AS CHAR INITIAL "".     
+DEF VAR RB-DB-CONNECTION AS CHAR INITIAL "".
+DEF VAR RB-MEMO-FILE AS CHAR INITIAL "".
+DEF VAR RB-PRINT-DESTINATION AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-NAME AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-PORT AS CHAR INITIAL "".
+DEF VAR RB-OUTPUT-FILE AS CHAR INITIAL "".
+DEF VAR RB-NUMBER-COPIES AS INTEGER INITIAL 1.
+DEF VAR RB-BEGIN-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-END-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-TEST-PATTERN AS LOGICAL INITIAL NO.
+DEF VAR RB-WINDOW-TITLE AS CHARACTER INITIAL "".
+DEF VAR RB-DISPLAY-ERRORS AS LOGICAL INITIAL YES.
+DEF VAR RB-DISPLAY-STATUS AS LOGICAL INITIAL YES.
+DEF VAR RB-NO-WAIT AS LOGICAL INITIAL NO.
+
+DEFINE VAR x-ruta-pdf AS CHAR.
+
+DEFINE VAR x-file-conta AS CHAR.
+DEFINE VAR x-file-alm AS CHAR.
+
+DEFINE VAR x-impresora-destino AS INT INIT -1.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 6.88
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/*MLR* 29/10/07 */
+
+/*  
+  
+DEFINE VARIABLE answer AS LOGICAL NO-UNDO.
+SYSTEM-DIALOG PRINTER-SETUP UPDATE answer.
+IF answer THEN RUN Imprime_FR.
+
+*/
+
+RUN Imprime_FR.
+
+    /**/
+PROCEDURE SetDefaultPrinterA EXTERNAL "WINSPOOL.drv":U :
+DEFINE INPUT PARAMETER pszPrinter AS CHARACTER.
+DEFINE RETURN PARAMETER ireturn AS LONG.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Formato-1) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-1 Procedure 
+PROCEDURE Formato-1 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEFINE FRAME F-FMT
+         Almmmatg.ArtPro    FORMAT "X(12)"
+         Almdmov.CodMat     AT  14 FORMAT "X(6)"
+         Almdmov.CanDes     AT  22 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  35 FORMAT "X(4)"          
+         Almmmatg.DesMat    AT  41 FORMAT "X(50)"
+         Almmmatg.Desmar    AT  91
+         Almmmate.CodUbi    AT  124
+         HEADER
+         S-NOMCIA FORMAT "X(45)" 
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-CLIENTE     AT 1 "R.U.C.          : " AT 79 Almcmov.CodCli AT 99 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         S-DOCUMENTO   AT 1 Almcmov.NroRf1 AT 20 FORMAT "XXX-XXXXXXXX" "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         "Devolucion No.  : " AT 1 Almcmov.NroRf2  AT 20 FORMAT "XXX-XXXXXX" "Compra en       : " AT 79 S-MONEDA AT 99 SKIP
+         "Observaciones   : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 Almacen.EncAlm AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "             CODIGO    CANTIDAD    UND.                  DESCRIPCION                          M A R C A                   UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroSer = Almcmov.NroSer AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroSer = Almcmov.NroSer AND Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmate.CodUbi
+                   Almmmatg.Desmar WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------            -----------------             -----------------       "  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                      Recibido                      Vo. Bo.            "  AT 10 SKIP.
+  PUT STREAM Reporte  Almcmov.usuario AT 18 "JEFE ALMACEN         "  AT 75 SKIP.
+  PUT STREAM Reporte " ** ALMACEN ** " AT 121 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-2) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-2 Procedure 
+PROCEDURE Formato-2 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEFINE FRAME F-FMT
+         Almmmatg.Artpro FORMAT "X(10)"         
+         Almdmov.CodMat     AT  11 FORMAT "X(6)"
+         Almdmov.CanDes     AT  18 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  29 FORMAT "X(4)" 
+         Almmmatg.DesMat    AT  34 FORMAT "X(45)"
+         Almmmatg.Desmar    AT  81 FORMAT "X(12)"
+         Almdmov.PreUni     AT  95 FORMAT ">,>>>.9999"
+/*         Almdmov.Dsctos[1]  AT 107 FORMAT ">>.99"*/
+         Almdmov.ImpDto     AT 107 FORMAT ">>>.9999"
+/*         Almdmov.Igvmat     AT 114 FORMAT ">>.99" 
+ *          S-SUBTO            AT 120 FORMAT ">,>>>,>>9.99"*/
+         Almdmov.ImpLin     AT 120 FORMAT ">,>>>,>>9.99"
+         HEADER
+         S-NOMCIA FORMAT "X(45)" 
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT '999999999' SKIP
+         "( " + S-CODALM + " )"  AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-CLIENTE     AT 1 "R.U.C.          : " AT 79 Almcmov.CodCli AT 99 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         S-DOCUMENTO   AT 1 Almcmov.NroRf1 AT 20 FORMAT "XXX-XXXXXXXX" "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         "Devolucion No.  : " AT 1 Almcmov.NroRf2  AT 20 FORMAT "XXX-XXXXXXXX" "Compra en       : " AT 79 S-MONEDA AT 99 SKIP
+         "Observaciones   : " AT 1 Almcmov.Observ  AT 20 FORMAT "X(80)" /*"Responsable     : " AT 79 Almacen.EncAlm AT 99*/ SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+/*         "         CODIGO  CANTIDAD  UND.            DESCRIPCION                            MARCA     PRECIO UNIT. DSCT1  I.G.V.   TOTAL NETO" SKIP*/
+         "         CODIGO  CANTIDAD  UND.            DESCRIPCION                            MARCA     PRECIO UNIT. DESCUENTO       TOTAL NETO" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP        
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroSer = Almcmov.NroSer AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:  
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroSer = Almcmov.NroSer AND Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+/*                S-SUBTO = ROUND(Almdmov.CanDes * Almdmov.PreUni,2).
+ *                 S-TOTAL = S-TOTAL + S-SUBTO.*/
+           S-TOTAL = S-TOTAL + Almdmov.ImpLin.
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmatg.Desmar
+                   Almdmov.PreUni  
+/*                   Almdmov.Dsctos[1]  
+ *                    Almdmov.Igvmat
+ *                    S-SUBTO */
+                   Almdmov.ImpDto
+                   Almdmov.ImpLin
+                   WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+     PUT STREAM Reporte "------------" AT 120 skip.
+     PUT STREAM Reporte S-MON AT 115 S-TOTAL FORMAT ">,>>>,>>9.99" AT 120 SKIP.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 4 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------       -----------------       -----------------      -----------------"  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                 Vo. Bo.                  Vo. Bo.               Vo. Bo.     "  AT 10 SKIP.
+  PUT STREAM Reporte Almcmov.usuario AT 18 "JEFE ALMACEN             CONTABILIDAD          ADMINISTRADOR     "  AT 40 SKIP.
+  PUT STREAM Reporte " ** CONTABILIDAD ** " AT 119 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-RB1) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-RB1 Procedure 
+PROCEDURE Formato-RB1 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    REPEAT:
+        s-task-no = RANDOM(1, 999999).
+        IF NOT CAN-FIND(FIRST w-report WHERE w-report.task-no = s-task-no
+                        AND w-report.llave-c = s-user-id NO-LOCK)
+            THEN DO:
+            LEAVE.
+        END.
+    END.     
+
+
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroSer = Almcmov.NroSer AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroSer = Almcmov.NroSer AND Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+
+           CREATE b-w-report.
+           /* Header */
+           ASSIGN b-w-report.task-no = s-task-no
+                   b-w-report.llave-c = "FORMATO-RB1"
+                   b-w-report.campo-c[1] = S-NOMCIA
+                   b-w-report.campo-c[2] = S-CODALM
+                   b-w-report.campo-c[3] = S-Movimiento
+                   b-w-report.campo-c[4] = SUBSTRING(S-CLIENTE,1,50)
+                   b-w-report.campo-c[5] = Almcmov.CodCli
+                   b-w-report.campo-c[6] = S-DOCUMENTO
+                   b-w-report.campo-c[7] = Almcmov.NroRf1
+                   b-w-report.campo-c[8] = Almcmov.HorRcp
+                   b-w-report.campo-c[9] = Almcmov.NroRf2
+                   b-w-report.campo-c[10] = S-MONEDA
+                   b-w-report.campo-c[11] = Almcmov.Observ
+                   b-w-report.campo-c[12] = almacen.EncAlm
+                   b-w-report.campo-c[19] = Almcmov.usuario
+                   b-w-report.campo-c[20] = SUBSTRING(S-CLIENTE,51,50)
+
+                   b-w-report.campo-i[1] = Almcmov.NroDoc
+
+                   b-w-report.campo-d[1] = Almcmov.FchDoc
+               .
+           /* Detail */
+            ASSIGN  b-w-report.campo-c[13] = Almdmov.CodMat
+                    b-w-report.campo-c[14] = Almdmov.CodUnd
+                    b-w-report.campo-c[15] = Almmmatg.ArtPro 
+                    b-w-report.campo-c[16] = Almmmatg.DesMat
+                    b-w-report.campo-c[17] = Almmmate.codubi
+                    b-w-report.campo-c[18] = Almmmatg.desmar
+                    
+                    b-w-report.campo-f[1] = Almdmov.CanDes 
+                    /*
+                    b-w-report.campo-f[2] = Almdmov.PreUni
+                    b-w-report.campo-f[3] = Almdmov.ImpDto
+                    b-w-report.campo-f[4] = Almdmov.ImpLin
+                    */
+                .
+
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+  END.
+
+  /* Code placed here will execute AFTER standard behavior.    */
+  GET-KEY-VALUE SECTION 'STARTUP' KEY 'BASE' VALUE RB-REPORT-LIBRARY.
+  ASSIGN
+    RB-REPORT-LIBRARY = RB-REPORT-LIBRARY + 'alm/RBALM.PRL'
+    RB-REPORT-NAME = 'ingreso devolucion cliente alm'
+    RB-INCLUDE-RECORDS = 'O'
+    RB-FILTER = "w-report.task-no = " + STRING(s-task-no).
+
+    DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+    
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+    
+    ASSIGN cDelimeter = CHR(32).
+    IF NOT (cDatabaseName = ? OR cHostName = ? OR cNetworkProto = ? OR cPortNumber = ?) THEN DO:
+
+        DEFINE VAR x-rb-user AS CHAR.
+        DEFINE VAR x-rb-pass AS CHAR.
+    
+        RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+    
+        IF x-rb-user = "**NOUSER**" THEN DO:
+            MESSAGE "No se pudieron ubicar las credenciales para" SKIP
+                    "la conexion del REPORTBUILDER" SKIP
+                    "--------------------------------------------" SKIP
+                    "Comunicarse con el area de sistemas - desarrollo"
+                VIEW-AS ALERT-BOX INFORMATION.
+    
+            RETURN "ADM-ERROR".
+        END.
+    
+       ASSIGN
+           cNewConnString =
+           "-db" + cDelimeter + cDatabaseName + cDelimeter +
+           "-H" + cDelimeter + cHostName + cDelimeter +
+           "-N" + cDelimeter + cNetworkProto + cDelimeter +
+           "-S" + cDelimeter + cPortNumber + cDelimeter +
+           "-U " + x-rb-user  + cDelimeter + cDelimeter +
+           "-P " + x-rb-pass + cDelimeter + cDelimeter.
+
+       /*
+       ASSIGN
+           cNewConnString =
+           "-db" + cDelimeter + cDatabaseName + cDelimeter +
+           "-H" + cDelimeter + cHostName + cDelimeter +
+           "-N" + cDelimeter + cNetworkProto + cDelimeter +
+           "-S" + cDelimeter + cPortNumber + cDelimeter +
+           "-U usrddigger"  + cDelimeter + cDelimeter +
+           "-P udd1456" + cDelimeter + cDelimeter.
+       */
+
+       IF cOtherParams > '' THEN cNewConnString = cNewConnString + cOtherParams + cDelimeter.
+       RB-DB-CONNECTION = cNewConnString.
+    END.
+
+    IF x-impresora-destino = 2 THEN DO:
+        RUN lib/_imprime2 (RB-REPORT-LIBRARY,
+                          RB-REPORT-NAME,
+                          RB-INCLUDE-RECORDS,
+                          RB-FILTER,
+                          RB-OTHER-PARAMETERS).
+    END.
+
+    /*  */
+    DEFINE VARIABLE x-current-printername AS CHARACTER NO-UNDO.
+
+    x-current-printername          = SESSION:PRINTER-NAME.
+
+    IF x-impresora-destino = 3 THEN DO:
+        DEFINE VARIABLE x-new-printer-name AS CHARACTER.
+        DEFINE VARIABLE x-new-ireturn AS INTEGER.
+    
+        IF CAPS(x-current-printername) <> "PDFCREATOR" THEN DO:
+            x-new-printer-name = "PDFCreator".
+            RUN SetDefaultPrinterA(INPUT x-new-printer-name, OUTPUT x-new-ireturn).
+    
+            IF x-new-ireturn <> 1 THEN DO:
+                MESSAGE "No esta instalado la impresora " + x-new-printer-name.
+                RETURN.
+            END.
+        END.
+    
+        DOS Silent VALUE("taskkill /F /IM PDFCreator.exe /T").
+    
+        /*Variáveis de instancia PDFCreator*/
+        DEFINE VARIABLE PDFObjQueue AS COM-HANDLE      NO-UNDO.
+        DEFINE VARIABLE PDF AS COM-HANDLE      NO-UNDO.
+        DEFINE VARIABLE PDFObj AS COM-HANDLE      NO-UNDO.
+        DEFINE VARIABLE PDFPrintJob AS HANDLE      NO-UNDO.
+    
+        CREATE "PDFCreator.PDFCreatorObj" pdfObj NO-ERROR.
+        IF NOT VALID-HANDLE (pdfobj) THEN DO:
+            MESSAGE "ERROR AL INICIAR EL PDFCreator" SKIP
+                    ERROR-STATUS:GET-MESSAGE(1).
+            RETURN.
+        END.
+        CREATE "PDFCreator.JobQueue" PDFObjQueue NO-ERROR.
+        IF NOT VALID-HANDLE (PDFObjQueue) THEN DO:
+            MESSAGE "ERROR COLA DE IMPRESION DEL PDFCreator - PDFObj" SKIP
+                    ERROR-STATUS:GET-MESSAGE(1).
+            RETURN.
+        END.
+    
+        PDFObjQueue:Initialize() NO-ERROR.
+        IF ERROR-STATUS:ERROR = YES THEN DO:
+            MESSAGE "ERROR AL INICIALIZAR LA COLA DE IMPRESION DEL PDFCreator" SKIP
+                    ERROR-STATUS:GET-MESSAGE(1).
+        END.
+    
+        /* La impresora a imprimir */
+        DEFINE VAR x-filer AS CHAR.
+        x-filer = PDFObj:GetPDFCreatorPrinters.
+    
+        s-Printer-Name = x-new-printer-name.
+    
+        /* 4 De acuerdo al sistema operativo transformamos el puerto de impresión */
+        RUN lib/_port-name-v2.p (s-Printer-Name, OUTPUT s-Port-Name).    
+
+        RB-BEGIN-PAGE = 1.
+        RB-END-PAGE = 99999999.
+        RB-PRINTER-NAME = s-port-name.       /*s-printer-name*/
+        /*RB-PRINTER-PORT = s-port-name*/
+        RB-OUTPUT-FILE = s-print-file.
+        RB-NUMBER-COPIES = s-nro-copias.
+    
+        /* -------------------------- */
+    
+        RUN aderb/_prntrb2 (RB-REPORT-LIBRARY,
+                          RB-REPORT-NAME,
+                          RB-DB-CONNECTION,
+                          RB-INCLUDE-RECORDS,
+                          RB-FILTER,
+                          RB-MEMO-FILE,
+                          RB-PRINT-DESTINATION,
+                          RB-PRINTER-NAME,
+                          RB-PRINTER-PORT,
+                          RB-OUTPUT-FILE,
+                          RB-NUMBER-COPIES,
+                          RB-BEGIN-PAGE,
+                          RB-END-PAGE,
+                          RB-TEST-PATTERN,
+                          RB-WINDOW-TITLE,
+                          RB-DISPLAY-ERRORS,
+                          RB-DISPLAY-STATUS,
+                          RB-NO-WAIT,
+                          RB-OTHER-PARAMETERS,  
+                          "").
+    END.
+
+    /* Borrar el temporal */
+    DEF BUFFER r-w-report FOR w-report.
+    DEFINE VAR lRowId AS ROWID.
+    DEFINE VAR x-file AS CHAR.
+    
+    FOR EACH w-report WHERE w-report.task-no = s-task-no NO-LOCK:
+        lRowId = ROWID(w-report).
+        FIND FIRST r-w-report WHERE ROWID(r-w-report) = lRowid EXCLUSIVE NO-ERROR.
+        IF AVAILABLE r-w-report THEN DO:
+            DELETE r-w-report.           
+        END.    
+    END.
+    RELEASE r-w-report.
+
+    /* ------------------------------------------------------- */
+    DEFINE VAR x-sec AS INT.
+    DEFINE VAR x-sec1 AS INT.
+
+    DEFINE VAR x-file-pdf AS CHAR.
+
+    x-file-pdf = "mov-alm-detalle-almacen_".
+    x-file-pdf = x-file-pdf + replace(replace(replace(STRING(NOW,"99/99/9999 HH:MM:SS"),"/","-"),":","-")," ","_").
+
+    x-sec1 = 0.
+
+    IF x-impresora-destino = 3 THEN DO:
+        ATRAPAR_PRINT:
+        REPEAT x-sec = 1 TO 30:
+            PDFObjQueue:WaitForJob(1).
+            IF PDFObjQueue:COUNT = 0 THEN DO:
+                /**/
+            END.
+            ELSE DO:
+                pdfObj = PDFObjQueue:NextJob.
+                x-sec1 = 1.
+                LEAVE ATRAPAR_PRINT.
+            END.
+        END.
+    
+        IF x-sec1 = 0 THEN DO:
+            /**/
+        END.
+        ELSE DO:
+            pdfObj:SetProfileByGuid("DefaultGuid").
+            pdfObj:SetProfileSetting("ShowProgress", "False").
+            /*x-file = x-ruta-pdf + "\mov-alm-detalle-almacen".*/
+            x-file = x-ruta-pdf + "\" + x-file-pdf.
+            x-file-alm = x-file.
+            pdfObj:ConvertTo(x-file).
+    
+            /*pdfObj:ConvertTo("d:\COMPROBANTE").*/
+        END.
+    
+        /*encerrar processo*/
+        pdfobjQueue:ReleaseCom.
+    
+        RELEASE OBJECT pdfobj.
+        RELEASE OBJECT PDFObjQueue.
+        DOS Silent VALUE("taskkill /F /IM PDFCreator.exe /T").
+    
+        RUN SetDefaultPrinterA(INPUT x-current-printername, OUTPUT x-new-ireturn).
+    END.
+    
+  /*
+  /* Code placed here will execute AFTER standard behavior.    */
+  GET-KEY-VALUE SECTION 'STARTUP' KEY 'BASE' VALUE RB-REPORT-LIBRARY.
+  ASSIGN
+    RB-REPORT-LIBRARY = RB-REPORT-LIBRARY + 'alm/RBALM.PRL'
+    RB-REPORT-NAME = 'ingreso devolucion cliente alm'       
+    RB-INCLUDE-RECORDS = 'O'
+    RB-FILTER = "w-report.task-no = " + STRING(s-task-no).
+
+  RUN lib/_imprime2 (RB-REPORT-LIBRARY,
+                    RB-REPORT-NAME,
+                    RB-INCLUDE-RECORDS,
+                    RB-FILTER,
+                    RB-OTHER-PARAMETERS).
+
+    DEF BUFFER r-w-report FOR w-report.
+    DEFINE VAR lRowId AS ROWID.
+    
+    FOR EACH w-report WHERE w-report.task-no = s-task-no NO-LOCK:
+        lRowId = ROWID(w-report).
+        FIND FIRST r-w-report WHERE ROWID(r-w-report) = lRowid EXCLUSIVE NO-ERROR.
+        IF AVAILABLE r-w-report THEN DO:
+            DELETE r-w-report.           
+        END.    
+    END.
+    RELEASE r-w-report.
+
+  */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-formato-RB2) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE formato-RB2 Procedure 
+PROCEDURE formato-RB2 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    REPEAT:
+        s-task-no = RANDOM(1, 999999).
+        IF NOT CAN-FIND(FIRST w-report WHERE w-report.task-no = s-task-no
+                        AND w-report.llave-c = s-user-id NO-LOCK)
+            THEN DO:
+            LEAVE.
+        END.
+    END.     
+
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroSer = Almcmov.NroSer AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:       
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroSer = Almcmov.NroSer AND Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+
+           CREATE b-w-report.
+           /* Header */
+           ASSIGN b-w-report.task-no = s-task-no
+                   b-w-report.llave-c = "FORMATO-RB2"
+                   b-w-report.campo-c[1] = S-NOMCIA
+                   b-w-report.campo-c[2] = S-CODALM
+                   b-w-report.campo-c[3] = S-Movimiento
+                   b-w-report.campo-c[4] = SUBSTRING(S-CLIENTE,1,50)
+                   b-w-report.campo-c[5] = Almcmov.CodCli
+                   b-w-report.campo-c[6] = S-DOCUMENTO
+                   b-w-report.campo-c[7] = Almcmov.NroRf1
+                   b-w-report.campo-c[8] = Almcmov.HorRcp
+                   b-w-report.campo-c[9] = Almcmov.NroRf2
+                   b-w-report.campo-c[10] = S-MONEDA
+                   b-w-report.campo-c[11] = Almcmov.Observ
+                   b-w-report.campo-c[17] = Almcmov.usuario
+                   b-w-report.campo-c[18] = SUBSTRING(S-CLIENTE,51,50)
+
+                   b-w-report.campo-i[1] = Almcmov.NroDoc
+
+                   b-w-report.campo-d[1] = Almcmov.FchDoc
+               .
+           /* Detail */
+            ASSIGN  b-w-report.campo-c[12] = Almdmov.CodMat
+                    b-w-report.campo-c[13] = Almdmov.CodUnd
+                    b-w-report.campo-c[14] = Almmmatg.ArtPro 
+                    b-w-report.campo-c[15] = Almmmatg.DesMat
+                    b-w-report.campo-c[16] = Almmmatg.Desmar
+
+                    b-w-report.campo-f[1] = Almdmov.CanDes 
+                    b-w-report.campo-f[2] = Almdmov.PreUni
+                    b-w-report.campo-f[3] = Almdmov.ImpDto
+                    b-w-report.campo-f[4] = Almdmov.ImpLin
+                .
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+  END.
+
+  /* Code placed here will execute AFTER standard behavior.    */
+  GET-KEY-VALUE SECTION 'STARTUP' KEY 'BASE' VALUE RB-REPORT-LIBRARY.
+  ASSIGN
+    RB-REPORT-LIBRARY = RB-REPORT-LIBRARY + 'alm/RBALM.PRL'
+    RB-REPORT-NAME = 'ingreso devolucion de cliente'       
+    RB-INCLUDE-RECORDS = 'O'
+    RB-FILTER = "w-report.task-no = " + STRING(s-task-no).
+
+    DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+    
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+    
+    ASSIGN cDelimeter = CHR(32).
+    IF NOT (cDatabaseName = ? OR cHostName = ? OR cNetworkProto = ? OR cPortNumber = ?) THEN DO:
+
+        DEFINE VAR x-rb-user AS CHAR.
+        DEFINE VAR x-rb-pass AS CHAR.
+    
+        RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+    
+        IF x-rb-user = "**NOUSER**" THEN DO:
+            MESSAGE "No se pudieron ubicar las credenciales para" SKIP
+                    "la conexion del REPORTBUILDER" SKIP
+                    "--------------------------------------------" SKIP
+                    "Comunicarse con el area de sistemas - desarrollo"
+                VIEW-AS ALERT-BOX INFORMATION.
+    
+            RETURN "ADM-ERROR".
+        END.
+    
+       ASSIGN
+           cNewConnString =
+           "-db" + cDelimeter + cDatabaseName + cDelimeter +
+           "-H" + cDelimeter + cHostName + cDelimeter +
+           "-N" + cDelimeter + cNetworkProto + cDelimeter +
+           "-S" + cDelimeter + cPortNumber + cDelimeter +
+           "-U " + x-rb-user  + cDelimeter + cDelimeter +
+           "-P " + x-rb-pass + cDelimeter + cDelimeter.
+
+        /*
+       ASSIGN
+           cNewConnString =
+           "-db" + cDelimeter + cDatabaseName + cDelimeter +
+           "-H" + cDelimeter + cHostName + cDelimeter +
+           "-N" + cDelimeter + cNetworkProto + cDelimeter +
+           "-S" + cDelimeter + cPortNumber + cDelimeter +
+           "-U usrddigger"  + cDelimeter + cDelimeter +
+           "-P udd1456" + cDelimeter + cDelimeter.
+       */
+       IF cOtherParams > '' THEN cNewConnString = cNewConnString + cOtherParams + cDelimeter.
+       RB-DB-CONNECTION = cNewConnString.
+    END.
+
+    /*  */
+    DEFINE VARIABLE x-current-printername AS CHARACTER NO-UNDO.
+    DEFINE VAR x-file AS CHAR.
+
+    x-current-printername          = SESSION:PRINTER-NAME.
+
+    DEFINE VARIABLE x-new-printer-name AS CHARACTER.
+    DEFINE VARIABLE x-new-ireturn AS INTEGER.
+
+    IF CAPS(x-current-printername) <> "PDFCREATOR" THEN DO:
+        x-new-printer-name = "PDFCreator".
+        RUN SetDefaultPrinterA(INPUT x-new-printer-name, OUTPUT x-new-ireturn).
+
+        IF x-new-ireturn <> 1 THEN DO:
+            MESSAGE "No esta instalado la impresora " + x-new-printer-name.
+            RETURN.
+        END.
+    END.
+
+    DOS Silent VALUE("taskkill /F /IM PDFCreator.exe /T").
+
+    /*Variáveis de instancia PDFCreator*/
+    DEFINE VARIABLE PDFObjQueue AS COM-HANDLE      NO-UNDO.
+    DEFINE VARIABLE PDF AS COM-HANDLE      NO-UNDO.
+    DEFINE VARIABLE PDFObj AS COM-HANDLE      NO-UNDO.
+    DEFINE VARIABLE PDFPrintJob AS HANDLE      NO-UNDO.
+
+    CREATE "PDFCreator.PDFCreatorObj" pdfObj NO-ERROR.
+    IF NOT VALID-HANDLE (pdfobj) THEN DO:
+        MESSAGE "ERROR AL INICIAR EL PDFCreator" SKIP
+                ERROR-STATUS:GET-MESSAGE(1).
+        RETURN.
+    END.
+    CREATE "PDFCreator.JobQueue" PDFObjQueue NO-ERROR.
+    IF NOT VALID-HANDLE (PDFObjQueue) THEN DO:
+        MESSAGE "ERROR COLA DE IMPRESION DEL PDFCreator - PDFObj" SKIP
+                ERROR-STATUS:GET-MESSAGE(1).
+        RETURN.
+    END.
+
+    PDFObjQueue:Initialize() NO-ERROR.
+    IF ERROR-STATUS:ERROR = YES THEN DO:
+        MESSAGE "ERROR AL INICIALIZAR LA COLA DE IMPRESION DEL PDFCreator" SKIP
+                ERROR-STATUS:GET-MESSAGE(1).
+    END.
+
+    /* La impresora a imprimir */
+    DEFINE VAR x-filer AS CHAR.
+    x-filer = PDFObj:GetPDFCreatorPrinters.
+
+    s-Printer-Name = x-new-printer-name.
+
+    /* 4 De acuerdo al sistema operativo transformamos el puerto de impresión */
+    RUN lib/_port-name-v2.p (s-Printer-Name, OUTPUT s-Port-Name).
+
+    RB-BEGIN-PAGE = 1.
+    RB-END-PAGE = 99999999.
+    RB-PRINTER-NAME = s-port-name.       /*s-printer-name*/
+    /*RB-PRINTER-PORT = s-port-name*/
+    RB-OUTPUT-FILE = s-print-file.
+    RB-NUMBER-COPIES = s-nro-copias.
+
+    /* -------------------------- */
+
+    RUN aderb/_prntrb2 (RB-REPORT-LIBRARY,
+                      RB-REPORT-NAME,
+                      RB-DB-CONNECTION,
+                      RB-INCLUDE-RECORDS,
+                      RB-FILTER,
+                      RB-MEMO-FILE,
+                      RB-PRINT-DESTINATION,
+                      RB-PRINTER-NAME,
+                      RB-PRINTER-PORT,
+                      RB-OUTPUT-FILE,
+                      RB-NUMBER-COPIES,
+                      RB-BEGIN-PAGE,
+                      RB-END-PAGE,
+                      RB-TEST-PATTERN,
+                      RB-WINDOW-TITLE,
+                      RB-DISPLAY-ERRORS,
+                      RB-DISPLAY-STATUS,
+                      RB-NO-WAIT,
+                      RB-OTHER-PARAMETERS,  
+                      "").
+
+    /* Borrar el temporal */
+    DEF BUFFER r-w-report FOR w-report.
+    DEFINE VAR lRowId AS ROWID.
+    
+    FOR EACH w-report WHERE w-report.task-no = s-task-no NO-LOCK:
+        lRowId = ROWID(w-report).
+        FIND FIRST r-w-report WHERE ROWID(r-w-report) = lRowid EXCLUSIVE NO-ERROR.
+        IF AVAILABLE r-w-report THEN DO:
+            DELETE r-w-report.           
+        END.    
+    END.
+    RELEASE r-w-report.
+
+    /* ------------------------------------------------------- */
+    DEFINE VAR x-sec AS INT.
+    DEFINE VAR x-sec1 AS INT.
+
+    DEFINE VAR x-file-pdf AS CHAR.
+
+    x-file-pdf = "mov-alm-detalle-contabilidad_".
+    x-file-pdf = x-file-pdf + replace(replace(replace(STRING(NOW,"99/99/9999 HH:MM:SS"),"/","-"),":","-")," ","_").
+
+    x-sec1 = 0.
+
+    ATRAPAR_PRINT:
+    REPEAT x-sec = 1 TO 30:
+        PDFObjQueue:WaitForJob(1).
+        IF PDFObjQueue:COUNT = 0 THEN DO:
+            /**/
+        END.
+        ELSE DO:
+            pdfObj = PDFObjQueue:NextJob.
+            x-sec1 = 1.
+            LEAVE ATRAPAR_PRINT.
+        END.
+    END.
+
+    IF x-sec1 = 0 THEN DO:
+        /**/
+    END.
+    ELSE DO:
+
+        /*x-file = x-ruta-pdf + "\mov-alm-detalle-contabilidad".*/
+        x-file = x-ruta-pdf + "\" + x-file-pdf.
+        x-file-conta = x-file.
+        
+        pdfObj:SetProfileByGuid("DefaultGuid").
+        pdfObj:SetProfileSetting("ShowProgress", "False").
+        pdfObj:ConvertTo(x-file).
+    END.
+
+    /*encerrar processo*/
+    pdfobjQueue:ReleaseCom.
+
+    RELEASE OBJECT pdfobj.
+    RELEASE OBJECT PDFObjQueue.
+    DOS Silent VALUE("taskkill /F /IM PDFCreator.exe /T").
+
+    RUN SetDefaultPrinterA(INPUT x-current-printername, OUTPUT x-new-ireturn).
+
+    /*
+    IF x-sec1 = 0 THEN DO:
+        MESSAGE "Proceso tuvo inconvenientes".
+    END.
+    ELSE DO:
+        MESSAGE "Proceso OK".
+    END.
+    */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Imprime_FR) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Imprime_FR Procedure 
+PROCEDURE Imprime_FR :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  
+ 
+  x-impresora-destino = -1.
+
+  RUN gn/d-impresion-destino.r(OUTPUT x-impresora-destino).
+
+  IF x-impresora-destino = -1 THEN DO:
+      RETURN.
+  END.
+  IF x-impresora-destino = 2 THEN DO:
+      MESSAGE "No esta disponible la impresion hacia impresora de tinta/laser"
+          VIEW-AS ALERT-BOX INFORMATION.
+      RETURN. 
+  END.  
+
+  /*x-impresora-destino = 3.  /* PDF */*/
+   
+  FIND almcmov WHERE ROWID(almcmov) = X-Rowid NO-LOCK.
+ 
+  IF almcmov.Codmon = 1 THEN DO:
+     S-Moneda = "SOLES".
+     S-Mon    = "S/.".
+  END.
+  ELSE DO:
+     S-Moneda = "DOLARES".
+     S-Mon    = "US$.".
+  END.
+  
+  IF Almcmov.CodRef = "FAC" THEN S-DOCUMENTO = "Factura         :". 
+  IF Almcmov.CodRef = "BOL" THEN S-DOCUMENTO = "Boleta          :".
+       
+  FIND FIRST Almtmovm WHERE  Almtmovm.CodCia = Almcmov.CodCia AND
+             Almtmovm.Tipmov = Almcmov.TipMov AND 
+             Almtmovm.Codmov = Almcmov.CodMov NO-LOCK NO-ERROR.
+  IF AVAILABLE Almtmovm THEN DO:
+     S-Movimiento = CAPS(Almtmovm.Desmov).
+     IF Almtmovm.PidCli THEN DO:
+        FIND Ccbcdocu WHERE Ccbcdocu.CodCia = Almcmov.CodCia AND 
+             CcbcDocu.Coddoc = Almcmov.CodRef AND 
+             Ccbcdocu.Nrodoc = Almcmov.NroRf1 NO-LOCK NO-ERROR.
+         /*IF AVAILABLE Ccbcdocu THEN S-Cliente = "Cliente         :  " + CcbCdocu.NomCli.*/
+         IF AVAILABLE Ccbcdocu THEN S-Cliente = CcbCdocu.NomCli.
+     END.
+  END.
+
+  IF x-impresora-destino = 1 THEN DO:
+    IF Almcmov.TipMov = "I" THEN DO:
+
+        DEFINE VARIABLE answer AS LOGICAL NO-UNDO.
+        SYSTEM-DIALOG PRINTER-SETUP UPDATE answer.
+        /*IF answer THEN RUN Imprime_FR.*/
+
+        IF answer = NO THEN RETURN.
+
+        RUN Formato-2.
+        RUN Formato-1. 
+    END.
+  END.
+
+  IF x-impresora-destino = 3 THEN DO:
+      /* Version ReportBuilder - Ic , 30Mar2022 */
+      IF Almcmov.TipMov = "I" THEN DO:
+    
+            x-file-conta = "".
+            x-file-alm = "".
+    
+            DEFINE VAR lDirectorio AS CHAR.
+            lDirectorio = "".
+    
+            IF x-impresora-destino = 3 THEN DO:
+                SYSTEM-DIALOG GET-DIR lDirectorio  
+                   RETURN-TO-START-DIR 
+                   TITLE 'Directorio Files'.
+                IF lDirectorio = "" THEN DO :
+                    RETURN.
+                END.
+                ELSE DO:
+                    x-ruta-pdf = lDirectorio.
+                END.
+            END.
+    
+            S-DOCUMENTO = Almcmov.CodRef.
+    
+            /* creo el temporal */ 
+             SESSION:SET-WAIT-STATE("GENERAL").
+             RUN Formato-RB2.
+             RUN Formato-RB1.
+             SESSION:SET-WAIT-STATE("").
+        
+             IF x-impresora-destino = 3 THEN DO:
+                 IF x-file-conta <> "" OR x-file-alm <> "" THEN DO:
+                     MESSAGE "Se crearon los siguientes archivos " SKIP
+                            "Para contabilidad : " + x-file-conta SKIP
+                            "Para almacen : " + x-file-alm
+                         VIEW-AS ALERT-BOX INFORMATION.
+                 END.
+             END.
+      END.
+  END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

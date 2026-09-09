@@ -1,0 +1,233 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT  PARAMETER pCodCli AS CHAR.
+DEFINE INPUT  PARAMETER pImport AS DECIMAL.     /* Importe del pedido */
+DEFINE INPUT  PARAMETER pCodMon AS INT.
+DEFINE INPUT  PARAMETER pFmaPgo AS CHAR.
+DEFINE INPUT  PARAMETER pMensaje AS LOG.        /* Muestra o no el mensaje de error */
+DEFINE OUTPUT PARAMETER pResultado AS CHAR.     /* OK o ADM-ERROR */
+
+DEFINE SHARED VARIABLE S-CODCIA  AS INTEGER.
+DEFINE SHARED VARIABLE CL-CODCIA  AS INTEGER.
+DEFINE SHARED VARIABLE S-CODDIV  AS CHAR.
+
+DEFINE VARIABLE F-TOTAL AS DECIMAL.
+DEFINE VARIABLE cMonLCred AS INTEGER NO-UNDO.
+DEFINE VARIABLE pSaldo  AS DECIMAL.
+DEFINE VARIABLE dImpLCred AS DEC.
+
+ASSIGN
+    pSaldo = 0
+    dImpLCred = 0
+    pResultado = 'ADM-ERROR'.
+
+
+/* FILTRO POR CONDICION DE VENTA */
+IF LOOKUP(pFmaPgo, '000,001,002,003,900') > 0 THEN DO:
+    pResultado = 'OK'.
+    RETURN.
+END.
+FIND GN-CLIE WHERE
+    GN-CLIE.CODCIA = CL-CODCIA AND
+    GN-CLIE.CODCLI = pCodCli NO-LOCK NO-ERROR.
+IF NOT AVAILABLE GN-CLIE THEN RETURN.
+/* IF Gn-Clie.FlagAut = "" THEN DO:                                      */
+/*     MESSAGE 'Línea de crédito NO AUTORIZADA' VIEW-AS ALERT-BOX ERROR. */
+/*     RETURN.                                                           */
+/* END.                                                                  */
+/* IF Gn-Clie.FlagAut = "R" THEN DO:                                     */
+/*     MESSAGE 'Línea de crédito RECHAZADA' VIEW-AS ALERT-BOX ERROR.     */
+/*     RETURN.                                                           */
+/* END.                                                                  */
+
+/* IF Gn-Clie.MonLC = 0 THEN DO:       /* ACTUALIZAMOS LA MONEDA */ */
+/*     FIND CURRENT Gn-clie EXCLUSIVE-LOCK NO-ERROR.                */
+/*     IF NOT AVAILABLE Gn-clie THEN RETURN.                        */
+/*     Gn-clie.MonLC = 2.      /* DOLARES */                        */
+/*     FIND CURRENT Gn-clie NO-LOCK NO-ERROR.                       */
+/* END.                                                             */
+FIND FacCfgGn WHERE FacCfgGn.CodCia = S-CODCIA NO-LOCK NO-ERROR.
+/* IF pCodMon = 1 THEN DO:                                               */
+/*     IF gn-clie.MonLC = 2 THEN pImport = pImport / FacCfgGn.TpoCmb[1]. */
+/* END.                                                                  */
+/* ELSE DO:                                                              */
+/*     IF gn-clie.MonLC = 1 THEN pImport = pImport * FacCfgGn.TpoCmb[1]. */
+/* END.                                                                  */
+
+/* MLR 02/Jun/2008 Verifica Linea de Crédito Campaña */
+ASSIGN
+    cMonLCred = Gn-Clie.MonLC.
+FOR EACH Gn-ClieL WHERE Gn-ClieL.CodCia = gn-clie.codcia AND
+    Gn-ClieL.CodCli = gn-clie.codcli AND
+    TODAY >= Gn-ClieL.FchIni AND
+    TODAY <= Gn-ClieL.FchFin NO-LOCK
+    BY gn-cliel.fchini BY gn-cliel.fchfin:
+    cMonLCred = Gn-ClieL.MonLC.
+    dImpLCred = Gn-ClieL.ImpLC.
+END.
+IF pCodMon = 1 THEN DO:                                                     
+    IF cMonLCred = 2 THEN pImport = pImport / FacCfgGn.TpoCmb[1]. 
+END.                                                                        
+ELSE DO:                                                                    
+    IF cMonLCred = 1 THEN pImport = pImport * FacCfgGn.TpoCmb[1].            
+END. 
+
+/* Verifica Línea de Crédito Normal */
+/* IF dImpLCred = 0 THEN DO:                                              */
+/*     IF Gn-clie.fchvlc <> ? AND Gn-clie.fchvlc < TODAY THEN DO:         */
+/*         MESSAGE                                                        */
+/*             "La línea de crédito del cliente venció el" gn-clie.fchvlc */
+/*             VIEW-AS ALERT-BOX ERROR.                                   */
+/*         RETURN.                                                        */
+/*     END.                                                               */
+/*     dImpLCred = Gn-Clie.ImpLC.                                         */
+/* END.                                                                   */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 4.46
+         WIDTH              = 49.43.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* Suma Todos los Documentos Pendientes */
+FOR EACH CcbCDocu NO-LOCK WHERE
+        CcbCDocu.CodCia = S-CODCIA AND
+        CcbCDocu.CodCli = pCodCli AND
+        LOOKUP(Ccbcdocu.coddoc, 'FAC,BOL,LET,CHQ,N/D,N/C,A/R,BD') > 0 AND
+        CcbCDocu.FlgEst = "P":
+    /* DOCUMENTOS QUE NO DEBEN APARECER EN LA LINEA DE CREDITO */
+    /*IF LOOKUP(Ccbcdocu.coddoc, 'A/R,BD') > 0 THEN NEXT.*/
+    /* ******************************************************* */
+    /* RHC 23.11.08 LETRAS ADELANTADAS */
+    IF Ccbcdocu.coddoc = 'LET' AND Ccbcdocu.codref = 'CLA' THEN NEXT.
+
+    F-TOTAL = CcbCDocu.SdoAct.
+    IF cMonLCred = 1 THEN DO:
+        IF CcbCDocu.CodMon = 2 THEN F-TOTAL = F-TOTAL * FacCfgGn.Tpocmb[1].
+    END.
+    ELSE DO:
+        IF CcbCDocu.CodMon = 1 THEN F-TOTAL = F-TOTAL / FacCfgGn.Tpocmb[1].
+    END.
+
+    FIND FacDocum WHERE FacDocum.CodCia = S-CODCIA 
+        AND FacDocum.CodDoc = CcbCDocu.CodDoc 
+        NO-LOCK NO-ERROR.
+    IF AVAILABLE FacDocum AND FacDocum.TpoDoc
+    THEN pSaldo = pSaldo + F-TOTAL.
+    ELSE pSaldo = pSaldo - F-TOTAL.
+END.
+
+/* RHC INICIO DEL SPEED */
+/* IF TODAY >= 08/01/2012 THEN DO:                                                              */
+/*         DEFINE VARIABLE chAppCom AS COM-HANDLE.                                              */
+/*     DEFINE VAR lValor        AS DECIMAL.    /* SALDO DEL CLIENTE = LINEA CRED - POR PAGAR */ */
+/*     DEFINE VAR lCodCli       AS CHAR.                                                        */
+/*                                                                                              */
+/*     CREATE "sp_db2.Speed400db2" chAppCom.                                                    */
+/*                                                                                              */
+/*     lCodCli = SUBSTRING(gn-clie.codcli,1,10).                                                */
+/*     IF gn-clie.codant <> '' AND LENGTH(gn-clie.codant) = 10                                  */
+/*         THEN lCodCli = gn-clie.codant.                                                       */
+/*                                                                                              */
+/*     lValor = chAppCom:GetLineaCredito(1,lCodCli).                                            */
+/*     /*MESSAGE lValor.*/                                                                      */
+/*     ASSIGN                                                                                   */
+/*         pSaldo = 0      /* YA lo incluye en la línea de crédito */                           */
+/*         dImpLCred = lValor * FacCfgGn.TpoCmb[1].    /* Como está en US$ lo pasamos a S/. */  */
+/*                                                                                              */
+/*     /* release com-handles */                                                                */
+/*     RELEASE OBJECT chAppCom NO-ERROR.                                                        */
+/* END.                                                                                         */
+
+/* Suma Pedidos Credito Pendientes Generar Guias */
+FOR EACH FacCPedi NO-LOCK WHERE
+        FacCPedi.CodCia = S-CODCIA AND
+        FacCPedi.CodDoc = "PED" AND
+        FacCPedi.CodCli = pCodCli AND
+        LOOKUP(FacCPedi.FlgEst, "X,P,W,WL") > 0 AND
+        LOOKUP(TRIM(Faccpedi.fmapgo), '001,002') = 0:   /* NO contraentrega ni anticipado */
+    F-TOTAL = FacCPedi.ImpTot.
+    IF cMonLCred = 1 THEN DO:
+       IF FacCpedi.CodMon = 2 THEN F-TOTAL = F-TOTAL * FacCfgGn.Tpocmb[1].
+    END.
+    ELSE DO:
+       IF FacCpedi.CodMon = 1 THEN F-TOTAL = F-TOTAL / FacCfgGn.Tpocmb[1].
+    END.
+    pSaldo = pSaldo + F-TOTAL.
+END.
+
+IF (dImpLCred - (pSaldo + pImport)) >= 0 THEN pResultado = 'OK'.
+ELSE IF pMensaje = YES THEN
+    MESSAGE
+        "  SALDO LINEA CREDITO: "
+            (IF cMonLCred = 1 THEN "S/. " ELSE "US$ " ) 
+            STRING(dImpLCred,"ZZ,ZZZ,ZZ9.99") SKIP
+        "                USADO: "
+            (IF cMonLCred = 1 THEN "S/. " ELSE "US$ " ) 
+            STRING(pSaldo + pImport,"-Z,ZZZ,ZZ9.99") SKIP
+        "   CREDITO DISPONIBLE: "
+            (IF cMonLCred = 1 THEN "S/. " ELSE "US$ " ) 
+            STRING(dImpLCred - (pSaldo + pImport),"-Z,ZZZ,ZZ9.99")
+        VIEW-AS ALERT-BOX ERROR.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

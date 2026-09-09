@@ -1,0 +1,21 @@
+/*FOR EACH  integral.ccbdDOCU WHERE integral.ccbdDOCU.codcia = 1 and
+                         integral.ccbdDOCU.codDOC = "FAC" and
+                         integral.ccbdDOCU.codcli = "10006732":
+DISPLAY CCBDDOCU.nrodoc CCBDDOCU.coddoc CCBDDOCU.codmat CCBDDOCU.preuni.
+END.                                               */
+
+
+FOR EACH  integral.ccbcDOCU WHERE integral.ccbcDOCU.codcia = 1 and
+                           integral.ccbcDOCU.codDOC = "LET" and 
+                           integral.ccbcDOCU.flgest = "P" : /* and 
+                         integral.ccbcDOCU.nrodoc = "001000021":  */
+DISPLAY CCBcDOCU.codcli CCBcDOCU.flgest CCBcDOCU.nrodoc CCBcDOCU.coddoc CCBcDOCU.imptot CCBcDOCU.codmon.
+END.
+
+/*
+FOR EACH  integral.ccbdcaja 
+WHERE integral.ccbdcaja.codcia = 1 and
+                         integral.ccbdcaja.codDOC = "FAC" and
+                         integral.ccbdcaja.nroDOC = "001000029". 
+DISPLAY CCBdcaja.nrodoc CCBdcaja.coddoc CCBdcaja.imptot CCBdcaja.codmon.
+END.  */

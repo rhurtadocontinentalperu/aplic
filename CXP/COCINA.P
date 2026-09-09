@@ -1,0 +1,102 @@
+DEFINE BUFFER DETALLE FOR CB-DMOV.
+DEFINE VARIABLE I-NroReg AS INTEGER INIT 0 NO-UNDO.
+DEFINE VARIABLE X-IMPORT AS DECIMAL EXTENT 2 INIT 0  NO-UNDO.
+define var F-IMPMN1 as decimal format "->>>,>>>,>>9.99".
+define var F-IMPMN2 as decimal format "->>>,>>>,>>9.99".
+
+
+/*for each cb-dmov no-lock where cb-dmov.codcia = 1 and
+         cb-dmov.periodo = 1998 and 
+         cb-dmov.codcta begins "421" 
+         and cb-dmov.coddoc = "PRF"
+         and not cb-dmov.codcta begins "4213" 
+         and cb-dmov.codope ne "000"
+         break by (cb-dmov.coddoc + cb-dmov.codope):
+    if first-of(cb-dmov.coddoc + cb-dmov.codope) then do: 
+       display cb-dmov.nroast cb-dmov.coddoc cb-dmov.codope cb-dmov.nrodoc cb-dmov.fchvto.
+       down 1.
+    end.*/
+/*define stream report.
+output stream report to c:\tmp\prueba.prn page-size 66.*/
+for each cb-dmov no-lock where cb-dmov.codcia = 1 and
+         cb-dmov.periodo = 1998 and 
+         cb-dmov.codcta begins "421" 
+         and cb-dmov.coddoc = "01"
+         and cb-dmov.codaux = "15494557"
+         and cb-dmov.nrodoc = "001501"
+         break by cb-dmov.coddoc  by cb-dmov.nrodoc:
+    display cb-dmov.codope cb-dmov.nrodoc cb-dmov.nroast cb-dmov.tpoitm cb-dmov.tpomov cb-dmov.impmn1 cb-dmov.impmn2.
+    if cb-dmov.tpomov then 
+       assign F-IMPMN1 = F-IMPMN1 + cb-dmov.impmn1
+              F-IMPMN2 = F-IMPMN2 + cb-dmov.impmn2.
+    else assign F-IMPMN1 = F-IMPMN1 - cb-dmov.impmn1
+                F-IMPMN2 = F-IMPMN2 - cb-dmov.impmn2.
+end.
+DISPLAY F-IMPMN1 F-IMPMN2.
+/*
+FOR EACH Cp-tpro NO-LOCK  WHERE Cp-tpro.CODCIA = 0 AND
+         cp-tpro.codcta begins "421" and
+         Cp-tpro.CORRELATIVO = YES :
+    FOR EACH DETALLE NO-LOCK WHERE DETALLE.CODCIA  = 1 AND
+             DETALLE.PERIODO = 1998 AND
+             DETALLE.CODOPE  = CP-TPRO.CODOPE AND
+             DETALLE.CODCTA  = CP-TPRO.CODCTA AND
+             DETALLE.CODDOC  = CP-TPRO.CODDOC :
+        /*IF detalle.TpoMov THEN 
+           ASSIGN F-ImpMn1 = F-ImpMn1 + detalle.ImpMn1
+                  F-ImpMn2 = F-ImpMn2 + detalle.ImpMn2.
+        ELSE
+           ASSIGN F-ImpMn1 = F-ImpMn1 - detalle.ImpMn1
+                  F-ImpMn2 = F-ImpMn2 - detalle.ImpMn2.*/
+        FOR EACH cb-dmov NO-LOCK WHERE cb-dmov.CodCia = DETALLE.CODCIA AND
+                 cb-dmov.Periodo = DETALLE.PERIODO AND
+                 cb-dmov.Codcta  = DETALLE.CODCTA  AND
+                 cb-dmov.Codaux  = DETALLE.codaux  AND
+                 cb-dmov.CodDoc  = DETALLE.CodDoc  AND
+                 cb-dmov.NroDoc  = DETALLE.NroDoc:
+            IF cb-dmov.TpoMov THEN 
+               ASSIGN F-ImpMn1 = F-ImpMn1 + cb-dmov.ImpMn1
+                      F-ImpMn2 = F-ImpMn2 + cb-dmov.ImpMn2.
+            ELSE
+               ASSIGN F-ImpMn1 = F-ImpMn1 - cb-dmov.ImpMn1
+                      F-ImpMn2 = F-ImpMn2 - cb-dmov.ImpMn2.
+        END.
+    END.
+END.
+DISPLAY F-IMPMN1 F-IMPMN2. 
+*/
+
+/*
+for each cb-dmov no-lock where cb-dmov.codcia = 1 and
+         cb-dmov.periodo = 1998 and
+         cb-dmov.codcta begins "423" AND
+         cb-dmov.coddoc = "lp"      
+         break by coddoc by nrodoc:
+    display cb-dmov.coddoc cb-dmov.nrodoc cb-dmov.codaux cb-dmov.impmn1.
+end.
+*/
+
+/*
+FOR EACH Cp-tpro NO-LOCK  WHERE Cp-tpro.CODCIA = 0 AND
+         Cp-tpro.CORRELATIVO = YES AND
+         Cp-tpro.CodCta BEGINS "421" with frame aa:
+    FOR EACH DETALLE NO-LOCK WHERE DETALLE.CODCIA  = 1 AND
+             DETALLE.PERIODO = 1998 AND
+             DETALLE.CODOPE  = CP-TPRO.CODOPE AND
+             DETALLE.CODCTA  = CP-TPRO.CODCTA AND
+             DETALLE.CODDOC  = CP-TPRO.CODDOC :
+        find first cb-dmov WHERE cb-dmov.CodCia = DETALLE.CODCIA AND
+                 cb-dmov.Periodo = DETALLE.PERIODO AND
+                 cb-dmov.Codcta  = DETALLE.CODCTA  AND
+                 cb-dmov.Codaux  = DETALLE.codaux  AND
+                 cb-dmov.CodDoc  = DETALLE.CodDoc  AND
+                 cb-dmov.NroDoc  = DETALLE.NroDoc and 
+                 cb-dmov.nroast <> DETALLE.nroast and
+                 cb-dmov.tpomov = DETALLE.TpoMov no-lock no-error.
+        if available cb-dmov then do:
+           display detalle.nroast detalle.codope cb-dmov.nroast cb-dmov.codope with frame aa.
+           down 1 with frame aa.
+        end.
+    END.
+END.
+*/

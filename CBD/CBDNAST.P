@@ -1,0 +1,170 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* -----------------------------------------------------------
+  Purpose: Incremetar el correlativo para la creaci¢n de la  
+           cabecera del asiento de diario.
+  Parameters:  retorna el nro de asiento a usar.
+  Notes:       
+-------------------------------------------------------------*/
+
+DEFINE INPUT  PARAMETER cb-codcia AS INTEGER. 
+DEFINE INPUT  PARAMETER s-codcia   AS INTEGER. 
+DEFINE INPUT  PARAMETER s-periodo      AS INTEGER.
+DEFINE INPUT  PARAMETER s-NroMes      AS INTEGER.
+DEFINE INPUT  PARAMETER X-CODOPE   AS CHARACTER.
+DEFINE OUTPUT PARAMETER X-NROAST   AS INTEGER.
+DEFINE VARIABLE x-Llave AS CHARACTER.
+
+/* Buscando la operaci¢n a usar */
+FIND integral.cb-oper WHERE
+    integral.cb-oper.CodCia = cb-codcia AND
+    integral.cb-oper.CodOpe = X-CodOpe NO-LOCK.
+  
+/* Buscando Correlativo de Documento */
+x-llave = STRING(s-periodo, "9999") + STRING(s-NroMes, "99") + x-codope.
+FIND integral.cb-corr WHERE
+    integral.cb-corr.CodCia = s-codcia AND
+    integral.cb-corr.CodDoc = "Asto" AND
+    integral.cb-corr.Llave  = x-Llave NO-ERROR.
+                            
+/* en caso de no existir cb-corr */
+IF NOT AVAILABLE integral.cb-corr 
+THEN DO:
+    /* Creando un nuevo registro de cb-corr */
+    CREATE integral.cb-corr.
+    ASSIGN integral.cb-corr.CodCia = s-codcia
+        integral.cb-corr.CodDoc = "ASTO"
+        integral.cb-corr.Llave  = x-Llave.
+                    
+    /* Buscando el correlativo siguiente del documento */
+    FIND LAST integral.cb-cmov WHERE
+        integral.cb-cmov.CodCia  = s-codcia AND
+        integral.cb-cmov.Periodo = s-periodo AND 
+        integral.cb-cmov.NroMes  = s-NroMes AND 
+        integral.cb-cmov.CodOpe  = x-CodOpe NO-LOCK NO-ERROR.
+    IF AVAILABLE integral.cb-cmov THEN
+        ASSIGN integral.cb-corr.NroDoc = 
+            INTEGER(integral.cb-cmov.NroAst) + 1.
+    ELSE ASSIGN integral.cb-corr.NroDoc = 1.
+END.
+    
+/* modificacion para cuando en el correlativo se antepone el mes */
+IF integral.cb-oper.CorMes AND
+    INTEGER(integral.cb-corr.NroDoc / 10000) <> s-NroMes
+THEN cb-corr.NroDoc = s-NroMes * 10000 + (cb-corr.NroDoc MODULO 10000).             
+
+/* Verificando si no esta repetido el documento para crearlo */
+FIND integral.cb-cmov WHERE
+    integral.cb-cmov.CodCia  = s-codcia AND
+    integral.cb-cmov.Periodo = s-periodo  AND
+    integral.cb-cmov.NroMes  = s-NroMes  AND
+    integral.cb-cmov.CodOpe  = x-CodOpe AND
+    integral.cb-cmov.NroAst  = STRING(cb-corr.NroDoc,"999999")
+    NO-LOCK NO-ERROR.
+                       
+/* En caso de estar repetido */
+IF AVAILABLE integral.cb-cmov 
+THEN DO:
+    /* Buscando el correlativo siguiente del documento */
+    FIND LAST integral.cb-cmov WHERE
+        integral.cb-cmov.CodCia = s-codcia AND
+        integral.cb-cmov.Periodo = s-periodo AND 
+        integral.cb-cmov.NroMes  = s-NroMes AND 
+        integral.cb-cmov.CodOpe  = x-CodOpe NO-LOCK NO-ERROR.
+    IF AVAILABLE integral.cb-cmov THEN DO:
+        ASSIGN cb-corr.NroDoc = INTEGER(cb-cmov.NroAst) + 1.
+        /* Buscamos nuevamento la no repetici¢n del documento */
+        FIND integral.cb-cmov WHERE
+            integral.cb-cmov.CodCia  = s-codcia AND
+            integral.cb-cmov.Periodo = s-periodo AND 
+            integral.cb-cmov.NroMes  = s-NroMes AND
+            integral.cb-cmov.CodOpe  = x-CodOpe AND
+            integral.cb-cmov.NroAst  = STRING(cb-corr.NroDoc,"999999")
+            NO-LOCK NO-ERROR.
+    END.
+END.
+        
+/* Si aun persiste la repetici¢n */
+IF AVAILABLE cb-cmov THEN DO:    
+    MESSAGE "Correlativo mal configurado en el sistema" 
+                VIEW-AS ALERT-BOX ERROR.
+    X-NROAST = 0.
+    RELEASE cb-corr.
+    RETURN ERROR.
+END.
+X-NROAST = cb-corr.NroDoc.
+        
+/* Incrementado el correlativo */
+ASSIGN cb-corr.NroDoc = cb-corr.NroDoc + 1.
+RELEASE cb-corr.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

@@ -1,0 +1,47 @@
+disable triggers for load of integral.almmmatg.
+DEFINE VAR C-ALM AS CHAR INIT "".
+DEFINE VAR C AS INTEGER INIT 0.
+/**FOR EACH Almmmatg:
+    CREATE Almmmate.
+    ASSIGN Almmmate.CodAlm = "A01"
+           Almmmate.CodCia = Almmmatg.CodCia
+           Almmmate.CodMar = Almmmatg.CodMar
+           Almmmate.codmat = Almmmatg.codmat
+           Almmmate.desmat = Almmmatg.Desmat
+           Almmmate.FacEqu = Almmmatg.FacEqu
+           Almmmate.UndVta = Almmmatg.UndStk.
+           C-ALM = Almmmatg.almacenes.
+    IF LOOKUP(Almmmate.CodAlm,Almmmatg.almacenes) = 0 THEN 
+       ASSIGN Almmmatg.almacenes = Almmmatg.almacenes + "," + Almmmate.CodAlm.
+END.
+**/
+
+/****  Transfiere Informacion de Staanita a ALMMMATE ****/
+FOR EACH THGERENC.TMPCINV0 WHERE TABCOCIA = "03" and
+                                 TABFLAGU = "1" :
+    FIND Almmmatg WHERE ALMMMATG.CODANT = THGERENC.TMPCINV.TABCODIG NO-ERROR.
+    IF AVAILABLE ALMMMATG THEN DO:
+       C = C + 1.
+       CREATE Almmmate.
+       ASSIGN Almmmate.CodAlm = "T03"
+              Almmmate.CodCia = Almmmatg.CodCia
+              Almmmate.CodMar = Almmmatg.CodMar
+              Almmmate.CodAnt = Almmmatg.CodAnt
+              Almmmate.StkAct = THGERENC.TMPCINV0.TABSTACT 
+              Almmmate.StkIni = THGERENC.TMPCINV0.TABSTINI
+              Almmmate.codmat = Almmmatg.codmat
+              Almmmate.desmat = Almmmatg.Desmat
+              Almmmate.FacEqu = Almmmatg.FacEqu
+              Almmmate.UndVta = Almmmatg.UndStk.
+              C-ALM = Almmmatg.almacenes.
+       IF LOOKUP(Almmmate.CodAlm,Almmmatg.almacenes) = 0 THEN DO:
+          IF Almmmatg.almacenes <> "" THEN
+             ASSIGN Almmmatg.almacenes = Almmmatg.almacenes + "," + Almmmate.CodAlm.
+          ELSE   
+             ASSIGN Almmmatg.almacenes = Almmmate.CodAlm.          
+       END.
+             
+    END.           
+END.
+DISPLAY C.
+

@@ -1,0 +1,530 @@
+
+/**
+ * start-super.p -
+ *
+ * (c) Copyright ABC Alon Blich Consulting Tech, Ltd.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Contact information
+ *  Email: alonblich@gmail.com
+ *  Phone: +972-54-218-8086
+ */
+
+
+
+function getRunFile     returns char private    ( pcFileName as char, output ptModDate as date, output piModTime as int ) forward.
+function normalizePath  returns char private    ( pcPath as char ) forward.
+function isRelativePath returns log private     ( pcPath as char ) forward.
+
+
+
+define temp-table ttProc no-undo
+
+    field cFullPath         as char
+    field lDeprecateable    as log
+
+    index cFullPath is primary unique
+          cFullPath.
+
+define temp-table ttInstance no-undo
+
+    field cFullPath         as char
+    field tModDate          as date
+    field iModTime          as int
+
+    field hProcHndl         as handle
+    field iProcUid          as int
+    field lDeprecated       as log
+
+    index FileTimeStamp is primary unique
+          cFullPath
+          tModDate
+          iModTime.
+
+define temp-table ttReference no-undo
+
+    field hProcHndl         as handle
+    field hSourceProcHndl   as handle
+    field iSourceProcUid    as int
+
+    index hProcHndl is primary
+          hProcHndl.
+
+
+
+define temp-table ttLoad no-undo
+
+    field cFullPath as char
+    field iLevel    as int
+
+    index cFullPath is primary unique
+          cFullPath
+
+    index iLevel is unique
+          iLevel.
+
+define var iLevel               as int no-undo.
+
+define var iLastCollectGarabage as int no-undo.
+
+
+
+on "close" of this-procedure do:
+
+    delete procedure this-procedure.
+
+end. /* on close */
+
+run initializeProc.
+
+procedure initializeProc private:
+
+    empty temp-table ttLoad.
+
+    assign
+        iLastCollectGarabage    = ?
+
+        iLevel                  = 0.
+
+end procedure. /* initializeProc */
+
+
+
+procedure startSuper:
+
+    define input param pcFileName       as char no-undo.
+    define input param phSourceProc     as handle no-undo.
+    define input param plDeprecateable  as log no-undo.
+
+    define buffer ttProc        for ttProc.
+    define buffer ttInstance    for ttInstance.
+    define buffer ttReference   for ttReference.
+    define buffer ttLoad        for ttLoad.
+    define buffer bLoad         for ttLoad.
+
+    define var cFileName    as char no-undo.
+    define var cFullPath    as char no-undo.
+    define var tModDate     as date no-undo.
+    define var iModTime     as int no-undo.
+    define var hProcHndl    as handle no-undo.
+
+    define var str          as char no-undo.
+    define var i            as int no-undo.
+
+    if phSourceProc = ? then
+       phSourceProc = source-procedure.
+
+    if phSourceProc = session then
+       return error.
+
+    if plDeprecateable = ? then
+       plDeprecateable = yes.
+
+    if  ( session:client-type = "webspeed"
+       or session:client-type = "appserver" )
+
+    and ( session:server-operating-mode = "stateless"
+       or session:server-operating-mode = "state-free" ) then
+
+       plDeprecateable = yes.
+
+
+
+    cFileName = getRunFile( pcFileName, output tModDate, output iModTime ).
+
+    if cFileName = ? then
+       cFileName = getRunFile( "xx/" + pcFileName, output tModDate, output iModTime ).
+
+    if cFileName = ? then
+       cFileName = getRunFile( "us/xx/" + pcFileName, output tModDate, output iModTime ).
+
+    if cFileName = ? then
+        return error.
+
+
+
+    find first ttLoad
+         where ttLoad.cFullPath = cFileName
+         no-error.
+
+    if avail ttLoad then do:
+
+        repeat:
+
+            str = str 
+                + ( if str <> "" then " calls~n" else "" )
+                + ttLoad.cFullPath.
+
+            find next ttLoad 
+                 use-index iLevel 
+                 no-error.
+
+            if not avail ttLoad then
+                leave.
+
+        end. /* repeat */
+
+        str = str 
+            + ( if str <> "" then " calls~n" else "" )
+            + cFileName + " again.".
+
+
+
+        message
+            str
+        view-as alert-box.
+
+        quit.
+
+    end. /* avail */
+
+    iLevel = iLevel + 1.
+
+    create ttLoad.
+    assign
+        ttLoad.cFullPath    = cFileName
+        ttLoad.iLevel       = iLevel.
+
+
+
+    find first ttProc
+         where ttProc.cFullPath = cFileName
+         use-index cFullPath
+         no-error.
+
+    if avail ttProc then do:
+
+        find last ttInstance
+            where ttInstance.cFullPath = ttProc.cFullPath
+            use-index FileTimeStamp
+            no-error.
+
+        if not valid-handle( ttInstance.hProcHndl ) then do:
+
+            for each  ttReference
+                where ttReference.hProcHndl = ttInstance.hProcHndl
+                use-index hProcHndl:
+
+                delete ttReference.
+
+            end. /* for each */
+
+            delete ttInstance.
+            delete ttProc.
+
+        end. /* not valid-handle */
+
+    end. /* avail */
+
+
+
+    if not avail ttProc then do:
+
+        run value( cFileName ) persistent set hProcHndl no-error.
+        if error-status:error then return error.
+
+        create ttProc.
+        assign
+            ttProc.cFullPath        = cFileName
+            ttProc.lDeprecateable   = plDeprecateable.
+
+        create ttInstance.
+        assign
+            ttInstance.cFullPath    = ttProc.cFullPath
+            ttInstance.tModDate     = tModDate
+            ttInstance.iModTime     = iModTime
+
+            ttInstance.hProcHndl    = hProcHndl
+            ttInstance.iProcUid     = hProcHndl:unique-id
+            ttInstance.lDeprecated  = no.
+
+    end. /* not avail */
+
+
+
+    else do:
+        
+        if ttProc.lDeprecateable then do:
+
+            file-info:file-name = ttProc.cFullPath.
+
+            assign
+                cFullPath   = file-info:full-pathname
+                tModDate    = file-info:file-mod-date
+                iModTime    = file-info:file-mod-time.
+
+            if    cFullPath <> ?
+            and ( tModDate  <> ttInstance.tModDate
+               or iModTime  <> ttInstance.iModTime ) then do:
+
+                run value( ttProc.cFullPath ) persistent set hProcHndl no-error.
+                if not error-status:error then do:
+
+                    assign
+                        ttInstance.lDeprecated  = yes.
+
+                    create ttInstance.
+                    assign
+                        ttInstance.cFullPath    = ttProc.cFullPath
+                        ttInstance.tModDate     = tModDate
+                        ttInstance.iModTime     = iModTime
+    
+                        ttInstance.hProcHndl    = hProcHndl
+                        ttInstance.iProcUid     = hProcHndl:unique-id
+                        ttInstance.lDeprecated  = no.
+
+                end. /* not error */
+
+            end. /* full-pathname <> ? */
+
+        end. /* lDeprecateable */
+
+    end. /* else */
+
+
+
+    phSourceProc:add-super-procedure( ttInstance.hProcHndl ).
+
+    if ttProc.lDeprecateable then do:
+
+        create ttReference.
+        assign
+            ttReference.hProcHndl       = ttInstance.hProcHndl
+            ttReference.hSourceProcHndl = phSourceProc
+            ttReference.iSourceProcUid  = phSourceProc:unique-id.
+
+    end. /* lDeprecateable */
+
+    if iLastCollectGarabage <> ( time - time mod 60 ) / 60 then
+        run collectGarabage.
+
+
+
+    iLevel = iLevel - 1.
+
+    delete ttLoad.
+
+end procedure. /* startSuper */
+
+
+
+procedure collectGarabage private:
+
+    define buffer ttInstance    for ttInstance.
+    define buffer ttReference   for ttReference.
+
+    for each ttReference
+        use-index hProcHndl:
+
+        if not valid-handle( ttReference.hSourceProcHndl )
+        or ttReference.iSourceProcUid <> ttReference.hSourceProcHndl:unique-id then
+
+            delete ttReference.
+
+    end. /* for each */
+
+    for each ttInstance
+        use-index FileTimeStamp:
+
+        if not valid-handle( ttInstance.hProcHndl )
+        or ttInstance.iProcUid <> ttInstance.hProcHndl:unique-id then do:
+
+            for each  ttReference
+                where ttReference.hProcHndl = ttInstance.hProcHndl
+                use-index hProcHndl:
+
+                delete ttReference.
+
+            end. /* for each */
+
+            delete ttInstance.
+
+        end. /* not valid-handle */
+
+        else
+        if  ttInstance.lDeprecated
+
+        and not can-find(
+            first ttReference 
+            where ttReference.hProcHndl = ttInstance.hProcHndl
+            use-index hProcHndl ) then do:
+
+            apply "close" to hProcHndl.
+            if valid-handle( hProcHndl ) then /* incase close did not work */
+
+                delete procedure hProcHndl.
+
+            for each  ttReference
+                where ttReference.hProcHndl = ttInstance.hProcHndl
+                use-index hProcHndl:
+
+                delete ttReference.
+
+            end. /* for each */
+
+            delete ttInstance.
+
+        end. /* lDeprecated */
+
+    end. /* for each */
+
+    for each ttProc
+        use-index cFullPath:
+
+        if not can-find(
+            first ttInstance
+            where ttInstance.cFullPath = ttProc.cFullPath
+            use-index FileTimeStamp ) then
+
+            delete ttProc.
+
+    end. /* for each */
+
+    iLastCollectGarabage = ( time - time mod 60 ) / 60.
+
+end procedure. /* collectGarabage */
+
+
+
+function getRunFile returns char private
+
+    ( input     pcFileName  as char,
+      output    ptModDate   as date,
+      output    piModTime   as int ):
+
+    define var cPFileName   as char no-undo.
+    define var cRFileName   as char no-undo.
+    define var cFullPath    as char no-undo.
+
+    define var cWorkDir     as char no-undo.
+    define var cDir         as char no-undo.
+    define var i            as int no-undo.
+
+    if pcFileName matches "*~~.r" then do:
+
+        file-info:file-name = pcFileName.
+
+        assign
+            ptModDate   = file-info:file-mod-date
+            piModTime   = file-info:file-mod-time.
+
+        return file-info:full-pathname.
+
+    end. /* matches "*.r" */
+
+
+
+    file-info:file-name = ".".
+    
+    cWorkDir = file-info:full-pathname.
+
+    assign
+        i = r-index( pcFileName, "." )
+
+        cRFileName = ( if i > 0 then substr( pcFileName, 1, i - 1 ) else pcFileName ) + ".r"
+        cPFileName = pcFileName.
+    
+    
+    
+    repeat i = 1 to num-entries( propath ):
+
+        cDir = normalizePath( entry( i, propath ) ).
+
+        if isRelativePath( cDir ) then
+            cDir = normalizePath( cWorkDir + "/" + cDir ).
+
+
+
+        if cDir matches "*.pl" then
+             cFullPath = search( cDir + "<<"    + cRFileName + ">>" ).
+        else cFullPath = search( cDir + "/"     + cRFileName ).
+
+        if cFullPath = ? then do:
+
+            if cDir matches "*.pl" then
+                 cFullPath = search( cDir + "<<"    + cPFileName + ">>" ).
+            else cFullPath = search( cDir + "/"     + cPFileName ).
+
+        end. /* cFullPath = ? */
+
+        if cFullPath <> ? then do:
+
+            if cDir matches "*.pl" then
+                 file-info:file-name = cDir.
+            else file-info:file-name = cFullPath.
+
+            assign
+                ptModDate   = file-info:file-mod-date
+                piModTime   = file-info:file-mod-time.
+
+            return cFullPath.
+
+        end. /* cFullPath <> ? */
+        
+    end. /* do */
+
+    return ?.
+
+end function. /* getRunFile */
+
+function isRelativePath returns log private ( pcPath as char ):
+
+    if source-procedure <> this-procedure then
+        pcPath = normalizePath( pcPath ).
+    
+    &if "{&opsys}" begins "win" &then
+
+        if  substr( pcPath, 1, 1 ) >= "a" and substr( pcPath, 1, 1 ) <= "z"
+        and substr( pcPath, 2, 2 ) = ":~\" 
+        or  substr( pcPath, 1, 2 ) = "~\~\" then
+    
+             return no.
+        else return yes.
+    
+    &else
+    
+        if pcPath begins "/" then
+             return no.
+        else return yes.
+    
+    &endif
+        
+end function. /* isRelativePath */
+
+function normalizePath returns char private ( pcPath as char ):
+    
+    &if "{&opsys}" begins "win" &then
+
+        pcPath = replace( trim( pcPath ), "/", "~\" ).
+    
+        do while index( pcPath, "~\~\", 2 ) <> 0:
+            substr( pcPath, 2, length( pcPath ) - 1 ) = replace( substr( pcPath, 2, length( pcPath ) - 1 ), "~\~\", "~\" ).
+        end.
+    
+        return pcPath.
+
+    &else
+
+        pcPath = replace( trim( pcPath ), "~\", "/" ).
+    
+        do while index( pcPath, "//" ) <> 0:
+            pcPath = replace( pcPath, "//", "/" ).
+        end.
+    
+        return pcPath.
+
+    &endif
+
+end function. /* normalizePath */

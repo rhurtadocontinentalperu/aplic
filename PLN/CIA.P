@@ -1,0 +1,6 @@
+for each PL-MOV-SEM:
+    PL-MOV-SEM.CodCia = 1.
+    
+    
+    
+    

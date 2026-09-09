@@ -1,0 +1,142 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER x-codcia  LIKE cb-dmov.codcia.
+DEFINE INPUT PARAMETER x-CodCta  LIKE cb-dmov.codcta.
+DEFINE INPUT PARAMETER x-CodDiv  LIKE cb-dmov.coddiv.
+DEFINE INPUT PARAMETER x-Periodo LIKE cb-dmov.periodo.
+DEFINE INPUT PARAMETER x-NroMes  LIKE cb-dmov.nromes.
+DEFINE INPUT PARAMETER x-CodMon  LIKE cb-dmov.codmon.
+
+DEFINE OUTPUT PARAMETER ImpCal1  AS DECIMAL.
+DEFINE OUTPUT PARAMETER ImpCal2  AS DECIMAL.
+DEFINE OUTPUT PARAMETER ImpCal3  AS DECIMAL.
+DEFINE OUTPUT PARAMETER ImpCal4  AS DECIMAL.
+DEFINE OUTPUT PARAMETER ImpCal5  AS DECIMAL.
+DEFINE OUTPUT PARAMETER ImpCal6  AS DECIMAL.
+
+DEFINE VARIABLE i AS INTEGER.
+DEFINE VARIABLE x-ImpDbe AS DECIMAL.
+DEFINE VARIABLE x-ImpHbe AS DECIMAL.
+DEFINE SHARED VAR cb-maxNivel AS INTEGER.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2.01
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+ImpCal1 = 0.  /*  Debe del Mes     */
+ImpCal2 = 0.  /*  Haber del Mes    */
+ImpCal3 = 0.  /*  Saldo del Mes    */
+ImpCal4 = 0.  /*  Debe Acumulado   */
+ImpCal5 = 0.  /*  Haber Acumulado  */
+ImpCal6 = 0.  /*  Saldo Acumulado  */
+
+FOR EACH cb-acmd WHERE cb-acmd.CodCia  = x-codcia     AND
+                       cb-acmd.Periodo = x-Periodo    AND
+                       (LENGTH ( cb-acmd.CodCta ) = cb-MaxNivel AND cb-acmd.CodCta BEGINS x-CodCta ) AND
+                       (cb-acmd.CodDiv <> "" AND cb-acmd.CodDiv BEGINS x-CodDiv ) NO-LOCK :                                             
+    RUN ACUMULA.
+END.           
+
+ImpCal3 = ImpCal1 - ImpCal2.
+ImpCal6 = ImpCal4 - ImpCal5.
+
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ACUMULA Procedure 
+PROCEDURE ACUMULA :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+ DO i = 1 TO ( x-NroMes + 1) :
+    CASE x-codmon:
+      WHEN 1 THEN DO:
+          x-ImpDbe = cb-acmd.DbeMn1[ i ].
+          x-ImpHbe = cb-acmd.HbeMn1[ i ].
+      END.
+      WHEN 2 THEN DO:
+         x-ImpDbe = cb-acmd.DbeMn2[ i ].
+         x-ImpHbe = cb-acmd.HbeMn2[ i ].
+      END.
+    END CASE.
+    ImpCal4 = ImpCal4 + x-ImpDbe.
+    ImpCal5 = ImpCal5 + x-ImpHbe.
+    IF i = ( x-NroMes + 1 ) THEN DO:
+       ImpCal1 = ImpCal1 + x-ImpDbe.
+       ImpCal2 = ImpCal2 + x-ImpHbe.
+    END.
+  END.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

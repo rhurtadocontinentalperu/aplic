@@ -1,0 +1,7 @@
+  FIELD CodCia LIKE FacDPedi.CodCia VALIDATE ~
+  FIELD CodDiv LIKE FacDPedi.CodDiv VALIDATE ~
+  FIELD CodDoc LIKE FacDPedi.CodDoc VALIDATE ~
+  FIELD NroPed LIKE FacDPedi.NroPed VALIDATE ~
+  FIELD CanPed LIKE FacDPedi.CanPed VALIDATE ~
+  FIELD codmat LIKE FacDPedi.codmat VALIDATE ~
+  FIELD DesMatCalc AS CHARACTER FORMAT "x(40)"

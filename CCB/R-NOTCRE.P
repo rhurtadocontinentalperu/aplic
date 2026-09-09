@@ -1,0 +1,262 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-fact01.p
+    Purpose     : Impresion de Fact/Boletas 
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia AS INT.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+
+DEF VAR X-Nomcli AS CHAR NO-UNDO.
+DEF VAR X-Dircli AS CHAR NO-UNDO.
+DEF VAR X-Ruccli AS CHAR NO-UNDO.
+DEF VAR X-EnLetras AS CHAR FORMAT "x(60)" NO-UNDO.
+DEF VAR I-NroItm AS INTEGER .
+DEF VAR X-TOTAL  AS DECIMAL NO-UNDO.
+DEF VAR X-DESCRI AS CHAR .
+DEF VAR I-NroSer AS INTEGER .
+DEF VAR X-DESMOV AS CHAR FORMAT "x(30)".
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF SHARED VAR s-user-id AS CHAR.
+
+
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+FIND gn-clie WHERE gn-clie.codcia = 0 AND
+     gn-clie.codcli = ccbcdocu.codcli NO-LOCK.
+IF AVAILABLE gn-clie THEN
+   ASSIGN
+      X-Nomcli = gn-clie.nomcli
+      X-Dircli = gn-clie.dircli
+      X-Ruccli = gn-clie.ruc.
+
+FIND FacCfgGn WHERE FacCfgGn.CodCia = s-codcia NO-LOCK NO-ERROR.
+
+IF ccbcdocu.codcli = FacCfgGn.CliVar THEN
+   ASSIGN       
+      X-Nomcli = Ccbcdocu.nomcli
+      X-Dircli = Ccbcdocu.dircli
+      X-Ruccli = Ccbcdocu.ruccli.
+
+FIND Almtmovm WHERE 
+     Almtmovm.CodCia = ccbcdocu.codCia AND
+     Almtmovm.Codmov = ccbcdocu.codmov NO-LOCK NO-ERROR.
+IF AVAILABLE Almtmovm THEN X-DESMOV = Almtmovm.Desmov.
+      
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(ccbcdocu.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = X-EnLetras + (IF ccbcdocu.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+/*DEFINE FRAME F-HdrN/C
+ *     HEADER
+ *     SKIP(10)
+ *     DAY(ccbcdocu.fchdoc) at 10 FORMAT "99" MONTH(ccbcdocu.fchdoc) AT 25 FORMAT "99" YEAR(ccbcdocu.fchdoc) AT 58 SKIP(1)
+ *     X-nomcli AT 18 FORMAT "x(40)" " Direccion : "  X-dircli FORMAT "x(40)" X-ruccli FORMAT "x(8)" SKIP
+ *     "Factura : " AT 18 ccbcdocu.nroref space(5) "  Fecha Emision:" ccbcdocu.fchdoc space(5) "  Por el importe de :" CcbCDocu.ImpTOT skip(2)
+ *     "Sirvase tomar debida nota que en la fecha le estamos abonando en su cuenta la cantidad de : " AT 8 CcbCDocu.ImpTOT skip
+ *     "Por Concepto de : " AT 8 ccbcdocu.codmov X-DESMOV SKIP
+ *     WITH PAGE-TOP WIDTH 200 NO-LABELS NO-BOX STREAM-IO DOWN .*/
+
+DEFINE FRAME F-HdrN/C
+    HEADER
+    SKIP(8)
+    CcbCDocu.NomCli /*X-nomcli*/ AT 18 FORMAT "x(40)" SKIP
+    CcbCDocu.DirCli /*X-dircli*/ AT 18 FORMAT "x(35)" SKIP
+    CcbCDocu.RucCli /*X-ruccli*/ AT 18 FORMAT "x(8)"  
+    CcbCDocu.CodCli AT 60 SKIP(.5)
+    CcbCDocu.nroref AT 97  FORMAT "XXX-XXXXXX"
+    CcbCDocu.FchDoc AT 120 FORMAT "99/99/9999" 
+    CcbCDocu.ImpTot AT 140 FORMAT ">>>,>>9.99" 
+    SKIP(1)
+    "DEVOLUCION DE MERCADERIA" AT 24 FORMAT "X(30)" 
+    "NRO. DEV" CcbCDocu.NroOrd FORMAT "XXX-XXXXXX"
+    CcbCDocu.NRODOC AT 97  FORMAT "XXX-XXXXXX"
+    S-User-Id + "/" + S-CODTER  AT 120 FORMAT "X(20)"
+    TODAY           AT 140 FORMAT "99/99/9999"  
+    SKIP(4)
+/*    "Factura : " AT 18  space(5) "  Fecha Emision:" ccbcdocu.fchdoc space(5) "  Por el importe de :" CcbCDocu.ImpTOT skip(3)
+ *     "Sirvase tomar debida nota que en la fecha le estamos abonando en su cuenta la cantidad de : " AT 8 CcbCDocu.ImpTOT skip
+ *     "Por Concepto de : " AT 8 ccbcdocu.codmov SKIP*/
+    WITH PAGE-TOP WIDTH 255 NO-LABELS NO-BOX STREAM-IO DOWN .
+
+
+
+/*DEFINE FRAME F-FtrN/C
+ *     HEADER
+ *     "----------" AT 122 SKIP
+ *     X-TOTAL FORMAT ">>>,>>9.99" AT 122 SKIP(2)
+ * 
+ *     "VALOR VENTA  :     " AT 102  ccbcdocu.impvta FORMAT ">>>,>>9.99" SKIP
+ *     "Son : " AT 10 X-EnLetras   
+ *     "I.G.V. 18%   :     " AT 102 ccbcdocu.impigv  FORMAT ">>>,>>9.99" SKIP
+ *     "NETO A PAGAR :     " AT 102 ccbcdocu.imptot  FORMAT ">>>,>>9.99" SKIP
+ * 
+ *     WITH PAGE-BOTTOM WIDTH 160 NO-BOX NO-LABELS NO-UNDERLINE STREAM-IO DOWN.*/
+    
+DEFINE FRAME F-FtrN/C
+    HEADER
+    "Son : " X-EnLetras SKIP  
+    "Imp.Brt: " FORMAT "X(9)" AT 73
+    CcbCDocu.ImpBrt FORMAT ">>>,>>9.99"
+    "DSCTO.: " FORMAT "X(9)"
+    CcbCDocu.ImpDto FORMAT ">>>,>>9.99"
+    CcbCDocu.PorDto FORMAT ">9.99"
+    " %" FORMAT "X(2)"
+    ccbcdocu.impvta FORMAT ">>>,>>9.99" AT 122
+    ccbcdocu.impigv FORMAT ">>>,>>9.99" AT 140 SKIP(2)
+    ccbcdocu.imptot FORMAT ">>>,>>9.99" AT 140 SKIP(2)
+/*    X-TOTAL FORMAT ">>>,>>9.99" AT 122 SKIP(4)
+ * /*    ccbcdocu.imptot AT 104 FORMAT ">>,>>>9.99" SKIP(4) */
+ * 
+ *     "VALOR VENTA  :     " AT 102  ccbcdocu.impvta FORMAT ">>>,>>9.99"  SKIP
+ * /*    ccbcdocu.impdto FORMAT ">>>,>>9.99" */
+ *     "I.G.V. 18%   :     " AT 102 ccbcdocu.impigv  FORMAT ">>>,>>9.99" SKIP
+ *     "Son : " X-EnLetras   "NETO A PAGAR :     "  AT 102 ccbcdocu.imptot  FORMAT ">>>,>>9.99" SKIP*/
+    WITH PAGE-BOTTOM WIDTH 255 NO-BOX NO-LABELS NO-UNDERLINE STREAM-IO DOWN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.77
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+
+FIND FacCorre WHERE FacCorre.CodCia = S-CODCIA AND
+     FacCorre.CodDoc = ccbcdocu.coddoc AND
+     FacCorre.CodDiv = S-CODDIV NO-LOCK NO-ERROR.
+IF AVAILABLE FacCorre THEN 
+   ASSIGN I-NroSer = FacCorre.NroSer.
+
+FIND FacCorre WHERE FacCorre.CodCia = S-CODCIA AND 
+     FacCorre.CodDiv = S-CODDIV AND
+     FacCorre.CodDoc = ccbcdocu.coddoc AND
+     FacCorre.NroSer = I-NroSer NO-LOCK. 
+     /* INTEGER(SUBSTRING(ccbcdocu.nrodoc, 1, 3)) NO-LOCK.*/
+
+IF LOOKUP(FacCorre.Printer, s-printer-list) = 0 THEN DO:
+   MESSAGE "Impresora " FacCorre.Printer " no esta instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+s-port-name = ENTRY(LOOKUP(FacCorre.Printer, s-printer-list), s-port-list).
+s-port-name = REPLACE(S-PORT-NAME, ":", "").
+
+DEFINE FRAME F-DetaN/C
+    I-NroItm FORMAT ">>>9" AT 3
+    ccbddocu.codmat AT   8
+    Almmmatg.Desmat AT  35 FORMAT "x(30)"
+    ccbddocu.candes AT  67 FORMAT ">>,>>>,>>9.99" 
+    ccbddocu.undvta AT  84 
+    ccbddocu.preuni AT 110 FORMAT ">,>>9.99" 
+    CcbDDocu.Por_Dsctos[1] FORMAT ">>9.99" 
+    " %"
+    ccbddocu.implin AT 140 FORMAT ">>,>>>9.99"
+    WITH NO-LABELS NO-BOX NO-UNDERLINE STREAM-IO WIDTH 200.
+
+/*OUTPUT STREAM REPORT TO VALUE(s-port-name) PAGE-SIZE 30.
+ * PUT STREAM REPORT CONTROL CHR(27) "@" CHR(27) "C" CHR(33) CHR(18) CHR(15).*/
+
+OUTPUT STREAM REPORT TO VALUE(s-port-name) PAGE-SIZE 33.
+PUT STREAM REPORT CONTROL CHR(27) "@" CHR(27) "C" CHR(38) CHR(18) CHR(15).
+
+I-NroItm = 0.
+      FOR EACH ccbddocu OF ccbcdocu ,
+               FIRST almmmatg OF ccbddocu
+               BREAK BY ccbddocu.nrodoc
+                     BY ccbddocu.codmat: 
+          VIEW STREAM REPORT FRAME F-HdrN/C.            
+          VIEW STREAM REPORT FRAME F-FtrN/C.
+          I-NroItm = I-NroItm + 1.
+          X-TOTAL = X-TOTAL + ccbddocu.implin.
+          DISPLAY STREAM REPORT 
+                  I-NroItm 
+                  ccbddocu.codmat 
+                  almmmatg.desmat 
+                  ccbddocu.candes 
+                  ccbddocu.undvta 
+                  ccbddocu.preuni 
+                  CcbDDocu.Por_Dsctos[1]
+                  ccbddocu.implin
+                  WITH FRAME F-DetaN/C.
+          IF LAST-OF(ccbddocu.nrodoc) THEN DO:
+             PAGE STREAM REPORT.
+          END.
+      END.
+
+OUTPUT STREAM REPORT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

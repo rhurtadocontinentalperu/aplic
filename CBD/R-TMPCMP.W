@@ -1,0 +1,1080 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11 GUI ADM1
+&ANALYZE-RESUME
+&Scoped-define WINDOW-NAME CURRENT-WINDOW
+&Scoped-define FRAME-NAME D-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS D-Dialog 
+/*------------------------------------------------------------------------
+
+  File: 
+
+  Description: from cntnrdlg.w - ADM SmartDialog Template
+
+  Input Parameters:
+      <none>
+
+  Output Parameters:
+      <none>
+
+  Author: 
+
+  Created: 
+------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* Create an unnamed pool to store all the widgets created 
+     by this procedure. This is a good default which assures
+     that this procedure's triggers and internal procedures 
+     will execute in this procedure's storage, and that proper
+     cleanup will occur on deletion of the procedure. */
+
+CREATE WIDGET-POOL.
+
+/* ***************************  Definitions  ************************** */
+
+/* Parameters Definitions ---                                           */
+{lib/def-prn.i}    
+
+DEFINE NEW SHARED VARIABLE xTerm     AS CHARACTER INITIAL "".
+
+/* Shared Variable Definitions ---                                       */
+
+DEFINE SHARED VAR s-CodCia  AS INTEGER.
+DEFINE SHARED VAR Cb-CodCia AS INTEGER.
+DEFINE SHARED VAR pv-codcia AS INTEGER.
+DEFINE SHARED VAR s-NroMes  AS INTEGER.
+DEFINE SHARED VAR s-NomCia  AS CHARACTER.
+DEFINE SHARED VAR s-DirCia  AS CHARACTER.
+DEFINE SHARED VAR s-Periodo  AS INTEGER.
+
+/* Local Variable Definitions ---                                       */
+DEFINE VARIABLE I-NroMes AS INTEGER NO-UNDO.
+DEFINE VARIABLE I-NroItm AS INTEGER NO-UNDO.
+DEFINE VARIABLE I-NroOpe AS INTEGER NO-UNDO.
+DEFINE VARIABLE L-Salir  AS LOGICAL INITIAL NO NO-UNDO.
+DEFINE VARIABLE C-FLGEST AS CHAR NO-UNDO.
+DEFINE VARIABLE PTO      AS LOGICAL NO-UNDO.
+DEFINE VARIABLE l-immediate-display  AS LOGICAL NO-UNDO.
+DEFINE SHARED VARIABLE lh_Handle  AS HANDLE.
+
+DEFINE VAR C-BIMP AS CHAR.
+DEFINE VAR C-ISC  AS CHAR.
+DEFINE VAR C-IGV  AS CHAR.
+DEFINE VAR C-TOT  AS CHAR.
+
+/* BUSCANDO LAS CONFIGURACIONES DEL LIBRO DE COMPRAS */
+
+FIND cb-cfgg WHERE cb-cfgg.CODCIA = cb-codcia AND cb-cfgg.CODCFG = "R01" NO-LOCK NO-ERROR.
+IF NOT AVAIL cb-cfgg THEN DO:
+   MESSAGE "No esta configurado el registro de Compras" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+/* Configuraciones */
+C-BIMP = cb-cfgg.CODCTA[1].
+C-ISC  = cb-cfgg.CODCTA[2].
+C-IGV  = cb-cfgg.CODCTA[3].
+C-TOT  = cb-cfgg.CODCTA[4].
+
+/* OTRAS VARIABLES */
+
+DEFINE TEMP-TABLE Registro
+   FIELD CodCia  AS INTE
+   FIELD NroAst  AS CHAR FORMAT "X(10)"
+   FIELD FchDoc  AS DATE FORMAT "99/99/9999"
+   FIELD CodDoc  AS CHAR FORMAT "XXX"
+   FIELD NroDoc  AS CHAR FORMAT "X(13)"
+   FIELD CodRef  AS CHAR FORMAT "XXX"
+   FIELD NroRef  AS CHAR FORMAT "X(12)"
+   FIELD Ruc     AS CHAR FORMAT "X(8)"
+   FIELD Nombre  AS CHAR FORMAT "X(30)"
+   FIELD Importe AS DECIMAL EXTENT 11 FORMAT "->,>>>,>>9.99".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE SmartDialog
+&Scoped-define DB-AWARE no
+
+&Scoped-define ADM-CONTAINER DIALOG-BOX
+
+/* Name of designated FRAME-NAME and/or first browse and/or first query */
+&Scoped-define FRAME-NAME D-Dialog
+
+/* Standard List Definitions                                            */
+&Scoped-Define ENABLED-OBJECTS Btn_OK RADIO-SET-1 B-impresoras CB-Mes ~
+Btn_Cancel F-CodDoc RB-NUMBER-COPIES C-CodMon RB-BEGIN-PAGE RB-END-PAGE ~
+x-Div s-CodOpe RECT-12 RECT-20 RECT-21 RECT-42 RECT-5 RECT-54 
+&Scoped-Define DISPLAYED-OBJECTS RADIO-SET-1 CB-Mes F-CodDoc F-Proceso ~
+RB-NUMBER-COPIES C-CodMon RB-BEGIN-PAGE RB-END-PAGE x-Div s-CodOpe 
+
+/* Custom List Definitions                                              */
+/* List-1,List-2,List-3,List-4,List-5,List-6                            */
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* ***********************  Control Definitions  ********************** */
+
+/* Define a dialog box                                                  */
+
+/* Definitions of the field level widgets                               */
+DEFINE BUTTON b-archivo 
+     IMAGE-UP FILE "IMG/pvstop":U
+     LABEL "&Archivos.." 
+     SIZE 5 BY 1.
+
+DEFINE BUTTON B-impresoras 
+     IMAGE-UP FILE "IMG/pvprint":U
+     IMAGE-DOWN FILE "IMG/pvprintd":U
+     LABEL "" 
+     SIZE 5 BY 1.
+
+DEFINE BUTTON Btn_Cancel AUTO-END-KEY 
+     IMAGE-UP FILE "img\b-cancel":U
+     LABEL "Cancelar" 
+     SIZE 11 BY 1.5
+     BGCOLOR 8 .
+
+DEFINE BUTTON Btn_OK AUTO-GO 
+     IMAGE-UP FILE "img\b-ok":U
+     LABEL "Aceptar" 
+     SIZE 11 BY 1.5
+     BGCOLOR 8 .
+
+DEFINE VARIABLE CB-Mes AS CHARACTER FORMAT "X(256)":U 
+     LABEL "Mes" 
+     VIEW-AS COMBO-BOX INNER-LINES 8
+     LIST-ITEMS "Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Setiembre","Octubre","Noviembre","Diciembre" 
+     DROP-DOWN-LIST
+     SIZE 16.72 BY 1 NO-UNDO.
+
+DEFINE VARIABLE F-CodDoc AS CHARACTER FORMAT "X(256)":U 
+     LABEL "Documento" 
+     VIEW-AS FILL-IN 
+     SIZE 6.43 BY .81 NO-UNDO.
+
+DEFINE VARIABLE F-Proceso AS CHARACTER FORMAT "X(256)":U 
+     LABEL "Procesando" 
+     VIEW-AS FILL-IN 
+     SIZE 43.57 BY .81
+     BGCOLOR 15 FGCOLOR 1  NO-UNDO.
+
+DEFINE VARIABLE RB-BEGIN-PAGE AS INTEGER FORMAT "ZZZ9":U INITIAL 1 
+     LABEL "Desde" 
+     VIEW-AS FILL-IN 
+     SIZE 7 BY .69
+     BGCOLOR 15 FGCOLOR 0  NO-UNDO.
+
+DEFINE VARIABLE RB-END-PAGE AS INTEGER FORMAT "ZZZ9":U INITIAL 9999 
+     LABEL "Hasta" 
+     VIEW-AS FILL-IN 
+     SIZE 7 BY .69
+     BGCOLOR 15 FGCOLOR 0  NO-UNDO.
+
+DEFINE VARIABLE RB-NUMBER-COPIES AS INTEGER FORMAT "ZZZ9":U INITIAL 1 
+     LABEL "No. Copias" 
+     VIEW-AS FILL-IN 
+     SIZE 7 BY .69
+     BGCOLOR 15 FGCOLOR 0  NO-UNDO.
+
+DEFINE VARIABLE RB-OUTPUT-FILE AS CHARACTER FORMAT "X(256)":U 
+     VIEW-AS FILL-IN 
+     SIZE 33.14 BY .69
+     BGCOLOR 15 FGCOLOR 0 FONT 12 NO-UNDO.
+
+DEFINE VARIABLE x-Div AS CHARACTER FORMAT "X(5)":U 
+     LABEL "Division" 
+     VIEW-AS FILL-IN 
+     SIZE 8.14 BY .81
+     BGCOLOR 15  NO-UNDO.
+
+DEFINE VARIABLE C-CodMon AS INTEGER 
+     VIEW-AS RADIO-SET HORIZONTAL
+     RADIO-BUTTONS 
+          "S/.", 1,
+"US$", 2
+     SIZE 11.72 BY .73 NO-UNDO.
+
+DEFINE VARIABLE RADIO-SET-1 AS INTEGER 
+     VIEW-AS RADIO-SET VERTICAL
+     RADIO-BUTTONS 
+          "Pantalla", 2,
+"Impresora", 1,
+"Archivo", 3
+     SIZE 12 BY 3.69
+     FONT 6 NO-UNDO.
+
+DEFINE RECTANGLE RECT-12
+     EDGE-PIXELS 3 GRAPHIC-EDGE  NO-FILL   
+     SIZE 40 BY 5.65.
+
+DEFINE RECTANGLE RECT-20
+     EDGE-PIXELS 3 GRAPHIC-EDGE  NO-FILL   
+     SIZE 13 BY 1.08.
+
+DEFINE RECTANGLE RECT-21
+     EDGE-PIXELS 3 GRAPHIC-EDGE  NO-FILL   
+     SIZE 55 BY 1.31.
+
+DEFINE RECTANGLE RECT-42
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE .86 BY .15.
+
+DEFINE RECTANGLE RECT-5
+     EDGE-PIXELS 4 GRAPHIC-EDGE  NO-FILL   
+     SIZE 55 BY 4.5.
+
+DEFINE RECTANGLE RECT-54
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE 14 BY 2.15.
+
+DEFINE VARIABLE s-CodOpe AS CHARACTER 
+     VIEW-AS SELECTION-LIST MULTIPLE SCROLLBAR-VERTICAL 
+     SIZE 10 BY 2.92
+     BGCOLOR 15  NO-UNDO.
+
+
+/* ************************  Frame Definitions  *********************** */
+
+DEFINE FRAME D-Dialog
+     Btn_OK AT ROW 1.85 COL 43.43
+     RADIO-SET-1 AT ROW 9.19 COL 2.72 NO-LABEL
+     B-impresoras AT ROW 9.46 COL 15.86
+     CB-Mes AT ROW 1.38 COL 5.14 COLON-ALIGNED
+     b-archivo AT ROW 11.81 COL 16
+     Btn_Cancel AT ROW 4.23 COL 43.43
+     F-CodDoc AT ROW 4.04 COL 11 COLON-ALIGNED
+     RB-OUTPUT-FILE AT ROW 11.96 COL 20 COLON-ALIGNED NO-LABEL
+     F-Proceso AT ROW 7 COL 9.57 COLON-ALIGNED
+     RB-NUMBER-COPIES AT ROW 9.31 COL 46.14 COLON-ALIGNED
+     C-CodMon AT ROW 2.73 COL 13.72 NO-LABEL
+     RB-BEGIN-PAGE AT ROW 9.81 COL 28.43 COLON-ALIGNED
+     RB-END-PAGE AT ROW 10.54 COL 28.43 COLON-ALIGNED
+     x-Div AT ROW 5.23 COL 11 COLON-ALIGNED
+     s-CodOpe AT ROW 3.12 COL 29 NO-LABEL
+     "Operaciones" VIEW-AS TEXT
+          SIZE 9.72 BY .5 AT ROW 2.62 COL 29.14
+          BGCOLOR 1 FGCOLOR 15 
+     "Moneda" VIEW-AS TEXT
+          SIZE 6.72 BY .65 AT ROW 2.73 COL 6.14
+     " Configuración de Impresión" VIEW-AS TEXT
+          SIZE 55 BY .62 AT ROW 8.12 COL 1.14
+          BGCOLOR 1 FGCOLOR 15 FONT 6
+     "Páginas" VIEW-AS TEXT
+          SIZE 14 BY .58 AT ROW 9.15 COL 24.43
+          BGCOLOR 1 FGCOLOR 15 FONT 6
+     RECT-12 AT ROW 1 COL 1
+     RECT-20 AT ROW 2.54 COL 13
+     RECT-21 AT ROW 6.77 COL 1
+     RECT-42 AT ROW 4.27 COL 34.57
+     RECT-5 AT ROW 8.77 COL 1.14
+     RECT-54 AT ROW 9.38 COL 24.43
+     SPACE(18.70) SKIP(1.77)
+    WITH VIEW-AS DIALOG-BOX KEEP-TAB-ORDER 
+         SIDE-LABELS NO-UNDERLINE THREE-D  SCROLLABLE 
+         FONT 4
+         TITLE "Registro de Compras Remoto".
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: SmartDialog
+   Allow: Basic,Browse,DB-Fields,Query,Smart
+   Other Settings: COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB D-Dialog 
+/* ************************* Included-Libraries *********************** */
+
+{src/adm/method/containr.i}
+{src/adm-vm/method/vmviewer.i}
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+
+/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
+
+&ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
+/* SETTINGS FOR DIALOG-BOX D-Dialog
+   FRAME-NAME Custom                                                    */
+ASSIGN 
+       FRAME D-Dialog:SCROLLABLE       = FALSE
+       FRAME D-Dialog:HIDDEN           = TRUE.
+
+/* SETTINGS FOR BUTTON b-archivo IN FRAME D-Dialog
+   NO-ENABLE                                                            */
+ASSIGN 
+       b-archivo:HIDDEN IN FRAME D-Dialog           = TRUE.
+
+/* SETTINGS FOR FILL-IN F-Proceso IN FRAME D-Dialog
+   NO-ENABLE                                                            */
+/* SETTINGS FOR FILL-IN RB-OUTPUT-FILE IN FRAME D-Dialog
+   NO-DISPLAY NO-ENABLE                                                 */
+ASSIGN 
+       RB-OUTPUT-FILE:HIDDEN IN FRAME D-Dialog           = TRUE.
+
+/* _RUN-TIME-ATTRIBUTES-END */
+&ANALYZE-RESUME
+
+
+/* Setting information for Queries and Browse Widgets fields            */
+
+&ANALYZE-SUSPEND _QUERY-BLOCK DIALOG-BOX D-Dialog
+/* Query rebuild information for DIALOG-BOX D-Dialog
+     _Options          = "SHARE-LOCK"
+     _Query            is NOT OPENED
+*/  /* DIALOG-BOX D-Dialog */
+&ANALYZE-RESUME
+
+ 
+
+
+
+/* ************************  Control Triggers  ************************ */
+
+&Scoped-define SELF-NAME D-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL D-Dialog D-Dialog
+ON WINDOW-CLOSE OF FRAME D-Dialog /* Registro de Compras Remoto */
+DO:  
+  /* Add Trigger to equate WINDOW-CLOSE to END-ERROR. */
+  APPLY "END-ERROR":U TO SELF.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME b-archivo
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL b-archivo D-Dialog
+ON CHOOSE OF b-archivo IN FRAME D-Dialog /* Archivos.. */
+DO:
+     SYSTEM-DIALOG GET-FILE RB-OUTPUT-FILE
+        TITLE      "Archivo de Impresi¢n ..."
+        FILTERS    "Archivos Impresi¢n (*.txt)"   "*.txt",
+                   "Todos (*.*)"   "*.*"
+        INITIAL-DIR "./txt"
+        MUST-EXIST
+        USE-FILENAME
+        UPDATE OKpressed.
+      
+    IF OKpressed = TRUE THEN
+        RB-OUTPUT-FILE:SCREEN-VALUE = RB-OUTPUT-FILE.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME B-impresoras
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL B-impresoras D-Dialog
+ON CHOOSE OF B-impresoras IN FRAME D-Dialog
+DO:
+    SYSTEM-DIALOG PRINTER-SETUP.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_Cancel
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_Cancel D-Dialog
+ON CHOOSE OF Btn_Cancel IN FRAME D-Dialog /* Cancelar */
+DO:
+  L-Salir = YES. 
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_OK
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_OK D-Dialog
+ON CHOOSE OF Btn_OK IN FRAME D-Dialog /* Aceptar */
+DO:
+  ASSIGN CB-Mes C-CodMon F-CodDoc F-Proceso s-CodOpe x-Div.
+    
+  I-NroMes = LOOKUP(CB-MES,CB-MES:LIST-ITEMS).
+  F-Proceso:VISIBLE = YES.
+  IF s-CodOpe = ? THEN s-CodOpe = s-CodOpe:LIST-ITEMS.
+  P-largo = 66.
+  P-Ancho = 210.
+  P-Copias  = INPUT FRAME D-DIALOG RB-NUMBER-COPIES.
+  P-pagIni  = INPUT FRAME D-DIALOG RB-BEGIN-PAGE.
+  P-pagfin  = INPUT FRAME D-DIALOG RB-END-PAGE.
+  P-select  = INPUT FRAME D-DIALOG RADIO-SET-1.
+  P-archivo = INPUT FRAME D-DIALOG RB-OUTPUT-FILE.
+  P-detalle = "Impresora Local (EPSON)".
+  P-name    = "Epson E/F/J/RX/LQ".
+  P-device  = "PRN".
+     
+  IF P-select = 2 
+     THEN P-archivo = SESSION:TEMP-DIRECTORY + 
+          STRING(NEXT-VALUE(sec-arc,integral)) + ".scr".
+  ELSE RUN setup-print.      
+     IF P-select <> 1 THEN P-copias = 1.
+  
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME RADIO-SET-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL RADIO-SET-1 D-Dialog
+ON VALUE-CHANGED OF RADIO-SET-1 IN FRAME D-Dialog
+DO:
+    IF SELF:SCREEN-VALUE = "3"
+    THEN ASSIGN b-archivo:VISIBLE = YES
+                RB-OUTPUT-FILE:VISIBLE = YES
+                b-archivo:SENSITIVE = YES
+                RB-OUTPUT-FILE:SENSITIVE = YES.
+    ELSE ASSIGN b-archivo:VISIBLE = NO
+                RB-OUTPUT-FILE:VISIBLE = NO
+                b-archivo:SENSITIVE = NO
+                RB-OUTPUT-FILE:SENSITIVE = NO.
+
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&UNDEFINE SELF-NAME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK D-Dialog 
+
+
+/* ***************************  Main Block  *************************** */
+  DO WITH FRAME {&FRAME-NAME}:
+     FIND cb-cfgg WHERE cb-cfgg.CODCIA = cb-codcia AND cb-cfgg.CODCFG = "R01"
+          NO-LOCK NO-ERROR.
+     IF AVAIL cb-cfgg THEN DO:
+        s-CodOpe:LIST-ITEMS IN FRAME {&FRAME-NAME} = cb-cfgg.codope.
+        s-CodOpe:SCREEN-VALUE = ENTRY( 1 , cb-cfgg.codope ).
+     END.  
+     F-Proceso:VISIBLE IN FRAME {&FRAME-NAME} = NO.
+     CB-Mes:SCREEN-VALUE = ENTRY(s-NroMes,CB-Mes:LIST-ITEMS).
+     CB-Mes = ENTRY(s-NroMes,CB-Mes:LIST-ITEMS).
+  END.
+
+IF VALID-HANDLE(ACTIVE-WINDOW) AND FRAME {&FRAME-NAME}:PARENT eq ?
+THEN FRAME {&FRAME-NAME}:PARENT = ACTIVE-WINDOW.
+
+/* Add Trigger to equate WINDOW-CLOSE to END-ERROR                      */
+ON WINDOW-CLOSE OF FRAME {&FRAME-NAME} APPLY "END-ERROR":U TO SELF.
+
+/* Now enable the interface and wait for the exit condition.            */
+/* (NOTE: handle ERROR and END-KEY so cleanup code will always fire.    */
+
+MAIN-BLOCK:
+DO ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
+   ON END-KEY UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK:
+  RUN enable_UI.
+  PTO                  = SESSION:SET-WAIT-STATE("").    
+  l-immediate-display  = SESSION:IMMEDIATE-DISPLAY.
+
+  WAIT-FOR GO OF FRAME {&FRAME-NAME}.
+  RUN disable_UI.
+
+  FRAME F-Mensaje:TITLE =  FRAME D-DIALOG:TITLE.
+  /* VIEW FRAME F-Mensaje.   */
+  PAUSE 0.           
+  SESSION:IMMEDIATE-DISPLAY = YES.
+
+  DO c-Copias = 1 to P-copias ON ERROR UNDO, LEAVE
+                                ON STOP UNDO, LEAVE:
+        OUTPUT STREAM report TO NUL PAGED PAGE-SIZE 84.
+        c-Pagina = 0.
+        RUN IMPRIMIR.
+    OUTPUT STREAM report CLOSE.        
+  END.
+  OUTPUT STREAM report CLOSE.        
+  SESSION:IMMEDIATE-DISPLAY =   l-immediate-display.
+  
+  IF NOT LASTKEY = KEYCODE("ESC") AND P-select = 2 THEN DO: 
+        RUN bin/_vcat.p ( P-archivo ). 
+  END.    
+  HIDE FRAME F-Mensaje.  
+  RETURN.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-create-objects D-Dialog  _ADM-CREATE-OBJECTS
+PROCEDURE adm-create-objects :
+/*------------------------------------------------------------------------------
+  Purpose:     Create handles for all SmartObjects used in this procedure.
+               After SmartObjects are initialized, then SmartLinks are added.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-row-available D-Dialog  _ADM-ROW-AVAILABLE
+PROCEDURE adm-row-available :
+/*------------------------------------------------------------------------------
+  Purpose:     Dispatched to this procedure when the Record-
+               Source has a new row available.  This procedure
+               tries to get the new row (or foriegn keys) from
+               the Record-Source and process it.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+  /* Define variables needed by this internal procedure.             */
+  {src/adm/template/row-head.i}
+
+  /* Process the newly available records (i.e. display fields,
+     open queries, and/or pass records on to any RECORD-TARGETS).    */
+  {src/adm/template/row-end.i}
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Compras D-Dialog 
+PROCEDURE Carga-Compras :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE VAR L-Ubica   AS LOGICAL INIT YES NO-UNDO. 
+DEFINE VAR F-IMPORTE AS DECIMAL NO-UNDO.
+DEFINE VAR jj        AS INTEGER NO-UNDO.
+DEFINE VAR C-OPER    AS CHAR    NO-UNDO.
+I-NroItm = 0.
+
+RegCmp:
+DO jj = 1 TO NUM-ENTRIES(S-CodOpe) :
+    C-OPER = ENTRY(jj,S-CodOpe).
+    FOR EACH T-cb-cmov NO-LOCK WHERE 
+             T-cb-cmov.Codcia  = S-CODCIA  AND
+             T-cb-cmov.Periodo = S-PERIODO AND
+             T-cb-cmov.Nromes  = I-NroMes  AND
+             T-cb-cmov.Codope  = C-OPER    AND
+             T-cb-cmov.CodDiv BEGINS x-Div AND
+             NOT L-Salir: 
+        F-Proceso = "VOUCHER : " + T-cb-cmov.Codope + "-" + T-cb-cmov.NroAst.
+        DISPLAY F-Proceso WITH FRAME {&FRAME-NAME}.
+        RegDet:
+        FOR EACH T-cb-dmov NO-LOCK WHERE 
+                 T-cb-dmov.Codcia  = T-cb-cmov.Codcia AND
+                 T-cb-dmov.Periodo = T-cb-cmov.Periodo AND
+                 T-cb-dmov.Nromes  = T-cb-cmov.Nromes  AND
+                 T-cb-dmov.Codope  = T-cb-cmov.Codope AND
+                 T-cb-dmov.NroAst  = T-cb-cmov.NroAst 
+                 BREAK BY T-cb-dmov.NroAst:
+             IF FIRST-OF(T-cb-dmov.NroAst) THEN DO:
+                CREATE Registro.
+                ASSIGN Registro.NroAst  = T-cb-cmov.CodOpe + "-" + T-cb-cmov.NroAst.
+             END.
+             IF T-cb-dmov.TpoItm <> "" THEN NEXT.
+             I-NroItm = I-NroItm + 1.
+             L-Ubica = NO.
+             F-IMPORTE = IF C-CodMon = 1 THEN T-cb-dmov.ImpMn1 ELSE T-cb-dmov.ImpMn2.
+             IF (T-cb-dmov.CodCta BEGINS "6" OR T-cb-dmov.CodCta BEGINS "7" OR
+                T-cb-dmov.CodCta BEGINS "33" OR T-cb-dmov.CodCta BEGINS "34" OR T-cb-dmov.CodCta BEGINS "4011") OR 
+                (T-cb-dmov.CodCta = "42130101") OR (T-cb-dmov.CodCta = "42130102") OR
+                (T-cb-dmov.CodCta BEGINS "162101") OR (T-cb-dmov.CodCta BEGINS "462101") OR
+                T-cb-dmov.CodCta BEGINS "38" OR T-cb-dmov.CodCta BEGINS "46910102" THEN DO:
+                IF T-cb-dmov.TpoMov THEN F-IMPORTE = F-IMPORTE * -1.
+                IF T-cb-dmov.tm = 0 THEN ASSIGN Registro.Importe[10] = Registro.Importe[10] + F-IMPORTE.
+                ELSE ASSIGN Registro.Importe[T-cb-dmov.tm] = Registro.Importe[T-cb-dmov.tm] + F-IMPORTE.
+                L-Ubica = YES.
+             END.
+             IF NOT L-Ubica AND T-cb-dmov.CodCta BEGINS "40" AND T-cb-dmov.TpoMov AND
+                NOT T-cb-dmov.CodCta BEGINS "4011" THEN DO:
+                ASSIGN Registro.Importe[11] = Registro.Importe[11] + F-IMPORTE.
+                L-Ubica = YES.
+             END.
+             IF NOT L-Ubica AND (T-cb-dmov.CodCta BEGINS "42" OR T-cb-dmov.CodCta BEGINS "46") AND
+                (T-cb-dmov.CodCta NE "42130101" AND T-cb-dmov.CodCta NE "42130102") THEN DO:
+                IF NOT T-cb-dmov.TpoMov THEN F-IMPORTE = F-IMPORTE * -1.
+                ASSIGN Registro.Importe[11] = Registro.Importe[11] + F-IMPORTE
+                       Registro.FchDoc  = T-cb-dmov.FchDoc
+                       Registro.CodDoc  = T-cb-dmov.CodDoc
+                       Registro.NroDoc  = T-cb-dmov.NroDoc.
+                IF T-cb-dmov.CodDoc = "07" OR T-cb-dmov.CodDoc = "08" THEN
+                   ASSIGN Registro.CodRef  = T-cb-dmov.CodRef
+                          Registro.NroRef  = T-cb-dmov.NroRef.
+                FIND gn-prov WHERE gn-prov.CodCia = pv-codcia AND 
+                     gn-prov.CodPro = T-cb-dmov.CodAux NO-LOCK NO-ERROR.
+                IF AVAILABLE gn-prov THEN 
+                   ASSIGN Registro.Ruc  = gn-prov.Ruc
+                          Registro.Nombre = gn-prov.NomPro.
+                ELSE 
+                   ASSIGN Registro.Ruc    = T-cb-dmov.NroRuc
+                          Registro.Nombre = T-cb-dmov.GloDoc.
+                L-Ubica = YES.
+             END.
+             IF LAST-OF(T-cb-dmov.NroAst) THEN DO:
+             END. 
+        END.
+        PROCESS EVENTS.
+    END.
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI D-Dialog  _DEFAULT-DISABLE
+PROCEDURE disable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     DISABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we clean-up the user-interface by deleting
+               dynamic widgets we have created and/or hide 
+               frames.  This procedure is usually called when
+               we are ready to "clean-up" after running.
+------------------------------------------------------------------------------*/
+  /* Hide all frames. */
+  HIDE FRAME D-Dialog.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI D-Dialog  _DEFAULT-ENABLE
+PROCEDURE enable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     ENABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we display/view/enable the widgets in the
+               user-interface.  In addition, OPEN all queries
+               associated with each FRAME and BROWSE.
+               These statements here are based on the "Other 
+               Settings" section of the widget Property Sheets.
+------------------------------------------------------------------------------*/
+  DISPLAY RADIO-SET-1 CB-Mes F-CodDoc F-Proceso RB-NUMBER-COPIES C-CodMon 
+          RB-BEGIN-PAGE RB-END-PAGE x-Div s-CodOpe 
+      WITH FRAME D-Dialog.
+  ENABLE Btn_OK RADIO-SET-1 B-impresoras CB-Mes Btn_Cancel F-CodDoc 
+         RB-NUMBER-COPIES C-CodMon RB-BEGIN-PAGE RB-END-PAGE x-Div s-CodOpe 
+         RECT-12 RECT-20 RECT-21 RECT-42 RECT-5 RECT-54 
+      WITH FRAME D-Dialog.
+  VIEW FRAME D-Dialog.
+  {&OPEN-BROWSERS-IN-QUERY-D-Dialog}
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato D-Dialog 
+PROCEDURE Formato :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+ P-largo  = 88.
+ P-Config = P-20cpi + P-8lpi.
+
+ DEFINE VAR Titulo1  AS CHAR FORMAT "X(230)" NO-UNDO.
+ DEFINE VAR Titulo2  AS CHAR FORMAT "X(230)" NO-UNDO.
+ DEFINE VAR Titulo3  AS CHAR FORMAT "X(230)" NO-UNDO.
+ DEFINE VAR F-Import LIKE Registro.Importe NO-UNDO.
+ DEFINE VAR x-DesMes AS CHAR NO-UNDO.
+ DEFINE VAR C-Vinen  AS CHAR FORMAT "X(250)" NO-UNDO.
+    
+ RUN bin/_mes.p ( INPUT s-NroMes  , 1, OUTPUT x-DesMes ).     
+     
+ Titulo1 = "R E G I S T R O  D E  C O M P R A S".
+ Titulo2 = "DEL MES DE " + x-DesMes.
+ Titulo3 = "EXPRESADO EN NUEVOS SOLES".
+     
+ /*
+ RUN BIN/_centrar.p ( INPUT Titulo1, 250, OUTPUT Titulo1).
+ RUN BIN/_centrar.p ( INPUT Titulo2, 35, OUTPUT Titulo2).
+ RUN BIN/_centrar.p ( INPUT Titulo3, 35, OUTPUT Titulo3).*/
+    
+ DEFINE FRAME f-cab
+       SPACE(10)
+       Registro.NroAst      COLUMN-LABEL "Numero!Voucher"
+       Registro.FchDoc      COLUMN-LABEL "Fecha de!Emision"
+       Registro.CodDoc      COLUMN-LABEL "Tpo!Doc"
+       Registro.NroDoc      COLUMN-LABEL "  Documento  !Serie Numero"
+       Registro.Ruc         COLUMN-LABEL "Numero!R.U.C."
+       Registro.Nombre      COLUMN-LABEL "Nombre o Razon Social" 
+       Registro.Importe[01] COLUMN-LABEL "Nacionales" 
+       Registro.Importe[02] COLUMN-LABEL "Importadas" 
+       Registro.Importe[03] COLUMN-LABEL "Grab y Nog" FORMAT "->>,>>>,>>9.99"
+       Registro.Importe[04] COLUMN-LABEL "S/Cred.Fis" FORMAT "->>,>>>,>>9.99"
+       Registro.Importe[05] COLUMN-LABEL "No grabada" FORMAT "->>,>>>,>>9.99"
+       Registro.Importe[06] COLUMN-LABEL "I.S.C." 
+       Registro.Importe[07] COLUMN-LABEL "I.G.V." 
+       Registro.Importe[08] COLUMN-LABEL "I.G.V." 
+       Registro.Importe[09] COLUMN-LABEL "I.G.V." 
+       Registro.Importe[10] COLUMN-LABEL "No B.I." 
+       Registro.Importe[11] COLUMN-LABEL "Total"      FORMAT "->>,>>>,>>9.99"
+       Registro.CodRef      COLUMN-LABEL "Tpo!Ref"
+       Registro.NroRef      COLUMN-LABEL " Referencia !Serie Numero"
+       WITH WIDTH 270 NO-BOX NO-LABEL NO-UNDERLINE STREAM-IO DOWN.
+      
+ DEFINE FRAME HeadRep
+         HEADER
+         SKIP
+         {&Prn2} + {&Prn7A} + {&Prn6A} + S-NOMCIA + {&Prn7B} + {&Prn6A} + {&PrnD} + {&Prn4} FORMAT "X(50)"  AT 11 
+         {&Prn3} + {&Prn7A} + {&Prn6A} + Titulo1  + {&Prn7B} + {&Prn6A} + {&PrnD} + {&Prn4} FORMAT "X(50)"  AT 80 
+         "PAGINA : " TO 194 c-Pagina FORMAT "ZZZZZ9" TO 206 SKIP
+         {&Prn3} + {&Prn7A} + {&Prn6A} + S-DIRCIA + {&Prn7B} + {&Prn6A} + {&PrnD} + {&Prn4} FORMAT "X(50)"  AT 11 
+         {&Prn3} + {&Prn7A} + {&Prn6A} + Titulo2 + {&Prn7B} + {&Prn6A} + {&PrnD} + {&Prn4}  FORMAT "X(50)"  AT 80 
+         "FECHA  : " TO 205 TODAY FORMAT "99/99/9999" TO 217 SKIP(1)
+         {&Prn3} + {&Prn7A} + {&Prn6A} + Titulo3  + {&Prn7B} + {&Prn6A} + {&PrnD} + {&Prn4} FORMAT "X(50)" AT 11 SKIP
+         {&PrnD} + {&Prn4} SKIP
+         "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" AT 11 SKIP
+         "                                                                                B.I.Adq.Grab.c/der. Credito  B.I.Adq.Grab.  B.I.Adq.grav.     Valor de                                                           Otros trib. y                                " AT 11 SKIP
+         "  Numero    Fecha de  Tpo   Documento   Numero                                  dest.a operaciones gravadas  cred.dest.ope  s/der. a cred  Adquisiciones     I.S.C.        I.G.V.        I.G.V.        I.G.V.    cargos que no  Importe Total    Referencia   " AT 11 SKIP
+         "  Voucher   Emision   Doc Serie Numero  R.U.C.   Nombre o Razon Social             Nacionales    Importadas  grab y no gra      fiscal      no grabadas                                                          forman la B.I                T/D Serie Numero" AT 11 SKIP
+         "---------- ---------- --- ------------- -------- ------------------------------ ------------- -------------  -------------  -------------  ------------- ------------- ------------- ------------- ------------- -------------  ------------- --- ------------" AT 11 SKIP
+         C-Vinen AT 11 SKIP(1) 
+       /* 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+                   1         2         3         4         5         6         7         8         9         10        11        12        13        14        15        16        17        18        19        20        21        22        23        24        25 */
+         WITH PAGE-TOP WIDTH 270 NO-BOX NO-LABEL NO-UNDERLINE STREAM-IO DOWN.
+         
+ DEFINE FRAME FootRep
+       HEADER
+       "------------- -------------  -------------  -------------  ------------- ------------- ------------- ------------- ------------- -------------  -------------" AT 91 SKIP
+       "    VAN   " TO 90
+       F-Import[01] AT 91
+       F-Import[02] 
+       F-Import[03] FORMAT "->>,>>>,>>9.99"
+       F-Import[04] FORMAT "->>,>>>,>>9.99"
+       F-Import[05] FORMAT "->>,>>>,>>9.99"
+       F-Import[06] 
+       F-Import[07] 
+       F-Import[08] 
+       F-Import[09] 
+       F-Import[10] 
+       F-Import[11] FORMAT "->>,>>>,>>9.99" SKIP
+       "------------- -------------  -------------  -------------  ------------- ------------- ------------- ------------- ------------- -------------  -------------" AT 91 SKIP
+       WITH PAGE-BOTTOM WIDTH 270 NO-BOX NO-LABEL NO-UNDERLINE STREAM-IO DOWN.
+          
+ FOR EACH Registro NO-LOCK WHERE Registro.CodDoc BEGINS F-CodDoc
+     BREAK BY Registro.CodCia 
+     ON ERROR UNDO, LEAVE:
+     VIEW STREAM REPORT FRAME FootRep.
+     {&NEW-PAGE}.
+     VIEW STREAM REPORT FRAME HeadRep.
+     DISPLAY STREAM REPORT  
+             Registro.NroAst      
+             Registro.FchDoc      
+             Registro.CodDoc      
+             Registro.NroDoc      
+             Registro.Ruc         
+             Registro.Nombre      
+             Registro.Importe[01] WHEN Registro.Importe[01] <> 0
+             Registro.Importe[02] WHEN Registro.Importe[02] <> 0
+             Registro.Importe[03] WHEN Registro.Importe[03] <> 0
+             Registro.Importe[04] WHEN Registro.Importe[04] <> 0
+             Registro.Importe[05] WHEN Registro.Importe[05] <> 0
+             Registro.Importe[06] WHEN Registro.Importe[06] <> 0
+             Registro.Importe[07] WHEN Registro.Importe[07] <> 0
+             Registro.Importe[08] WHEN Registro.Importe[08] <> 0
+             Registro.Importe[09] WHEN Registro.Importe[09] <> 0
+             Registro.Importe[10] WHEN Registro.Importe[10] <> 0
+             Registro.Importe[11] WHEN Registro.Importe[11] <> 0
+             Registro.CodRef      
+             Registro.NroRef      
+             WITH FRAME F-CAB. 
+     
+     F-Import[01] = F-Import[01] + Registro.Importe[01].
+     F-Import[02] = F-Import[02] + Registro.Importe[02]. 
+     F-Import[03] = F-Import[03] + Registro.Importe[03]. 
+     F-Import[04] = F-Import[04] + Registro.Importe[04]. 
+     F-Import[05] = F-Import[05] + Registro.Importe[05]. 
+     F-Import[06] = F-Import[06] + Registro.Importe[06]. 
+     F-Import[07] = F-Import[07] + Registro.Importe[07]. 
+     F-Import[08] = F-Import[08] + Registro.Importe[08]. 
+     F-Import[09] = F-Import[09] + Registro.Importe[09]. 
+     F-Import[10] = F-Import[10] + Registro.Importe[10]. 
+     F-Import[11] = F-Import[11] + Registro.Importe[11]. 
+     C-Vinen = FILL(" ",70) + " VIENEN   " +
+               STRING(F-Import[01], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[02], "->,>>>,>>9.99") + "  " + 
+               STRING(F-Import[03], "->,>>>,>>9.99") + "  " + 
+               STRING(F-Import[04], "->,>>>,>>9.99") + "  " + 
+               STRING(F-Import[05], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[06], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[07], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[08], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[09], "->,>>>,>>9.99") + " " + 
+               STRING(F-Import[10], "->,>>>,>>9.99") + "  " + 
+               STRING(F-Import[11], "->,>>>,>>9.99").
+     IF LAST-OF (Registro.CodCia) THEN DO:
+        UNDERLINE STREAM REPORT               
+             Registro.Nombre         Registro.Importe[01] 
+             Registro.Importe[02]    Registro.Importe[03] 
+             Registro.Importe[04]    Registro.Importe[05] 
+             Registro.Importe[06]    Registro.Importe[07] 
+             Registro.Importe[08]    Registro.Importe[09] 
+             Registro.Importe[10]    Registro.Importe[11] WITH FRAME F-CAB. 
+        DISPLAY STREAM REPORT  
+                 "TOTAL POR GENERAL " @ Registro.Nombre    
+                 F-Import[01] @ Registro.Importe[01] 
+                 F-Import[02] @ Registro.Importe[02] 
+                 F-Import[03] @ Registro.Importe[03] 
+                 F-Import[04] @ Registro.Importe[04] 
+                 F-Import[05] @ Registro.Importe[05] 
+                 F-Import[06] @ Registro.Importe[06] 
+                 F-Import[07] @ Registro.Importe[07] 
+                 F-Import[08] @ Registro.Importe[08] 
+                 F-Import[09] @ Registro.Importe[09] 
+                 F-Import[10] @ Registro.Importe[10] 
+                 F-Import[11] @ Registro.Importe[11] WITH FRAME F-CAB.        
+        UNDERLINE STREAM REPORT               
+             Registro.Nombre         Registro.Importe[01] 
+             Registro.Importe[02]    Registro.Importe[03] 
+             Registro.Importe[04]    Registro.Importe[05] 
+             Registro.Importe[06]    Registro.Importe[07] 
+             Registro.Importe[08]    Registro.Importe[09] 
+             Registro.Importe[10]    Registro.Importe[11] WITH FRAME F-CAB. 
+     END.
+ END.
+         
+ PAGE STREAM REPORT.
+ OUTPUT STREAM REPORT CLOSE.
+     
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Imprimir D-Dialog 
+PROCEDURE Imprimir :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  RUN Carga-Compras.
+  IF  I-NroItm = 0 THEN DO:
+      MESSAGE "No existen registros a listar" VIEW-AS ALERT-BOX ERROR.
+      RETURN ERROR.
+  END.
+  
+  RUN Formato.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE NEW-PAGE D-Dialog 
+PROCEDURE NEW-PAGE :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    c-Pagina = c-Pagina + 1.
+    IF c-Pagina > P-pagfin  THEN RETURN ERROR.
+    /* DISPLAY c-Pagina WITH FRAME f-mensaje. */
+    IF c-Pagina > 1 THEN PAGE STREAM report.
+    IF P-pagini = c-Pagina THEN DO:
+        OUTPUT STREAM report CLOSE.
+        IF P-select = 1 THEN DO:
+            OUTPUT STREAM report TO PRINTER NO-MAP NO-CONVERT UNBUFFERED
+                   PAGED PAGE-SIZE 84.
+            PUT STREAM report CONTROL P-reset NULL P-flen NULL P-config NULL.
+        END.
+        ELSE DO:
+            OUTPUT STREAM report TO VALUE ( P-archivo ) NO-MAP NO-CONVERT UNBUFFERED
+                 PAGED PAGE-SIZE 84.
+            IF P-select = 3 THEN
+                PUT STREAM report CONTROL P-reset P-flen P-config.
+        END.
+    END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Procesa-Parametros D-Dialog 
+PROCEDURE Procesa-Parametros :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    /*
+    Variables a usar:
+    output-var-1 como ROWID
+    output-var-2 como CHARACTER
+    output-var-3 como CHARACTER.
+    */
+
+    CASE HANDLE-CAMPO:name:
+        WHEN "" THEN .
+    END CASE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Recoge-Parametros D-Dialog 
+PROCEDURE Recoge-Parametros :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    /*
+    Variables a usar:
+    input-var-1 como CHARACTER
+    input-var-2 como CHARACTER
+    input-var-3 como CHARACTER.
+    */
+
+    CASE HANDLE-CAMPO:name:
+        WHEN "F-CodDoc" THEN ASSIGN input-var-1 = "02".
+        /*
+            ASSIGN
+                input-para-1 = ""
+                input-para-2 = ""
+                input-para-3 = "".
+         */      
+    END CASE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE remvar D-Dialog 
+PROCEDURE remvar :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    DEFINE INPUT  PARAMETER IN-VAR AS CHARACTER.
+    DEFINE OUTPUT PARAMETER OU-VAR AS CHARACTER.
+    DEFINE VARIABLE P-pos AS INTEGER.
+    OU-VAR = IN-VAR.
+    IF P-select = 2 THEN DO:
+        OU-VAR = "".
+        RETURN.
+    END.
+    P-pos =  INDEX(OU-VAR, "[NULL]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     CHR(0) + SUBSTR(OU-VAR, P-pos + 6).
+    P-pos =  INDEX(OU-VAR, "[#B]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     CHR(P-Largo) + SUBSTR(OU-VAR, P-pos + 4).
+    P-pos =  INDEX(OU-VAR, "[#]" ).
+    IF P-pos <> 0
+    THEN OU-VAR = SUBSTR(OU-VAR, 1, P-pos - 1) +
+                     STRING(P-Largo, ">>9" ) + SUBSTR(OU-VAR, P-pos + 3).
+    RETURN.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE send-records D-Dialog  _ADM-SEND-RECORDS
+PROCEDURE send-records :
+/*------------------------------------------------------------------------------
+  Purpose:     Send record ROWID's for all tables used by
+               this file.
+  Parameters:  see template/snd-head.i
+------------------------------------------------------------------------------*/
+
+  /* SEND-RECORDS does nothing because there are no External
+     Tables specified for this SmartDialog, and there are no
+     tables specified in any contained Browse, Query, or Frame. */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Setup-Print D-Dialog 
+PROCEDURE Setup-Print :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    FIND integral.P-Codes WHERE integral.P-Codes.Name = P-name NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE integral.P-Codes
+    THEN DO:
+        MESSAGE "Invalido Tabla de Impresora" SKIP
+                "configurado al Terminal" XTerm
+                VIEW-AS ALERT-BOX ERROR.
+        RETURN ERROR.
+    END.
+    /* Configurando Variables de Impresion */
+    RUN RemVar (INPUT integral.P-Codes.Reset,    OUTPUT P-Reset).
+    RUN RemVar (INPUT integral.P-Codes.Flen,     OUTPUT P-Flen).
+    RUN RemVar (INPUT integral.P-Codes.C6lpi,    OUTPUT P-6lpi).
+    RUN RemVar (INPUT integral.P-Codes.C8lpi,    OUTPUT P-8lpi).
+    RUN RemVar (INPUT integral.P-Codes.C10cpi,   OUTPUT P-10cpi).
+    RUN RemVar (INPUT integral.P-Codes.C12cpi,   OUTPUT P-12cpi).
+    RUN RemVar (INPUT integral.P-Codes.C15cpi,   OUTPUT P-15cpi).
+    RUN RemVar (INPUT integral.P-Codes.C20cpi,   OUTPUT P-20cpi).
+    RUN RemVar (INPUT integral.P-Codes.Landscap, OUTPUT P-Landscap).
+    RUN RemVar (INPUT integral.P-Codes.Portrait, OUTPUT P-Portrait).
+    RUN RemVar (INPUT integral.P-Codes.DobleOn,  OUTPUT P-DobleOn).
+    RUN RemVar (INPUT integral.P-Codes.DobleOff, OUTPUT P-DobleOff).
+    RUN RemVar (INPUT integral.P-Codes.BoldOn,   OUTPUT P-BoldOn).
+    RUN RemVar (INPUT integral.P-Codes.BoldOff,  OUTPUT P-BoldOff).
+    RUN RemVar (INPUT integral.P-Codes.UlineOn,  OUTPUT P-UlineOn).
+    RUN RemVar (INPUT integral.P-Codes.UlineOff, OUTPUT P-UlineOff).
+    RUN RemVar (INPUT integral.P-Codes.ItalOn,   OUTPUT P-ItalOn).
+    RUN RemVar (INPUT integral.P-Codes.ItalOff,  OUTPUT P-ItalOff).
+    RUN RemVar (INPUT integral.P-Codes.SuperOn,  OUTPUT P-SuperOn).
+    RUN RemVar (INPUT integral.P-Codes.SuperOff, OUTPUT P-SuperOff).
+    RUN RemVar (INPUT integral.P-Codes.SubOn,    OUTPUT P-SubOn).
+    RUN RemVar (INPUT integral.P-Codes.SubOff,   OUTPUT P-SubOff).
+    RUN RemVar (INPUT integral.P-Codes.Proptnal, OUTPUT P-Proptnal).
+    RUN RemVar (INPUT integral.P-Codes.Lpi,      OUTPUT P-Lpi).
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE state-changed D-Dialog 
+PROCEDURE state-changed :
+/* -----------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+-------------------------------------------------------------*/
+  DEFINE INPUT PARAMETER p-issuer-hdl AS HANDLE NO-UNDO.
+  DEFINE INPUT PARAMETER p-state AS CHARACTER NO-UNDO.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+

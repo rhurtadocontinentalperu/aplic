@@ -1,0 +1,509 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-guides.p
+    Purpose     : Impresion de Guias de Despacho en su respectivo Almacen
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   : Carlos Quiroz
+    Created     : 24/01/2000
+    Notes       : 
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEFINE INPUT PARAMETER X-ALMDES LIKE CcbDDocu.AlmDes.
+DEFINE INPUT PARAMETER pTitulo AS CHAR.
+DEFINE INPUT PARAMETER pImpresora AS LOG.
+DEFINE OUTPUT PARAMETER pMensaje AS CHAR NO-UNDO.
+
+/* ***************************************** */
+pMensaje = "OK".        /* Valor por defecto */
+/* ***************************************** */
+
+/* pImpresora:
+   YES: Pre-definida en el correlativo
+   NO:  Seleccionar
+*/    
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR CL-codcia  AS INT.
+DEF SHARED VAR s-coddiv  LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF SHARED VAR s-user-id AS CHAR.
+DEF SHARED VAR s-codmov  LIKE Almtmovm.Codmov.
+
+DEF VAR X-EnLetras AS CHAR FORMAT "x(60)" NO-UNDO.
+DEF VAR x-impbrt   AS DECIMAL NO-UNDO.
+DEF VAR C-NomCon   AS CHAR FORMAT "X(40)".
+DEF VAR N-ITEM     AS INTEGER INIT 0 NO-UNDO.
+DEF VAR X-Cheque   AS CHAR NO-UNDO.
+DEF VAR x-frmpgo   AS CHARACTER.
+DEF VAR X-OD       AS INTEGER.
+DEF VAR imptotfac like ccbcdocu.imptot.
+
+DEFINE VARIABLE x-dscto AS DECIMAL.
+
+DEF VAR DES-DIV  AS CHARACTER FORMAT "X(25)".
+DEF VAR DES-DIV2 AS CHARACTER FORMAT "X(25)".
+DEF VAR X-VIP    AS CHAR      FORMAT "X(10)".
+
+DEF VAR x-client LIKE ccbcdocu.nomcli.
+DEF VAR x-vent   LIKE ccbcdocu.codven.
+DEF VAR x-direc  LIKE ccbcdocu.dircli.
+DEF VAR x-nroord LIKE CcbCDocu.NroSal.
+DEF VAR x-aval   LIKE gn-clie.aval1[1].
+DEF VAR x-NroSal AS CHAR NO-UNDO.
+
+/* Buscamos el documento en cuestión */
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+FIND gn-convt WHERE 
+     gn-convt.Codig = CcbCDocu.FmaPgo AND  
+     gn-ConVt.TipVta BEGINS "1" NO-LOCK NO-ERROR.
+IF AVAILABLE gn-convt THEN
+    x-frmpgo = gn-convt.Nombr.
+ELSE 
+    x-frmpgo = "".
+
+FIND GN-DIVI WHERE 
+     GN-DIVI.CodCia = S-CodCia AND  
+     GN-DIVI.CodDiv = ccbcdocu.coddiv  NO-LOCK NO-ERROR.
+IF AVAILABLE GN-DIVI THEN DES-DIV = GN-DIVI.DesDiv.
+ELSE DES-DIV = "".
+des-div2 = des-div.
+
+FIND gn-clie WHERE 
+     gn-clie.codcia = CL-CODCIA AND  
+     gn-clie.codcli = ccbcdocu.codcli NO-LOCK NO-ERROR.
+
+x-aval = gn-clie.aval1[1].
+
+FIND Almcmov WHERE Almcmov.codcia = Ccbcdocu.codcia
+    AND Almcmov.codref = Ccbcdocu.coddoc
+    AND Almcmov.nroref = Ccbcdocu.nrodoc
+    NO-LOCK NO-ERROR.
+IF AVAILABLE Almcmov THEN x-NroSal = STRING(Almcmov.nrodoc).
+
+/*Copia de Documentos*/
+x-client = CcbCDocu.NomCli.
+x-vent   = CcbCDocu.CodVen.
+x-direc  = CcbCDocu.DirCli.
+x-nroord = CcbCDocu.NroSal.
+
+C-NomCon = "".
+
+X-VIP = IF CcbCDocu.NroCard <> "" THEN "V.I.P" ELSE "".
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(ccbcdocu.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = X-EnLetras + (IF ccbcdocu.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+DEFINE TEMP-TABLE Detalle
+    FIELD codcia AS INT
+    FIELD CodAlm LIKE Almmmate.CodAlm
+    FIELD codmat AS CHAR FORMAT 'x(6)'
+    FIELD desmat AS CHAR FORMAT 'x(43)'
+    FIELD desmar AS CHAR FORMAT 'x(10)'
+    FIELD candes AS DEC  FORMAT '>>,>>9.99'
+    FIELD UndBas LIKE Almmmatg.UndBas
+    FIELD undvta AS CHAR FORMAT 'x(8)'
+    FIELD codzona AS CHAR FORMAT 'x(8)'
+    FIELD codubi AS CHAR FORMAT 'x(5)'
+    FIELD ruta   AS INT  FORMAT '>9'
+    FIELD CodKit AS LOGICAL
+    FIELD Glosa  AS CHARACTER
+    FIELD codmat1 AS CHAR FORMAT 'x(6)'
+    FIELD desmat1 AS CHAR FORMAT 'x(45)'
+    FIELD desmar1 AS CHAR FORMAT 'x(10)'
+    FIELD candes1 AS DEC  FORMAT '>>,>>9.99'
+    FIELD UndBas1 LIKE Almmmatg.UndBas
+    FIELD undvta1 AS CHAR FORMAT 'x(8)'
+    FIELD codubi1 AS CHAR FORMAT 'x(5)'
+    FIELD Glosa1  AS CHARACTER.
+
+
+DEF BUFFER b-Detalle FOR Detalle.
+
+DEF VAR s-Task-No AS INTE NO-UNDO.
+
+DEF VAR RB-REPORT-LIBRARY AS CHAR.
+DEF VAR RB-REPORT-NAME AS CHAR INITIAL "Imprime Orden Despacho".
+DEF VAR RB-INCLUDE-RECORDS AS CHAR INITIAL "".
+DEF VAR RB-FILTER AS CHAR INITIAL "".
+DEF VAR RB-OTHER-PARAMETERS AS CHAR INITIAL "".     
+DEF VAR RB-DB-CONNECTION AS CHAR INITIAL "".
+DEF VAR RB-MEMO-FILE AS CHAR INITIAL "".
+DEF VAR RB-PRINT-DESTINATION AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-NAME AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-PORT AS CHAR INITIAL "".
+DEF VAR RB-OUTPUT-FILE AS CHAR INITIAL "".
+DEF VAR RB-NUMBER-COPIES AS INTEGER INITIAL 1.
+DEF VAR RB-BEGIN-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-END-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-TEST-PATTERN AS LOGICAL INITIAL NO.
+DEF VAR RB-WINDOW-TITLE AS CHARACTER INITIAL "".
+DEF VAR RB-DISPLAY-ERRORS AS LOGICAL INITIAL YES.
+DEF VAR RB-DISPLAY-STATUS AS LOGICAL INITIAL YES.
+DEF VAR RB-NO-WAIT AS LOGICAL INITIAL NO.
+
+/* capturamos ruta inicial */
+DEF VAR S-REPORT-LIBRARY AS CHAR.
+GET-KEY-VALUE SECTION "Startup" KEY "BASE" VALUE s-report-library.
+
+RB-REPORT-LIBRARY = s-report-library + "ccb/rbccb.prl".
+
+DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+
+GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+
+ASSIGN cDelimeter = CHR(32).
+IF NOT (cDatabaseName = ? OR cHostName = ? OR cNetworkProto = ? OR cPortNumber = ?) THEN DO:
+    DEFINE VAR x-rb-user AS CHAR.
+    DEFINE VAR x-rb-pass AS CHAR.
+
+    RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+
+    IF x-rb-user = "**NOUSER**" THEN DO:
+        pMensaje = "No se pudieron ubicar las credenciales para" + CHR(10) +
+                "la conexión del REPORTBUILDER" + CHR(10) +
+                "--------------------------------------------" + CHR(10) +
+                "Comunicarse con el área de sistemas - desarrollo".
+        RETURN.
+    END.
+
+   ASSIGN
+       cNewConnString =
+       "-db" + cDelimeter + cDatabaseName + cDelimeter +
+       "-H" + cDelimeter + cHostName + cDelimeter +
+       "-N" + cDelimeter + cNetworkProto + cDelimeter +
+       "-S" + cDelimeter + cPortNumber + cDelimeter +
+       "-U " + x-rb-user  + cDelimeter + cDelimeter +
+       "-P " + x-rb-pass + cDelimeter + cDelimeter.
+
+   IF cOtherParams > '' THEN cNewConnString = cNewConnString + cOtherParams + cDelimeter.
+   RB-DB-CONNECTION = cNewConnString.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.15
+         WIDTH              = 63.29.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+CASE pImpresora:
+    WHEN YES THEN DO:
+        CASE Ccbcdocu.CodPed:
+            WHEN "PED" THEN DO:
+                FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                    AND FacCorre.CodDoc = "O/D" 
+                    AND TRIM(FacCorre.CodAlm) = TRIM(X-ALMDES)
+                    NO-LOCK NO-ERROR.
+            END.
+            WHEN "P/M" THEN DO:
+                FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                    AND FacCorre.CodDiv = Ccbcdocu.CodDiv
+                    AND FacCorre.CodDoc = "O/M" 
+                    AND faccorre.flgest = YES
+                    AND faccorre.PRINTER > ""
+                    NO-LOCK NO-ERROR.
+            END.
+            OTHERWISE DO:
+                FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                    AND FacCorre.CodDoc = "O/D" 
+                    AND TRIM(FacCorre.CodAlm) = TRIM(X-ALMDES)
+                    NO-LOCK NO-ERROR.
+            END.
+        END CASE.
+        /* ******************************************************************* */
+        /* 08/03/2024: Si no está definida la impresora entonces NO se imprime */
+        /* ******************************************************************* */
+        IF NOT AVAILABLE FacCorre OR TRUE <> (FacCorre.PRINTER > '') THEN DO:
+            pMensaje = "NO hay impresora definida".
+            RETURN.
+        END.
+        s-Printer-Name = FacCorre.Printer.
+        /* ******************************************************************* */
+        RUN lib/_port-name-v2.p (INPUT s-printer-name, OUTPUT s-port-name).
+        IF TRUE <> (s-port-name > '') THEN RETURN.
+    END.
+    WHEN NO THEN DO:
+        /* Solicitamos Impresora: OJO s-Printer-Name debe ser una variable GLOBAL */
+        RUN bin/_prnctr.
+        IF s-salida-impresion = 0 THEN RETURN 'OK'.     /* Usuario NO desea imprimir */
+        RUN lib/_port-name-v2.p (s-printer-name, OUTPUT s-port-name).
+    END.
+    OTHERWISE DO:
+        pMensaje = "Parámetro debe ser YES o NO".
+        RETURN.
+    END.
+END CASE.
+
+/* ****************************************************************************** */
+/* Cargamos Temporal */
+/* ****************************************************************************** */
+RUN Carga-Temporal.
+IF NOT CAN-FIND(FIRST Detalle NO-LOCK) THEN DO:
+    pMensaje = "NO hay nada que imprimir".
+    RETURN.
+END.
+/* ****************************************************************************** */
+/* ¿cuantas hojas se van a imprimir? */
+DEF VAR x-Pagina AS INT NO-UNDO.
+DEF VAR x-TotalPaginas AS INT NO-UNDO.
+
+ASSIGN
+    x-Pagina = 0
+    x-TotalPaginas = 0.
+FOR EACH Detalle BREAK BY Detalle.codzona:
+    IF FIRST-OF(Detalle.codzona) THEN x-TotalPaginas = x-TotalPaginas + 1.
+END.
+/* ****************************************************************************** */
+RB-INCLUDE-RECORDS = "O".
+RB-FILTER = " w-report.task-no = " + STRING(s-task-no) +  
+              " AND w-report.llave-c = '" + s-user-id + "'".
+RB-OTHER-PARAMETERS = "s-Titulo = " + pTitulo +
+    "~ns-Paginas = " + STRING(x-TotalPaginas).
+
+
+ASSIGN
+    RB-BEGIN-PAGE = s-pagina-inicial
+    RB-END-PAGE = s-pagina-final
+    RB-PRINTER-NAME = s-port-name       /*s-printer-name*/
+    RB-OUTPUT-FILE = s-print-file
+    RB-NUMBER-COPIES = s-nro-copias.
+
+CASE s-salida-impresion:
+  WHEN 1 THEN RB-PRINT-DESTINATION = "D".     /* Pantalla */
+  WHEN 2 THEN RB-PRINT-DESTINATION = "".      /* Impresora */
+  WHEN 3 THEN RB-PRINT-DESTINATION = "A".     /* Archivo */
+END CASE.
+
+RUN aderb/_prntrb2 (RB-REPORT-LIBRARY,
+                  RB-REPORT-NAME,
+                  RB-DB-CONNECTION,
+                  RB-INCLUDE-RECORDS,
+                  RB-FILTER,
+                  RB-MEMO-FILE,
+                  RB-PRINT-DESTINATION,
+                  RB-PRINTER-NAME,
+                  RB-PRINTER-PORT,
+                  RB-OUTPUT-FILE,
+                  RB-NUMBER-COPIES,
+                  RB-BEGIN-PAGE,
+                  RB-END-PAGE,
+                  RB-TEST-PATTERN,
+                  RB-WINDOW-TITLE,
+                  RB-DISPLAY-ERRORS,
+                  RB-DISPLAY-STATUS,
+                  RB-NO-WAIT,
+                  RB-OTHER-PARAMETERS,  
+                  "").
+
+/* Borar el temporal */
+DEF BUFFER B-w-report FOR w-report.
+DEFINE VAR lRowId AS ROWID.
+
+FOR EACH w-report WHERE w-report.task-no = s-task-no AND w-report.llave-c =  s-user-id NO-LOCK:
+    lRowId = ROWID(w-report).  
+    FIND FIRST b-w-report WHERE ROWID(b-w-report) = lRowid EXCLUSIVE NO-ERROR.   
+    IF AVAILABLE b-w-report THEN DO:
+        DELETE b-w-report.            
+    END.    
+END.
+RELEASE B-w-report.
+
+pMensaje = "OK".    /* Impresión completa */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Temporal) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Temporal Procedure 
+PROCEDURE Carga-Temporal :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE VAR lKit     AS LOGICAL     NO-UNDO.
+
+FOR EACH Ccbddocu OF Ccbcdocu NO-LOCK,
+    FIRST Almmmatg OF Ccbddocu NO-LOCK,
+    FIRST Almmmate NO-LOCK WHERE Almmmate.codcia = Ccbddocu.codcia
+    AND Almmmate.codmat = Ccbddocu.codmat
+    AND Almmmate.codalm = Ccbddocu.almdes:
+    CREATE Detalle.
+    ASSIGN
+        Detalle.codcia = s-codcia
+        Detalle.codalm = Ccbddocu.almdes
+        Detalle.codmat = Almmmatg.codmat
+        Detalle.desmat = Almmmatg.desmat
+        Detalle.desmar = Almmmatg.desmar
+        Detalle.candes = Ccbddocu.candes * Ccbddocu.factor      /* En Unidades Base */
+        Detalle.undvta = Ccbddocu.undvta
+        Detalle.undbas = Almmmatg.undbas
+        Detalle.codubi = Almmmate.codubi.
+    FIND Almtubic OF Almmmate NO-LOCK NO-ERROR.
+    IF AVAILABLE Almtubic THEN Detalle.codzona = Almtubic.codzona.
+    /* RHC 12/01/2012 Luis Nerio solicita se haga la impresión corrida */
+    /* 08/02/2012 También Elizabeth Urbano */
+    CASE Almmmate.codalm:
+        WHEN "04" OR WHEN "05" OR WHEN "31" THEN DO:
+            Detalle.codzona = 'G-0'.
+        END.
+    END CASE.
+END.
+/*Buscando Kits*/
+FOR EACH Detalle:
+    lKit = NO.
+    IF lKit THEN DELETE Detalle.
+END.
+
+DEF VAR x-Ruta AS INT.
+FOR EACH Detalle BY Detalle.codubi:
+    x-Ruta = x-Ruta + 1.
+    Detalle.Ruta = x-Ruta.
+END.
+
+/* CARGAMOS LO MISMO PERO POR DESCRIPCION */
+x-Ruta = 1.
+FOR EACH Detalle BREAK BY Detalle.codcia BY Detalle.DesMat:
+    FIND b-Detalle WHERE b-Detalle.Ruta = x-Ruta.
+    ASSIGN
+        b-Detalle.codmat1 = Detalle.codmat
+        b-Detalle.desmat1 = Detalle.desmat
+        b-Detalle.desmar1 = Detalle.desmar
+        b-Detalle.undbas1 = Detalle.undbas
+        b-Detalle.codubi1 = Detalle.codubi
+        b-Detalle.candes1 = Detalle.candes.
+    x-Ruta = x-Ruta + 1.
+END.
+
+
+/* Cargamos el archivo de impresión */
+s-Task-No = 0.
+n-Item = 0.
+REPEAT:
+    s-task-no = RANDOM(1,999999).
+    IF NOT CAN-FIND(FIRST w-report WHERE w-report.task-no = s-task-no AND
+                    w-report.llave-c = s-user-id NO-LOCK)
+        THEN LEAVE.
+END.
+FOR EACH Detalle NO-LOCK BY Detalle.codcia BY Detalle.CodZona BY Detalle.CodUbi:
+    n-Item = n-Item + 1.
+    /* LLAVE */
+    CREATE w-report.
+    ASSIGN
+        w-report.task-no = s-task-no
+        w-report.llave-c = s-user-id
+        w-report.Campo-C[1] = Ccbcdocu.coddoc
+        w-report.Campo-C[2] = Ccbcdocu.nrodoc.
+    /* QUIEBRE */
+    ASSIGN
+        w-report.Campo-C[30] = Detalle.CodZona.
+    /* DETALLE */
+    ASSIGN
+        w-report.Llave-I = n-Item
+        w-report.Campo-C[3] = Detalle.codmat
+        w-report.Campo-C[4] = Detalle.desmat
+        w-report.Campo-C[5] = Detalle.desmar
+        w-report.Campo-F[1] = Detalle.candes
+        w-report.Campo-C[6] = Detalle.undbas
+        w-report.Campo-C[7] = Detalle.codubi
+        .
+    /* DATOS DE CABECERA */
+    ASSIGN
+        w-report.Campo-C[10] = pTitulo
+        w-report.Campo-C[11] = Des-Div
+        w-report.Campo-C[12] = Ccbcdocu.codped
+        w-report.Campo-C[13] = Ccbcdocu.nroped
+        w-report.Campo-C[14] = Ccbcdocu.Libre_c01
+        w-report.Campo-C[15] = Ccbcdocu.Libre_c02
+        w-report.Campo-C[16] = x-NroSal
+        w-report.Campo-C[17] = CcbCDocu.NomCli
+        w-report.Campo-C[18] = CcbCDocu.CodVen
+        w-report.Campo-C[19] = CcbCDocu.DirCli
+        w-report.Campo-C[20] = X-ALMDES
+        w-report.Campo-C[21] = CcbCDocu.Glosa
+        .
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

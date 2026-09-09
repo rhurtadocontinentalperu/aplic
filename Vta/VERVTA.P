@@ -1,0 +1,4 @@
+for each faccpedi : /*where coddoc = "PED" and  nroped = "001000007":*/
+/*nomcli = "".       */
+display faccpedi.
+end.

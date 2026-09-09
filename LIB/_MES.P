@@ -1,0 +1,48 @@
+/*
+-----
+mes.p
+-----
+    Entrega el string del mes.
+Formato:
+     RUN _mes.p (INPUT <INTEGER1>, <INTEGER2>, OUTPUT <VARIABLE>)
+ 
+     donde:
+     INTEGER1  : Numero del mes          1 Enero, 2 Febrero, ...., 12 Diciembre
+     INTEGER2  : Presentacion            1 Mayusculas, 2 Minusculas, 3 Propio.
+            
+     VARIABLE  : Variable de tipo CHARACTER donde graba el valor de retorno.        
+
+
+Observaciones :
+
+     MONTH(<var-date>)  -> Entrega el numero del mes de una variable fecha.
+*/
+
+
+DEFINE INPUT  PARAMETER NumMes   AS INTEGER.
+DEFINE INPUT  PARAMETER TpoPre   AS INTEGER.
+DEFINE OUTPUT PARAMETER MesTexto AS CHARACTER.
+
+
+CASE NumMes:
+    WHEN 0  THEN MesTexto = "apertura".
+    WHEN 1  THEN MesTexto = "enero".
+    WHEN 2  THEN MesTexto = "febrero".
+    WHEN 3  THEN MesTexto = "marzo".
+    WHEN 4  THEN MesTexto = "abril".
+    WHEN 5  THEN MesTexto = "mayo".
+    WHEN 6  THEN MesTexto = "junio".
+    WHEN 7  THEN MesTexto = "julio".
+    WHEN 8  THEN MesTexto = "agosto".
+    WHEN 9  THEN MesTexto = "setiembre".
+    WHEN 10 THEN MesTexto = "octubre".
+    WHEN 11 THEN MesTexto = "noviembre".
+    WHEN 12 THEN MesTexto = "diciembre".
+    WHEN 13 THEN MesTexto = "cierre".
+    OTHERWISE    MesTexto = " ".
+END CASE.
+
+CASE TpoPre:
+    WHEN 1 THEN MesTexto = CAPS(MesTexto).
+    WHEN 3 THEN MesTexto = CAPS( SUBSTRING(MesTexto, 1, 1) ) + SUBSTRING(MesTexto, 2).
+END CASE.

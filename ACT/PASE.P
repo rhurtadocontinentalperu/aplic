@@ -1,0 +1,65 @@
+/* PASA LA INFORMACION DE ACTIVO A BASE DE DATOS integral */
+
+DELETE FROM AC-PARTI.
+
+FOR EACH ACTIVO :
+    CREATE AC-PARTI.
+
+    AC-PARTI.Ccosto = "".
+    AC-PARTI.CodCia = 10.
+    AC-PARTI.Codcta = ACTIVO.CODCTA.
+    AC-PARTI.CodDiv = "00000".
+    AC-PARTI.CodFam = ACTIVO.CODFAM.
+    AC-PARTI.CodMov = "ADIC".
+    AC-PARTI.Codope = "".
+    AC-PARTI.CodPar = ACTIVO.CODI97. 
+    AC-PARTI.CodPro = "".
+    AC-PARTI.CodUbc = ACTIVO.NUEUBI.
+    AC-PARTI.DepAcuMn1  = ACTIVO.IMPSOL.
+    AC-PARTI.DepAcuMn2  = ACTIVO.IMPDOL. 
+    AC-PARTI.DepBaja  = 0 .
+    AC-PARTI.DesPar   = ACTIVO.DESMAT.
+    AC-PARTI.DivAct   = "00000".
+    AC-PARTI.FchCese  = TODAY + (ACTIVO.EXPECTA * 365).
+    AC-PARTI.FchComp  = TODAY.
+    AC-PARTI.FchDepr  = TODAY.
+    AC-PARTI.FchIngr  = TODAY.
+    AC-PARTI.FlgEst   = "P".
+    AC-PARTI.Marca    = ACTIVO.MARCA. 
+    AC-PARTI.MesCon   = 1.
+    AC-PARTI.Modelo   = ACTIVO.MODELO. 
+    AC-PARTI.MonCmp   = 1.
+    AC-PARTI.NroAst   = "".
+    AC-PARTI.NroFacCmp  = "".
+    AC-PARTI.Observaciones  = ACTIVO.OBSERVA. 
+    AC-PARTI.PerCon = 1999.
+    AC-PARTI.Periodo = 1999.
+    AC-PARTI.PorDep = 0.
+    AC-PARTI.Reponsable = "". 
+    AC-PARTI.Serie  = ACTIVO.SERIE. 
+    AC-PARTI.TpoCal = 1.
+    AC-PARTI.UbiAct = ACTIVO.NUEUBI. 
+    AC-PARTI.ubicacion = ACTIVO.DESUBI.  
+    AC-PARTI.ValActMn1 = ACTIVO.IMPSOL. 
+    AC-PARTI.ValActMn2 = ACTIVO.IMPDOL. 
+    AC-PARTI.ValAjusMn1 = ACTIVO.IMPSOL. 
+    AC-PARTI.ValBaja   = 0.
+    AC-PARTI.ValCmpMn1  = ACTIVO.IMPSOL. 
+    AC-PARTI.ValCmpMn2  = ACTIVO.IMPDOL. 
+    AC-PARTI.ValDepAjus = 0.
+  
+END.
+
+
+
+/*
+ACTIVO.CODMAT 
+ACTIVO.CODPR1 
+ACTIVO.DESUSO 
+ACTIVO.ESTADO 
+ACTIVO.EXPECTA 
+ACTIVO.INDICADOR 
+ACTIVO.RECORD 
+ACTIVO.SUBALM 
+ACTIVO.VIDAUT
+*/

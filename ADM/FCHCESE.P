@@ -1,0 +1,20 @@
+define input parameter  p-fecha-1      as date.
+define input parameter  p-dep          as decimal.
+define OUTPUT parameter  p-fecha-2      as date.
+
+def var n-anos as integer.
+def var n-dias as integer.
+
+p-fecha-2 = ?.
+
+if p-fecha-1 = ? then return "ERROR".
+if p-dep     = 0 then return "ERROR".
+
+n-anos = truncate ( 100 / p-dep , 0 ).
+n-dias = round(  ( 100 / p-dep - n-anos  ) * 365  , 0 ).
+
+p-fecha-2 = date ( month (p-fecha-1 ) ,
+                   day   (p-fecha-1 ) ,
+                   year  (p-fecha-1 ) + n-anos ) +
+            n-dias - 1 .
+                    

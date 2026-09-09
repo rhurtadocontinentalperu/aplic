@@ -1,0 +1,13 @@
+
+To install the certificate equifax_secure_certificate_authority.cer -
+
+1. Run proenv
+
+2. In the command line type: certutil -import "<the certificate file full path>"
+
+
+Note: 
+
+I have had problems using certutil and a certificate file path with spaces. I recommend using a file path with no spaces.
+
+Depending on the OS you may need to restart your machine.

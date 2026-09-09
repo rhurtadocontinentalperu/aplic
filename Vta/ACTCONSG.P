@@ -1,0 +1,121 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR S-USER-ID AS CHAR.
+DEFINE BUFFER B-DMOV FOR AlmDMov.
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DO ON ERROR UNDO, RETURN "ADM-ERROR":
+   /* CREAMOS EL INGRESO EN ALMACEN DE CONSIGNACION */
+   CREATE Almcmov.
+   ASSIGN Almcmov.CodCia = CcbCDocu.CodCia
+          Almcmov.CodAlm = CcbCDocu.CodCob   /* ALMACEN DE CONSIGNACION */ 
+          Almcmov.TipMov = "I"
+          Almcmov.CodMov = CcbCDocu.CodMov
+          Almcmov.NroSer = 0
+          Almcmov.NroDoc = INTEGER(CcbCDocu.NroSal)
+          Almcmov.FchDoc = CcbCDocu.FchDoc
+          Almcmov.codmon = CcbCDocu.CodMon
+          Almcmov.TpoCmb = CcbCDocu.TpoCmb
+          Almcmov.HorSal = STRING(TIME, "HH:MM:SS")
+          Almcmov.CodVen = ccbcdocu.CodVen
+          Almcmov.CodTra = CcbCDocu.CodAge 
+          Almcmov.Observ = CcbCDocu.Glosa
+          Almcmov.CodCli = ccbcdocu.CodCli
+          Almcmov.Nomref = ccbcdocu.NomCli
+          Almcmov.CodRef = ccbcdocu.CodDoc
+          Almcmov.NroRef = ccbcdocu.nrodoc
+          Almcmov.NroRf1 = CcbCDocu.NroPed
+          Almcmov.NroRf2 = SUBSTRING(ccbcdocu.coddoc,1,1) + ccbcdocu.nrodoc
+          Almcmov.usuario= s-user-id.
+   FOR EACH Almdmov EXCLUSIVE-LOCK WHERE 
+            Almdmov.CodCia = CcbCDocu.CodCia AND
+            Almdmov.CodAlm = CcbCDocu.CodAlm AND
+            Almdmov.TipMov = "S"             AND
+            Almdmov.CodMov = CcbCDocu.CodMov AND
+            Almdmov.NroSer = 0               AND
+            Almdmov.NroDoc = INTEGER(CcbCDocu.NroSal)
+            ON ERROR UNDO, RETURN "ADM-ERROR":
+       CREATE B-DMOV.
+       RAW-TRANSFER AlmDMov TO B-DMOV.
+       ASSIGN B-DMOV.CodAlm = Almcmov.CodAlm 
+              B-DMOV.TipMov = Almcmov.TipMov 
+              B-DMOV.CodMov = Almcmov.CodMov 
+              B-DMOV.NroSer = Almcmov.NroSer
+              B-DMOV.NroDoc = Almcmov.NroDoc.
+       RUN ALM\ALMACSTK (ROWID(B-DMOV)).
+       IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+       /* RHC 05.04.04 ACTIVAMOS KARDEX POR ALMACEN */
+       RUN alm/almacpr1 (ROWID(B-DMOV), 'U').
+       IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+   END.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

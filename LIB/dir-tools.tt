@@ -1,0 +1,65 @@
+/*--------------------------------------------------------------------------
+Program     : utl/filesys/dir-tools.tt
+
+Description : Temp tables used by dir.p
+
+PARAMETERS  :
+
+--------Revision History---------------------------------------------------
+
+	Last change: TSI 12/9/2004 12:50:46 PM
+--------------------------------------------------------------------------*/
+
+&IF DEFINED(utl-filesys-dir-tools-tt__) = 0 &THEN
+&GLOBAL-DEFINE utl-filesys-dir-tools-tt__
+
+    /* Things that can be compiled  */
+
+&GLOBAL-DEFINE dir-file-compilable-extensions   "p,w"
+
+    /* TT to return                 */
+
+DEFINE TEMP-TABLE tt-dir-file NO-UNDO
+
+    FIELD base-name             AS CHARACTER    COLUMN-LABEL "Base"     FORMAT "X(15)"  /* NAme of this dir / file                  */
+
+    FIELD file-extension        AS CHARACTER    COLUMN-LABEL "Ext"      FORMAT "X(5)"   /* File extension                           */
+
+    FIELD absolute-file-path    AS CHARACTER    COLUMN-LABEL "Abs Path" FORMAT "X(40)"  /* Absolute path to this dir / file         */
+    FIELD relative-file-path    AS CHARACTER    COLUMN-LABEL "Rel Path" FORMAT "X(40)"  /* Relative path to this dir / file         */
+
+    FIELD attr-list             AS CHARACTER    COLUMN-LABEL "Attr"     FORMAT "X(10)"  /* Attribute list                           */
+
+    FIELD is-directory          AS LOGICAL      COLUMN-LABEL "Dir"      FORMAT "Yes/ "  /* is this a directory?                     */
+    FIELD is-file               AS LOGICAL      COLUMN-LABEL "File"     FORMAT "Yes/ "  /* Is this  a file?                         */
+
+    FIELD is-compilable         AS LOGICAL      COLUMN-LABEL "Cmp"      FORMAT "Yes/ "  /* Can this be compiled?                    */
+
+    FIELD is-compile-error      AS LOGICAL      COLUMN-LABEL "Cmp!Err"  FORMAT "Yes/ "  /* Compile attempt got an warning           */
+    FIELD is-compile-warning    AS LOGICAL      COLUMN-LABEL "Cmp!Wrn"  FORMAT "Yes/ "  /* Compile attempt got an error             */
+
+    FIELD is-dir-processed      AS LOGICAL      COLUMN-LABEL "Dir!Prc"  FORMAT "Yes/ "  /* Has this directory been processed?       */
+                                                                                        /* Used for getting full directory trees    */
+
+    FIELD is-deleted            AS LOGICAL      COLUMN-LABEL "Del"      FORMAT "Yes/ "  /* Has this file been deleted?              */
+    FIELD is-copied             AS LOGICAL      COLUMN-LABEL "Cpy"      FORMAT "Yes/ "  /* Has this file been copied?               */
+
+    FIELD sort-order            AS CHARACTER    COLUMN-LABEL "Sort"                     /* To help sort things after compiling      */
+
+    INDEX i-bn                  base-name
+
+    INDEX i-afp     IS PRIMARY absolute-file-path
+
+    INDEX i-rfp                 relative-file-path
+
+    INDEX i-dir                 is-directory
+
+    INDEX i-files               is-file
+
+    INDEX i-is-dp               is-dir-processed
+
+    INDEX i-st-ord              sort-order  DESCENDING
+                                base-name
+    .
+
+&ENDIF

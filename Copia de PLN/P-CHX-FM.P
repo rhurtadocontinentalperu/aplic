@@ -1,0 +1,147 @@
+/* Genera interpretaciones progress */            
+
+    DEFINE INPUT  PARAMETER TEXT-DEFI      AS CHARACTER NO-UNDO.
+    DEFINE INPUT  PARAMETER TEXT-PROC      AS CHARACTER NO-UNDO.
+    DEFINE INPUT  PARAMETER CODI-PROC      AS INTEGER   NO-UNDO.
+    DEFINE INPUT  PARAMETER TIPO-FML       AS CHARACTER NO-UNDO.
+    DEFINE OUTPUT PARAMETER TEXT-PROGRESS  AS CHARACTER NO-UNDO.
+    DEFINE OUTPUT PARAMETER ERROR-MSG      AS CHARACTER NO-UNDO.
+    
+    DEFINE VARIABLE         ERROR-NUM      AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE         OK AS LOGICAL NO-UNDO.
+    DEFINE VARIABLE         CIERRE-BUCLE AS INTEGER NO-UNDO.
+
+    DEFINE VARIABLE SEC-DEFINE AS CHARACTER NO-UNDO.
+
+    DEFINE VARIABLE PRE-ASG    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE CHR-IN     AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE NUM-VAR    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE SEL-VAR    AS CHARACTER EXTENT 3 NO-UNDO.
+    DEFINE VARIABLE WRD-ASSIGN AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE Tipo       AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE i          AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE y          AS INTEGER   NO-UNDO.    
+    DEFINE VARIABLE LEN-TEXT   AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE TEMP-FILE  AS CHARACTER NO-UNDO.
+
+    OK = SESSION:SET-WAIT-STATE("GENERAL").
+
+    ASSIGN Tipo      = 0
+           TEXT-PROGRESS  = ""
+           ERROR-NUM = 0
+           LEN-TEXT  = LENGTH(Text-PROC)
+           CHR-IN    = "".
+
+
+CIERRE-BUCLE = 0.
+DO i = 1 TO LEN-TEXT:
+        
+    /* TRADUCCIONES */
+    IF Tipo = 0
+    THEN DO:                  
+        IF SUBSTR( TEXT-PROC, I, 23) = "NO INSCRITO EN UNA AFP:"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "IF NOT AVAILABLE integral.PL-AFP THEN DO:"
+                    I = I + 23
+                    CIERRE-BUCLE = CIERRE-BUCLE + 1.
+
+
+        IF SUBSTR( TEXT-PROC, I, 20) = "INSCRITO EN UNA AFP:"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "IF AVAILABLE integral.PL-AFP THEN DO:"
+                    I = I + 20
+                    CIERRE-BUCLE = CIERRE-BUCLE + 1.
+                    
+        IF SUBSTR( TEXT-PROC, I, 8) = "VARIABLE"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "DEFINE VARIABLE"
+                    I = I + 8.
+        
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO NUMERO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS DECIMAL NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO LOGICO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS LOGICAL NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO ENTERO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS INTEGER NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 13) = "COMO CARACTER"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS CHARACTER NO-UNDO"
+                    I = I + 13.
+
+        IF SUBSTR( TEXT-PROC, I, 10) = "COMO FECHA"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS DATE NO-UNDO"
+                    I = I + 10.
+    END.
+      
+    /* ************ inicio de macros ************** */        
+    CHR-IN = SUBSTR(Text-PROC, i, 1).
+        
+    /*   Macros */
+    IF Tipo = 0  AND  INDEX( "^$" , CHR-IN ) > 0
+    THEN ASSIGN Tipo = 1
+                WRD-ASSIGN = "".
+
+    IF Tipo > 0 AND INDEX( "-^0123456789()$," , CHR-IN ) > 0 
+    THEN WRD-ASSIGN = WRD-ASSIGN + CHR-IN.
+            
+    IF Tipo > 0 AND INDEX( "-^0123456789()$," , CHR-IN ) = 0 
+    THEN DO:
+        NUM-VAR = LOOKUP( SEL-VAR[Tipo], WRD-ASSIGN, ";").
+        IF NUM-VAR = 0
+        THEN DO:
+             NUM-VAR = NUM-ENTRIES( SEL-VAR[Tipo] ) + 1.
+             IF SEL-VAR[Tipo] = ""
+             THEN SEL-VAR[Tipo] = WRD-ASSIGN.
+             ELSE SEL-VAR[Tipo] = SEL-VAR[Tipo] + ";" + WRD-ASSIGN.
+        END.
+        
+        TEXT-PROGRESS = TEXT-PROGRESS + "VAL-VAR" + "[" + STRING( NUM-VAR ) + "]".
+        Tipo     = 0.
+            
+    END.            
+    
+    /* ********** */
+    
+    IF Tipo = 0
+    THEN TEXT-PROGRESS   = TEXT-PROGRESS + CHR-IN.
+END.    
+
+                                                                                                                                          
+DO i = 1 TO 3:
+    IF SEL-VAR[ i ] <> "" 
+    THEN TEXT-PROGRESS = 
+     "RUN PLN/P-CALC-S.R(" + CHR(10) +
+     "   integral.PL-FLG-MES.Codcia," + CHR(10) +
+     "   integral.PL-FLG-MES.PERIODO," + CHR(10) +
+     "   integral.PL-FLG-MES.NroMes," + CHR(10) +
+     "   integral.PL-FLG-MES.codpln," + CHR(10) +
+     "   s-codcal," + CHR(10) +
+     "   integral.PL-FLG-MES.codper," +  CHR(10) + 
+     "   " + CHR(34) + SEL-VAR[ i ] + CHR(34) + " )." + CHR(10) + 
+     TEXT-PROGRESS.
+END.
+
+DO I = 1 TO CIERRE-BUCLE:
+    TEXT-PROGRESS = TEXT-PROGRESS + CHR(10) + "END.".        
+END.
+
+/* Compilando para verificar errores */
+TEMP-FILE = SESSION:TEMP-DIRECTORY + "Errpln.p".
+RUN PLN/P-CHK-DF.P( 1, 1, OUTPUT SEC-DEFINE ).
+       
+OUTPUT TO VALUE( TEMP-FILE ) NO-MAP NO-CONVERT.
+PUT UNFORMATTED SEC-DEFINE. 
+PUT UNFORMATTED TEXT-DEFI.
+PUT UNFORMATTED TEXT-PROGRESS.
+OUTPUT CLOSE.
+
+COMPILE VALUE( TEMP-FILE) NO-ERROR.
+IF COMPILER:ERROR
+THEN ASSIGN ERROR-NUM = ERROR-STATUS:NUM-MESSAGES 
+            ERROR-MSG = ERROR-STATUS:GET-MESSAGE( ERROR-NUM ).
+
+
+OK = SESSION:SET-WAIT-STATE("").
+RETURN.

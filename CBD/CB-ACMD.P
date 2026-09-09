@@ -1,0 +1,68 @@
+/* Acumulado Contable - Actualiza lo que esta en el record Buffers */
+/*RMT : LOGICA
+        - Mayorizo por División a nivel de cuenta de
+          movimiento.
+        - Mayorizo por cuenta todos los niveles
+  WRC :     
+  ACTUALIZACION : Mayorizo por cuenta de Ultimo nivel y cuenta contable
+*/
+
+DEFINE INPUT PARAMETER RegAct    AS RECID.
+DEFINE INPUT PARAMETER Suma      AS LOGICAL.
+DEFINE INPUT PARAMETER ActCtaCte AS LOGICAL.
+
+DEFINE VARIABLE x-codcta LIKE cb-dmov.CodCta.
+DEFINE VARIABLE cb-codcia LIKE cb-dmov.CodCia.
+DEFINE VARIABLE x-coddiv LIKE cb-dmov.CodDiv.
+DEFINE SHARED VARIABLE cb-niveles AS CHARACTER .
+DEFINE VARIABLE i             AS INTEGER.
+DEFINE VARIABLE nivel         AS INTEGER.
+DEFINE VARIABLE SIGNO         AS INTEGER.
+DEFINE VARIABLE X-MonCta      AS INTEGER.
+
+IF Suma THEN Signo =  1.
+        ELSE Signo = -1.
+FIND cb-dmov  WHERE RECID(cb-dmov) = RegAct NO-LOCK.
+
+FIND Empresas WHERE Empresas.CodCia = cb-dmov.codcia NO-LOCK.
+
+IF NOT Empresas.Campo-CodCbd THEN cb-codcia = cb-dmov.CodCia.
+x-MonCta = 0.
+FIND cb-ctas WHERE cb-ctas.CODCIA = cb-codcia AND
+                   cb-ctas.CODCTA = cb-dmov.CODCTA
+                   NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE cb-Ctas THEN RETURN.
+                   
+x-MonCta = cb-ctas.CodMon.
+x-codcta = cb-dmov.CodCta.
+x-coddiv = cb-dmov.CodDiv.
+RUN ACTUALIZA.
+
+RETURN.
+
+PROCEDURE ACTUALIZA.
+    FIND cb-acmd WHERE cb-acmd.CodCia  = cb-dmov.CodCia
+                   AND cb-acmd.Periodo = cb-dmov.Periodo
+                   AND cb-acmd.CodCta  = x-CodCta
+                   AND cb-acmd.CodDiv  = x-CodDiv NO-ERROR.
+    IF NOT AVAILABLE cb-acmd THEN DO:
+       IF NOT Suma THEN RETURN.
+       CREATE cb-acmd.
+       ASSIGN cb-acmd.CodCia  = cb-dmov.CodCia
+              cb-acmd.Periodo = cb-dmov.Periodo
+              cb-acmd.CodDiv  = x-CodDiv
+              cb-acmd.CodCta  = x-CodCta.
+    END.
+    IF NOT cb-dmov.TpoMov THEN ASSIGN
+       cb-acmd.DbeMn1[ cb-dmov.NroMes + 1 ] =
+       cb-acmd.DbeMn1[ cb-dmov.NroMes + 1 ] + Signo * cb-dmov.ImpMn1
+       cb-acmd.DbeMn2[ cb-dmov.NroMes + 1 ] =
+       cb-acmd.DbeMn2[ cb-dmov.NroMes + 1 ] + Signo * cb-dmov.ImpMn2.
+    ELSE ASSIGN
+       cb-acmd.HbeMn1[ cb-dmov.NroMes + 1 ] =
+       cb-acmd.HbeMn1[ cb-dmov.NroMes + 1 ] + Signo * cb-dmov.ImpMn1
+       cb-acmd.HbeMn2[ cb-dmov.NroMes + 1 ] =
+       cb-acmd.HbeMn2[ cb-dmov.NroMes + 1 ] + Signo * cb-dmov.ImpMn2.
+       RELEASE cb-acmd.
+END PROCEDURE.

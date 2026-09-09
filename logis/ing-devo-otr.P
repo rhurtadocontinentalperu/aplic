@@ -1,0 +1,221 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.    /* La OTR (Faccpedi) */
+DEFINE OUTPUT PARAMETER pMensaje AS CHAR NO-UNDO.
+
+DEFINE SHARED VAR s-user-id AS CHAR.
+
+DEFINE VAR s-codcia AS INT.
+DEFINE VAR s-coddiv AS CHAR.
+DEFINE VAR s-codalm AS CHAR.
+DEFINE VAR s-codmov AS INT.
+DEFINE VAR s-NroSer AS INT.
+
+DEFINE VARIABLE I-NROSER       AS INTEGER NO-UNDO.
+DEFINE VARIABLE I-NRODOC       AS INTEGER NO-UNDO.
+DEFINE VARIABLE s-NroDoc AS INT64 NO-UNDO.
+
+FIND Faccpedi WHERE ROWID(Faccpedi) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE Faccpedi THEN RETURN "OK".
+ASSIGN
+    s-codcia = Faccpedi.codcia
+    s-coddiv = Faccpedi.coddiv
+    s-codalm = Faccpedi.codalm
+    s-codmov = 30               /* Devolución de Cliente Interno */
+    s-NroSer = 0
+    pMensaje = ''.
+IF NOT CAN-FIND(FIRST Almtdocm WHERE Almtdocm.CodCia = s-codcia AND
+                Almtdocm.CodAlm = s-codalm AND
+                Almtdocm.TipMov = "I" AND
+                Almtdocm.CodMov = s-codmov NO-LOCK)
+    THEN DO:
+    pMensaje = 'Correlativo I-' + STRING(s-codmov,'99') + ' NO configurado en el almacén ' + s-codalm.
+    RETURN 'ADM-ERROR'.
+END.
+FIND FacCfgGn WHERE FacCfgGn.CodCia = S-CODCIA NO-LOCK NO-ERROR.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.46
+         WIDTH              = 41.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DEF VAR i AS INTEGER INITIAL 1 NO-UNDO.
+DEF VAR R-ROWID AS ROWID NO-UNDO.
+
+PRINCIPAL:
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR" ON STOP UNDO, RETURN 'ADM-ERROR':
+    {lib/lock-genericov3.i ~
+        &Tabla="Almacen" ~
+        &Condicion="Almacen.codcia = s-codcia AND Almacen.codalm = s-codalm" ~
+        &Bloqueo="EXCLUSIVE-LOCK" ~
+        &Accion="RETRY" ~
+        &Mensaje="NO" ~
+        &txtMensaje="pMensaje"
+        &TipoError="UNDO, RETURN 'ADM-ERROR'" }
+    s-NroDoc = Almacen.CorrIng.
+    REPEAT:
+        IF NOT CAN-FIND(FIRST Almcmov WHERE Almcmov.codcia = s-codcia AND
+                        Almcmov.codalm = s-codalm AND
+                        Almcmov.tipmov = "I" AND
+                        Almcmov.codmov = s-codmov AND
+                        Almcmov.nroser = s-nroser AND
+                        Almcmov.nrodoc = s-NroDoc NO-LOCK)
+            THEN LEAVE.
+        s-NroDoc = s-NroDoc + 1.
+    END.
+    /* CABECERA */
+    CREATE almcmov.
+    ASSIGN 
+        Almcmov.CodCia = s-CodCia 
+        Almcmov.CodAlm = s-CodAlm
+        Almcmov.TipMov = "I"
+        Almcmov.CodMov = s-CodMov
+        Almcmov.NroSer = s-NroSer
+        Almcmov.NroDoc = s-NroDoc
+        Almcmov.CodRef = Faccpedi.CodDoc
+        Almcmov.NroRef = Faccpedi.NroPed
+        Almcmov.FchDoc = TODAY
+        Almcmov.HorSal = STRING(TIME, "HH:MM:SS")
+        Almcmov.usuario= s-user-id
+        Almcmov.HorRcp = STRING(TIME,"HH:MM:SS")
+        NO-ERROR.
+    IF ERROR-STATUS:ERROR THEN DO:
+        RUN show-errors.
+        UNDO PRINCIPAL, RETURN "ADM-ERROR".
+    END.
+    ASSIGN 
+        Almacen.CorrIng = s-NroDoc + 1.
+    /* DETALLE */
+    FOR EACH Facdpedi OF Faccpedi NO-LOCK BY Facdpedi.NroItm:
+        CREATE Almdmov.
+        ASSIGN 
+            Almdmov.CodCia = Almcmov.CodCia
+            Almdmov.CodAlm = Almcmov.CodAlm
+            Almdmov.TipMov = Almcmov.TipMov
+            Almdmov.CodMov = Almcmov.CodMov 
+            Almdmov.NroSer = almcmov.nroser
+            Almdmov.NroDoc = almcmov.nrodoc
+            Almdmov.FchDoc = Almcmov.FchDoc
+            Almdmov.AftIgv = Facdpedi.aftigv
+            Almdmov.AftIsc = Facdpedi.aftisc
+            Almdmov.CanDes = Facdpedi.canped
+            Almdmov.codmat = Facdpedi.codmat
+            Almdmov.CodMon = Faccpedi.codmon
+            Almdmov.CodUnd = Facdpedi.undvta
+            Almdmov.Factor = Facdpedi.factor
+            Almdmov.ImpIgv = Facdpedi.impigv
+            Almdmov.ImpIsc = Facdpedi.impisc
+            Almdmov.ImpLin = Facdpedi.implin
+            Almdmov.NroItm = i
+            Almdmov.PreBas = Facdpedi.prebas
+            Almdmov.PreUni = Facdpedi.preuni
+            Almdmov.TpoCmb = Faccpedi.tpocmb
+            Almcmov.TotItm = i
+            Almdmov.HraDoc = Almcmov.HorRcp
+            i = i + 1.
+        r-Rowid = ROWID(Almdmov).
+        RUN ALM\ALMACSTK (R-ROWID).
+        IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO PRINCIPAL, RETURN 'ADM-ERROR'.
+        RUN ALM\ALMACPR1 (R-ROWID,"U").
+       IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO PRINCIPAL, RETURN 'ADM-ERROR'. 
+    END.
+END.
+IF AVAILABLE(Faccpedi) THEN RELEASE Faccpedi.
+IF AVAILABLE(Almacen) THEN RELEASE Almacen.
+IF AVAILABLE(Almcmov) THEN RELEASE Almcmov.
+IF AVAILABLE(Almdmov) THEN RELEASE Almdmov.
+IF AVAILABLE(FacCorre) THEN RELEASE FacCorre.
+
+RETURN 'OK'.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-show-errors) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE show-errors Procedure 
+PROCEDURE show-errors :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    DEFINE VARIABLE        cntr                  AS INTEGER   NO-UNDO.
+
+    DO cntr = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        MESSAGE ERROR-STATUS:GET-MESSAGE(cntr) 
+            VIEW-AS ALERT-BOX ERROR TITLE "ERROR: Generación de Movimientos de Almacén".
+    END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

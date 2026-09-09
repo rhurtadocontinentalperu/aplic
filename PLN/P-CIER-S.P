@@ -1,0 +1,721 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12 GUI
+&ANALYZE-RESUME
+&Scoped-define WINDOW-NAME CURRENT-WINDOW
+&Scoped-define FRAME-NAME D-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS D-Dialog 
+/*------------------------------------------------------------------------
+
+  File: 
+
+  Description: from cntnrdlg.w - ADM SmartDialog Template
+
+  Input Parameters:
+      <none>
+
+  Output Parameters:
+      <none>
+
+  Author: 
+
+  Created: 
+------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* Create an unnamed pool to store all the widgets created 
+     by this procedure. This is a good default which assures
+     that this procedure's triggers and internal procedures 
+     will execute in this procedure's storage, and that proper
+     cleanup will occur on deletion of the procedure. */
+
+CREATE WIDGET-POOL.
+
+/* ***************************  Definitions  ************************** */
+
+/* Parameters Definitions ---                                           */
+
+/* Local Variable Definitions ---                                       */
+
+{bin/s-global.i}
+{pln/s-global.i}
+
+DEFINE VARIABLE x-periodo    AS INTEGER NO-UNDO.
+DEFINE VARIABLE x-nrosem     AS INTEGER NO-UNDO.
+DEFINE VARIABLE x-fchini     AS DATE NO-UNDO.
+DEFINE VARIABLE x-fchfin     AS DATE NO-UNDO.
+DEFINE VARIABLE x-ultfch     AS DATE NO-UNDO.    /* Fecha fin de £ltima semana del periodo */
+DEFINE VARIABLE x-ultsem     AS LOGICAL NO-UNDO. /* Para saber si estamos en la £ltima semana del periodo */
+DEFINE VARIABLE x-valcal-sem AS DECIMAL NO-UNDO.
+
+/* Buscamos la £ltima semana del periodo */
+FIND LAST integral.PL-SEM WHERE
+    integral.PL-SEM.CodCia = s-CodCia AND
+    integral.PL-SEM.Periodo = s-Periodo NO-LOCK NO-ERROR.
+IF NOT AVAILABLE integral.PL-SEM THEN DO:
+    BELL.
+    MESSAGE
+        "Registro de periodo no existe." SKIP
+        "Es necesario crear los periodos" SKIP
+        "para el sistema de planillas"
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN.
+END.
+
+ASSIGN
+    x-ultsem = integral.PL-SEM.NroSem = s-NroSem
+    x-ultfch = integral.PL-SEM.FecFin + 1.
+
+IF x-ultsem = TRUE THEN DO:
+    ASSIGN
+        x-periodo = s-Periodo + 1
+        x-nrosem = 1.
+    RUN @genera-periodo.
+END.
+ELSE DO:
+    ASSIGN
+        x-periodo = s-Periodo
+        x-nrosem = s-NroSem + 1.
+END.
+
+FIND integral.PL-SEM WHERE
+    integral.PL-SEM.CodCia = s-CodCia AND
+    integral.PL-SEM.Periodo = x-periodo AND
+    integral.PL-SEM.NroSem = x-nrosem NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE integral.PL-SEM THEN DO:
+    BELL.
+    MESSAGE
+        "Registro de periodo no existe." SKIP
+        "Es necesario crear los periodos" SKIP
+        "para el sistema de planillas"
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN.
+END.
+
+ASSIGN
+    x-fchini = integral.PL-SEM.FecIni
+    x-fchfin = integral.PL-SEM.FecFin.
+
+FIND integral.PL-SEM WHERE
+    integral.PL-SEM.CodCia = s-CodCia AND
+    integral.PL-SEM.Periodo = s-Periodo AND
+    integral.PL-SEM.NroSem = s-NroSem NO-LOCK NO-ERROR.
+IF NOT AVAILABLE integral.PL-SEM THEN DO:
+    BELL.
+    MESSAGE
+        "Registro de periodo no existe." SKIP
+        "Es necesario crear los periodos" SKIP
+        "para el sistema de planillas"
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN.
+END.
+
+DEFINE BUFFER b-FLG-SEM     FOR integral.PL-FLG-SEM.
+DEFINE BUFFER b-MOV-SEM     FOR integral.PL-MOV-SEM.
+DEFINE BUFFER b-CFG-CTE-SEM FOR integral.PL-CFG-CTE-SEM.
+DEFINE BUFFER b-VAR-SEM     FOR integral.PL-VAR-SEM.
+DEFINE BUFFER b-VAR-MES     FOR integral.PL-VAR-MES.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE SmartDialog
+
+&Scoped-define ADM-CONTAINER DIALOG-BOX
+
+/* Name of first Frame and/or Browse and/or first Query                 */
+&Scoped-define FRAME-NAME D-Dialog
+
+/* Standard List Definitions                                            */
+&Scoped-Define ENABLED-OBJECTS RECT-2 Btn_OK Btn_Cancel 
+&Scoped-Define DISPLAYED-OBJECTS FILL-IN-Codigo 
+
+/* Custom List Definitions                                              */
+/* List-1,List-2,List-3,List-4,List-5,List-6                            */
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* ***********************  Control Definitions  ********************** */
+
+/* Define a dialog box                                                  */
+
+/* Definitions of the field level widgets                               */
+DEFINE BUTTON Btn_Cancel AUTO-END-KEY 
+     IMAGE-UP FILE "img/b-cancel":U
+     LABEL "" 
+     SIZE 11.57 BY 1.46
+     BGCOLOR 8 .
+
+DEFINE BUTTON Btn_OK AUTO-GO 
+     IMAGE-UP FILE "img/b-ok":U
+     LABEL "" 
+     SIZE 11.57 BY 1.46
+     BGCOLOR 8 .
+
+DEFINE VARIABLE FILL-IN-Codigo AS CHARACTER FORMAT "X(6)":U 
+     LABEL "Procesando cierre para personal" 
+     VIEW-AS FILL-IN 
+     SIZE 7.57 BY .81
+     BGCOLOR 15 FGCOLOR 9  NO-UNDO.
+
+DEFINE RECTANGLE RECT-2
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL 
+     SIZE 47.57 BY 4.12
+     BGCOLOR 8 FGCOLOR 0 .
+
+
+/* ************************  Frame Definitions  *********************** */
+
+DEFINE FRAME D-Dialog
+     FILL-IN-Codigo AT ROW 4 COL 23.57 COLON-ALIGNED
+     Btn_OK AT ROW 1.42 COL 35.57
+     Btn_Cancel AT ROW 3.23 COL 35.57
+     "Por lo tanto no deber  ejecutarse otro proceso" VIEW-AS TEXT
+          SIZE 32.72 BY .69 AT ROW 2.62 COL 2.43
+     "sobre el sistema." VIEW-AS TEXT
+          SIZE 12.14 BY .69 AT ROW 3.35 COL 2.43
+     RECT-2 AT ROW 1 COL 1
+     "El presente proceso consiste en cerrar" VIEW-AS TEXT
+          SIZE 27 BY .69 AT ROW 1.19 COL 5
+     "la semana actual e inicializar la siguiente." VIEW-AS TEXT
+          SIZE 28.57 BY .69 AT ROW 1.88 COL 2.43
+     SPACE(17.57) SKIP(2.55)
+    WITH VIEW-AS DIALOG-BOX KEEP-TAB-ORDER 
+         SIDE-LABELS NO-UNDERLINE THREE-D  SCROLLABLE 
+         FONT 4
+         TITLE "Cierre de Semana".
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: SmartDialog
+   Allow: Basic,Browse,DB-Fields,Query,Smart
+   Other Settings: COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+
+/* ***************  Runtime Attributes and UIB Settings  ************** */
+
+&ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
+/* SETTINGS FOR DIALOG-BOX D-Dialog
+                                                                        */
+ASSIGN 
+       FRAME D-Dialog:SCROLLABLE       = FALSE
+       FRAME D-Dialog:HIDDEN           = TRUE.
+
+/* SETTINGS FOR FILL-IN FILL-IN-Codigo IN FRAME D-Dialog
+   NO-ENABLE                                                            */
+/* _RUN-TIME-ATTRIBUTES-END */
+&ANALYZE-RESUME
+
+
+/* Setting information for Queries and Browse Widgets fields            */
+
+&ANALYZE-SUSPEND _QUERY-BLOCK DIALOG-BOX D-Dialog
+/* Query rebuild information for DIALOG-BOX D-Dialog
+     _Options          = "SHARE-LOCK"
+     _Query            is NOT OPENED
+*/  /* DIALOG-BOX D-Dialog */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB D-Dialog 
+/* ************************* Included-Libraries *********************** */
+
+{src/adm/method/containr.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+
+/* ************************  Control Triggers  ************************ */
+
+&Scoped-define SELF-NAME D-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL D-Dialog D-Dialog
+ON GO OF FRAME D-Dialog /* Cierre de Semana */
+DO:
+    ASSIGN
+        Btn_Cancel:SENSITIVE = FALSE
+        Btn_OK:SENSITIVE = FALSE
+        FILL-IN-Codigo:VISIBLE = TRUE.
+    RUN @cierre.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL D-Dialog D-Dialog
+ON WINDOW-CLOSE OF FRAME D-Dialog /* Cierre de Semana */
+DO:  
+  /* Add Trigger to equate WINDOW-CLOSE to END-ERROR. */
+  APPLY "END-ERROR":U TO SELF.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&UNDEFINE SELF-NAME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK D-Dialog 
+
+
+/* ***************************  Main Block  *************************** */
+
+{src/adm/template/dialogmn.i}
+
+ASSIGN
+    FRAME D-dialog:TITLE = FRAME D-dialog:TITLE + " " + STRING(s-NroSem, "99")
+    FILL-IN-Codigo:VISIBLE = FALSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE @actualiza-variables D-Dialog 
+PROCEDURE @actualiza-variables :
+FIND LAST integral.PL-VAR-SEM WHERE
+    integral.PL-VAR-SEM.Periodo = s-Periodo AND
+    integral.PL-VAR-SEM.NroSem <= s-NroSem NO-LOCK NO-ERROR.
+IF AVAILABLE integral.PL-VAR-SEM THEN DO:
+    FIND LAST b-VAR-SEM WHERE
+        b-VAR-SEM.Periodo = x-periodo AND
+        b-VAR-SEM.NroSem = 1 NO-ERROR.
+    IF NOT AVAILABLE b-VAR-SEM THEN DO:
+        CREATE b-VAR-SEM.
+        ASSIGN
+            b-VAR-SEM.Periodo = x-periodo
+            b-VAR-SEM.NroSem  = 1.
+    END.
+    ASSIGN
+        b-VAR-SEM.ValVar-SEM[1] = PL-VAR-SEM.ValVar-SEM[1]
+        b-VAR-SEM.ValVar-SEM[2] = PL-VAR-SEM.ValVar-SEM[2]
+        b-VAR-SEM.ValVar-SEM[3] = PL-VAR-SEM.ValVar-SEM[3]
+        b-VAR-SEM.ValVar-SEM[4] = PL-VAR-SEM.ValVar-SEM[4]
+        b-VAR-SEM.ValVar-SEM[5] = PL-VAR-SEM.ValVar-SEM[5]
+        b-VAR-SEM.ValVar-SEM[6] = PL-VAR-SEM.ValVar-SEM[6]
+        b-VAR-SEM.ValVar-SEM[7] = PL-VAR-SEM.ValVar-SEM[7]
+        b-VAR-SEM.ValVar-SEM[8] = PL-VAR-SEM.ValVar-SEM[8]
+        b-VAR-SEM.ValVar-SEM[9] = PL-VAR-SEM.ValVar-SEM[9]
+        b-VAR-SEM.ValVar-SEM[10] = PL-VAR-SEM.ValVar-SEM[10]
+        b-VAR-SEM.ValVar-SEM[11] = PL-VAR-SEM.ValVar-SEM[11]
+        b-VAR-SEM.ValVar-SEM[12] = PL-VAR-SEM.ValVar-SEM[12]
+        b-VAR-SEM.ValVar-SEM[13] = PL-VAR-SEM.ValVar-SEM[13]
+        b-VAR-SEM.ValVar-SEM[14] = PL-VAR-SEM.ValVar-SEM[14]
+        b-VAR-SEM.ValVar-SEM[15] = PL-VAR-SEM.ValVar-SEM[15]
+        b-VAR-SEM.ValVar-SEM[16] = PL-VAR-SEM.ValVar-SEM[16]
+        b-VAR-SEM.ValVar-SEM[17] = PL-VAR-SEM.ValVar-SEM[17]
+        b-VAR-SEM.ValVar-SEM[18] = PL-VAR-SEM.ValVar-SEM[18]
+        b-VAR-SEM.ValVar-SEM[19] = PL-VAR-SEM.ValVar-SEM[19]
+        b-VAR-SEM.ValVar-SEM[20] = PL-VAR-SEM.ValVar-SEM[20].
+END.
+
+FIND LAST integral.PL-VAR-MES WHERE
+    integral.PL-VAR-MES.Periodo = s-Periodo AND
+    integral.PL-VAR-MES.NroMes <= s-NroMes NO-LOCK NO-ERROR.
+IF AVAILABLE integral.PL-VAR-MES THEN DO:
+    FIND LAST b-VAR-MES WHERE
+        b-VAR-MES.Periodo = x-periodo AND
+        b-VAR-MES.NroMes = 1 NO-ERROR.
+    IF NOT AVAILABLE b-VAR-MES THEN DO:
+        CREATE b-VAR-MES.
+        ASSIGN
+            b-VAR-MES.Periodo       = x-periodo
+            b-VAR-MES.NroMes        = 1
+            b-VAR-MES.ValVAR-MES[1] = PL-VAR-MES.ValVAR-MES[1]
+            b-VAR-MES.ValVAR-MES[2] = PL-VAR-MES.ValVAR-MES[2]
+            b-VAR-MES.ValVAR-MES[3] = PL-VAR-MES.ValVAR-MES[3]
+            b-VAR-MES.ValVAR-MES[4] = PL-VAR-MES.ValVAR-MES[4]
+            b-VAR-MES.ValVAR-MES[5] = PL-VAR-MES.ValVAR-MES[5]
+            b-VAR-MES.ValVAR-MES[6] = PL-VAR-MES.ValVAR-MES[6]
+            b-VAR-MES.ValVAR-MES[7] = PL-VAR-MES.ValVAR-MES[7]
+            b-VAR-MES.ValVAR-MES[8] = PL-VAR-MES.ValVAR-MES[8]
+            b-VAR-MES.ValVAR-MES[9] = PL-VAR-MES.ValVAR-MES[9]
+            b-VAR-MES.ValVAR-MES[10] = PL-VAR-MES.ValVAR-MES[10]
+            b-VAR-MES.ValVAR-MES[11] = PL-VAR-MES.ValVAR-MES[11]
+            b-VAR-MES.ValVAR-MES[12] = PL-VAR-MES.ValVAR-MES[12]
+            b-VAR-MES.ValVAR-MES[13] = PL-VAR-MES.ValVAR-MES[13]
+            b-VAR-MES.ValVAR-MES[14] = PL-VAR-MES.ValVAR-MES[14]
+            b-VAR-MES.ValVAR-MES[15] = PL-VAR-MES.ValVAR-MES[15]
+            b-VAR-MES.ValVAR-MES[16] = PL-VAR-MES.ValVAR-MES[16]
+            b-VAR-MES.ValVAR-MES[17] = PL-VAR-MES.ValVAR-MES[17]
+            b-VAR-MES.ValVAR-MES[18] = PL-VAR-MES.ValVAR-MES[18]
+            b-VAR-MES.ValVAR-MES[19] = PL-VAR-MES.ValVAR-MES[19]
+            b-VAR-MES.ValVAR-MES[20] = PL-VAR-MES.ValVAR-MES[20].
+    END.
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE @cierre D-Dialog 
+PROCEDURE @cierre :
+FOR EACH PL-FLG-SEM WHERE
+    PL-FLG-SEM.CodCia  = s-codcia AND
+    PL-FLG-SEM.Periodo = s-periodo AND
+    PL-FLG-SEM.NroSem  = s-NroSem NO-LOCK:
+
+    IF PL-FLG-SEM.SitAct = "Inactivo" THEN NEXT.
+
+    DISPLAY PL-FLG-SEM.CodPer @ FILL-IN-Codigo WITH FRAME D-Dialog.
+
+    FIND b-FLG-SEM WHERE
+        b-FLG-SEM.CodCia  = s-codcia AND
+        b-FLG-SEM.Periodo = x-periodo AND
+        b-FLG-SEM.NroSem  = x-nrosem AND
+        b-FLG-SEM.codpln  = PL-FLG-SEM.Codpln AND
+        b-FLG-SEM.CodPer  = PL-FLG-SEM.CodPer NO-ERROR.
+    IF NOT AVAILABLE B-FLG-SEM
+    THEN CREATE B-FLG-SEM.
+    BUFFER-COPY PL-FLG-SEM TO B-FLG-SEM
+        ASSIGN
+            b-FLG-SEM.Periodo = x-periodo
+            b-FLG-SEM.NroSem = x-nrosem
+            b-FLG-SEM.Fch-Ult-Reg  = TODAY
+            b-FLG-SEM.Hra-Ult-Reg  = STRING(TIME, "HH:MM").
+    
+    /* RHC 21.12.04 OBSOLETO *****************************************
+    IF NOT AVAILABLE b-FLG-SEM THEN DO:
+        CREATE b-FLG-SEM.
+        ASSIGN
+            b-FLG-SEM.CodCia = PL-FLG-SEM.CodCia
+            b-FLG-SEM.Periodo = x-periodo
+            b-FLG-SEM.NroSem = x-nrosem
+            b-FLG-SEM.codpln = PL-FLG-SEM.Codpln
+            b-FLG-SEM.codper = PL-FLG-SEM.CodPer.
+    END.
+    ASSIGN
+        b-FLG-SEM.Conyugue     = PL-FLG-SEM.Conyugue
+        b-FLG-SEM.Nro-de-Hijos = PL-FLG-SEM.Nro-de-Hijos
+        b-FLG-SEM.fecing       = PL-FLG-SEM.fecing
+        b-FLG-SEM.vcontr       = PL-FLG-SEM.vcontr
+        b-FLG-SEM.codafp       = PL-FLG-SEM.Codafp
+        b-FLG-SEM.cnpago       = PL-FLG-SEM.cnpago
+        b-FLG-SEM.Clase        = PL-FLG-SEM.Clase
+        b-FLG-SEM.ccosto       = PL-FLG-SEM.ccosto
+        b-FLG-SEM.cargos       = PL-FLG-SEM.cargos
+        b-FLG-SEM.inivac       = PL-FLG-SEM.inivac
+        b-FLG-SEM.finvac       = PL-FLG-SEM.finvac
+        b-FLG-SEM.CTS          = PL-FLG-SEM.CTS
+        b-FLG-SEM.nrodpt-CTS   = PL-FLG-SEM.nrodpt-CTS
+        b-FLG-SEM.nroafp       = PL-FLG-SEM.nroafp
+        b-FLG-SEM.nrodpt       = PL-FLG-SEM.nrodpt
+        b-FLG-SEM.Proyecto     = PL-FLG-SEM.Proyecto
+        b-FLG-SEM.seccion      = PL-FLG-SEM.seccion
+        b-FLG-SEM.SitAct       = PL-FLG-SEM.SitAct
+        b-FLG-SEM.Exceso-Sem   = PL-FLG-SEM.Exceso-Sem
+        b-FLG-SEM.CodDiv       = PL-FLG-SEM.CodDiv
+        b-FLG-SEM.Fch-Ult-Reg  = TODAY
+        b-FLG-SEM.Hra-Ult-Reg  = STRING(TIME, "HH:MM").
+    ************************************************************* */
+    
+    /* Si no esta de vacaciones */
+    IF PL-FLG-SEM.SitAct = "Activo" AND
+        PL-FLG-SEM.inivac > x-fchini AND
+        PL-FLG-SEM.inivac <= (x-fchfin + 1) 
+    THEN ASSIGN b-FLG-SEM.SitAct = "Vacaciones".
+
+    /* Si esta de vacaciones */
+    IF PL-FLG-SEM.SitAct = "Vacaciones" AND
+        PL-FLG-SEM.finvac >= x-fchfin AND
+        PL-FLG-SEM.finvac < ( x-fchfin + 7 ) 
+    THEN ASSIGN b-FLG-SEM.SitAct = "Activo".
+
+    RELEASE b-FLG-SEM.
+
+    FOR EACH PL-MOV-SEM WHERE
+        PL-MOV-SEM.CodCia  = PL-FLG-SEM.CodCia  AND
+        PL-MOV-SEM.Periodo = PL-FLG-SEM.Periodo AND
+        PL-MOV-SEM.NroSem  = PL-FLG-SEM.NroSem  AND
+        PL-MOV-SEM.CodPln  = PL-FLG-SEM.CodPln  AND
+        PL-MOV-SEM.CodCal  = 0                  AND
+        PL-MOV-SEM.codper  = PL-FLG-SEM.CodPer NO-LOCK:
+        FIND PL-CONC WHERE PL-CONC.CodMov = PL-MOV-SEM.CodMov
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE PL-CONC THEN NEXT.
+        ASSIGN x-valcal-sem = 0.
+        CASE PL-CONC.CieMov:
+            WHEN "No cambia con los cierres" THEN
+                ASSIGN x-valcal-sem = PL-MOV-SEM.valcal-Sem.
+            WHEN "Al cierre del periodo" THEN
+                ASSIGN x-valcal-sem = PL-CONC.ValIni-Sem.
+            WHEN "Al cierre anual" THEN DO:
+                IF x-ultsem = TRUE THEN
+                    ASSIGN x-valcal-sem = PL-CONC.ValIni-Sem.
+                ELSE ASSIGN x-valcal-sem = PL-MOV-SEM.valcal-sem.
+            END.
+        END CASE.
+        
+        IF x-valcal-sem = 0 THEN NEXT.
+        FIND b-MOV-SEM WHERE
+            b-MOV-SEM.CodCia  = PL-MOV-SEM.CodCia AND
+            b-MOV-SEM.Periodo = x-periodo AND
+            b-MOV-SEM.NroSem  = x-nrosem AND
+            b-MOV-SEM.CodPln  = PL-MOV-SEM.CodPln AND
+            b-MOV-SEM.CodCal  = PL-MOV-SEM.CodCal AND
+            b-MOV-SEM.codper  = PL-MOV-SEM.CodPer AND
+            b-MOV-SEM.CodMov  = PL-MOV-SEM.CodMov NO-ERROR.
+
+        IF NOT AVAILABLE b-MOV-SEM THEN DO:
+            CREATE b-MOV-SEM.
+            ASSIGN
+                b-MOV-SEM.CodCia  = PL-MOV-SEM.CodCia
+                b-MOV-SEM.Periodo = x-periodo
+                b-MOV-SEM.NroSem  = x-nrosem
+                b-MOV-SEM.codpln  = PL-MOV-SEM.Codpln
+                b-MOV-SEM.codcal  = PL-MOV-SEM.CodCal
+                b-MOV-SEM.codper  = PL-MOV-SEM.Codper
+                b-MOV-SEM.CodMov  = PL-MOV-SEM.Codmov.
+        END.
+        
+        ASSIGN
+            b-MOV-SEM.VALCAL-sem = x-valcal-sem
+            b-MOV-SEM.flgreg-sem = FALSE.
+        RELEASE b-MOV-SEM.
+    END.    
+    
+    /* ACTUALIZANDO LA CUENTA CORRIENTE */
+    FOR EACH integral.PL-CFG-CTE-SEM WHERE
+        integral.PL-CFG-CTE-SEM.CodCia = PL-FLG-SEM.CodCia AND
+        integral.PL-CFG-CTE-SEM.Periodo = PL-FLG-SEM.Periodo AND
+        integral.PL-CFG-CTE-SEM.NroSem = PL-FLG-SEM.NroSem AND
+        integral.PL-CFG-CTE-SEM.CodPer = PL-FLG-SEM.CodPer NO-LOCK:
+        IF integral.PL-CFG-CTE-SEM.Sdo-Cte-Sem > 0 THEN DO:
+            FIND b-CFG-CTE-SEM WHERE
+                b-CFG-CTE-SEM.CodCia = integral.PL-CFG-CTE-SEM.CodCia AND
+                b-CFG-CTE-SEM.Periodo = x-periodo AND
+                b-CFG-CTE-SEM.NroSem = x-nrosem AND
+                b-CFG-CTE-SEM.Clf-Cte-Sem = integral.PL-CFG-CTE-SEM.Clf-Cte-Sem AND
+                b-CFG-CTE-SEM.Tpo-Cte-Sem = integral.PL-CFG-CTE-SEM.Tpo-Cte-Sem AND
+                b-CFG-CTE-SEM.CodPer = integral.PL-CFG-CTE-SEM.CodPer AND
+                b-CFG-CTE-SEM.Nro-Cte-Sem = integral.PL-CFG-CTE-SEM.Nro-Cte-Sem NO-ERROR.
+            IF NOT AVAILABLE b-CFG-CTE-SEM THEN DO:
+                CREATE b-CFG-CTE-SEM.
+                ASSIGN
+                    b-CFG-CTE-SEM.CodCia = integral.PL-CFG-CTE-SEM.CodCia
+                    b-CFG-CTE-SEM.Periodo = x-periodo
+                    b-CFG-CTE-SEM.NroSem = x-nrosem
+                    b-CFG-CTE-SEM.Clf-Cte-Sem = integral.PL-CFG-CTE-SEM.Clf-Cte-Sem
+                    b-CFG-CTE-SEM.Tpo-Cte-Sem = integral.PL-CFG-CTE-SEM.Tpo-Cte-Sem
+                    b-CFG-CTE-SEM.CodPer = integral.PL-CFG-CTE-SEM.CodPer
+                    b-CFG-CTE-SEM.Nro-Cte-Sem = integral.PL-CFG-CTE-SEM.Nro-Cte-Sem.
+            END.
+            ASSIGN
+                b-CFG-CTE-SEM.Fch-Cte-Sem = integral.PL-CFG-CTE-SEM.Fch-Cte-Sem
+                b-CFG-CTE-SEM.Beneficiario-Sem = integral.PL-CFG-CTE-SEM.Beneficiario-Sem
+                b-CFG-CTE-SEM.Moneda-Sem  = integral.PL-CFG-CTE-SEM.Moneda-Sem
+                b-CFG-CTE-SEM.Imp-Cte-Sem = integral.PL-CFG-CTE-SEM.Imp-Cte-Sem
+                b-CFG-CTE-SEM.Imp-Usa-Sem = integral.PL-CFG-CTE-SEM.Imp-USA-Sem                
+                b-CFG-CTE-SEM.Cuo-Cte-Sem = integral.PL-CFG-CTE-SEM.Cuo-Cte-Sem
+                b-CFG-CTE-SEM.Cuo-Por-Sem = integral.PL-CFG-CTE-SEM.Cuo-Por-Sem
+                b-CFG-CTE-SEM.Sdo-Cte-Sem = integral.PL-CFG-CTE-SEM.Sdo-Cte-Sem
+                b-CFG-CTE-SEM.Sdo-Usa-Sem = integral.PL-CFG-CTE-SEM.Sdo-Usa-Sem
+                b-CFG-CTE-SEM.Fch-Prx-Pgo-Sem = integral.PL-CFG-CTE-SEM.Fch-Prx-Pgo-Sem.
+            IF integral.PL-CFG-CTE-SEM.Fch-Prx-Pgo-Sem <= x-fchfin THEN
+                ASSIGN
+                    b-CFG-CTE-SEM.Fch-Prx-Pgo-Sem =
+                    integral.PL-CFG-CTE-SEM.Fch-Prx-Pgo-Sem + 7.
+        END.
+    END.
+END.
+
+IF x-nrosem = 1 THEN DO:
+    FIND LAST integral.CB-PERI WHERE
+        integral.CB-PERI.CodCia = s-CodCia AND
+        integral.CB-PERI.Periodo = x-periodo NO-ERROR.
+    IF NOT AVAILABLE integral.CB-PERI THEN DO:
+        CREATE integral.CB-PERI.
+        ASSIGN
+            integral.CB-PERI.CodCia = s-CodCia
+            integral.CB-PERI.Periodo = x-periodo
+            integral.CB-PERI.pl-NroMes = 1.
+    END.
+    ASSIGN integral.CB-PERI.pl-NroSem = 1.
+    RUN @actualiza-variables.
+    ASSIGN s-NroMes = integral.CB-PERI.pl-NroMes.
+END.
+ELSE DO:
+    FIND LAST integral.CB-PERI WHERE
+        integral.CB-PERI.CodCia = s-CodCia AND
+        integral.CB-PERI.Periodo = s-Periodo AND
+        integral.CB-PERI.pl-nrosem = s-NroSem NO-ERROR.
+
+    IF AVAILABLE integral.CB-PERI THEN
+        ASSIGN integral.CB-PERI.pl-nrosem = x-nrosem.
+
+END.
+
+ASSIGN
+    s-NroSem  = x-nrosem
+    s-Periodo = x-periodo.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE @genera-periodo D-Dialog 
+PROCEDURE @genera-periodo :
+DEFINE VARIABLE i AS INTEGER NO-UNDO.
+
+IF NOT CAN-FIND(FIRST integral.PL-SEM WHERE
+    integral.PL-SEM.CodCia  = s-CodCia AND
+    integral.PL-SEM.Periodo = x-periodo) THEN DO: /* Si no existen periodos */
+    DO i = 1 TO 53:
+        CREATE integral.PL-SEM.
+        ASSIGN
+            integral.PL-SEM.CodCia  = s-CodCia
+            integral.PL-SEM.Periodo = x-periodo
+            integral.PL-SEM.NroSem  = i
+            integral.PL-SEM.FecIni  = x-ultfch
+            integral.PL-SEM.FecFin  = x-ultfch + 6
+            integral.PL-SEM.NroMes  = MONTH(integral.PL-SEM.FecFin)
+            x-ultfch               = x-ultfch + 7.
+        IF DAY(integral.PL-SEM.FecFin) < 4 THEN
+            ASSIGN integral.PL-SEM.NroMes = MONTH(integral.PL-SEM.FecIni).
+    END.
+    FIND LAST integral.PL-SEM WHERE
+        integral.PL-SEM.CodCia = s-CodCia AND
+        integral.PL-SEM.Periodo = x-periodo NO-ERROR.
+    IF AVAILABLE integral.PL-SEM AND integral.PL-SEM.NroMes = 1 THEN
+        DELETE integral.PL-SEM.
+END.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-create-objects D-Dialog _ADM-CREATE-OBJECTS
+PROCEDURE adm-create-objects :
+/*------------------------------------------------------------------------------
+  Purpose:     Create handles for all SmartObjects used in this procedure.
+               After SmartObjects are initialized, then SmartLinks are added.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-row-available D-Dialog _ADM-ROW-AVAILABLE
+PROCEDURE adm-row-available :
+/*------------------------------------------------------------------------------
+  Purpose:     Dispatched to this procedure when the Record-
+               Source has a new row available.  This procedure
+               tries to get the new row (or foriegn keys) from
+               the Record-Source and process it.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+  /* Define variables needed by this internal procedure.             */
+  {src/adm/template/row-head.i}
+
+  /* Process the newly available records (i.e. display fields,
+     open queries, and/or pass records on to any RECORD-TARGETS).    */
+  {src/adm/template/row-end.i}
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI D-Dialog _DEFAULT-DISABLE
+PROCEDURE disable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     DISABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we clean-up the user-interface by deleting
+               dynamic widgets we have created and/or hide 
+               frames.  This procedure is usually called when
+               we are ready to "clean-up" after running.
+------------------------------------------------------------------------------*/
+  /* Hide all frames. */
+  HIDE FRAME D-Dialog.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI D-Dialog _DEFAULT-ENABLE
+PROCEDURE enable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     ENABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we display/view/enable the widgets in the
+               user-interface.  In addition, OPEN all queries
+               associated with each FRAME and BROWSE.
+               These statements here are based on the "Other 
+               Settings" section of the widget Property Sheets.
+------------------------------------------------------------------------------*/
+  DISPLAY FILL-IN-Codigo 
+      WITH FRAME D-Dialog.
+  ENABLE RECT-2 Btn_OK Btn_Cancel 
+      WITH FRAME D-Dialog.
+  VIEW FRAME D-Dialog.
+  {&OPEN-BROWSERS-IN-QUERY-D-Dialog}
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE send-records D-Dialog _ADM-SEND-RECORDS
+PROCEDURE send-records :
+/*------------------------------------------------------------------------------
+  Purpose:     Send record ROWID's for all tables used by
+               this file.
+  Parameters:  see template/snd-head.i
+------------------------------------------------------------------------------*/
+
+  /* SEND-RECORDS does nothing because there are no External
+     Tables specified for this SmartDialog, and there are no
+     tables specified in any contained Browse, Query, or Frame. */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE state-changed D-Dialog 
+PROCEDURE state-changed :
+/* -----------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+-------------------------------------------------------------*/
+  DEFINE INPUT PARAMETER p-issuer-hdl AS HANDLE NO-UNDO.
+  DEFINE INPUT PARAMETER p-state AS CHARACTER NO-UNDO.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

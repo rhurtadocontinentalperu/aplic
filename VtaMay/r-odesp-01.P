@@ -1,0 +1,405 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-guides.p
+    Purpose     : Impresion de Guias de Despacho en su respectivo Almacen
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   : Carlos Quiroz
+    Created     : 24/01/2000
+    Notes       : 
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEFINE INPUT PARAMETER X-ALMDES LIKE CcbDDocu.AlmDes.
+DEFINE INPUT PARAMETER pTitulo AS CHAR.
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR CL-codcia  AS INT.
+DEF SHARED VAR s-coddiv  LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF SHARED VAR s-user-id AS CHAR.
+DEF SHARED VAR s-codmov  LIKE Almtmovm.Codmov.
+
+DEF VAR X-EnLetras AS CHAR FORMAT "x(60)" NO-UNDO.
+DEF VAR x-impbrt   AS DECIMAL NO-UNDO.
+DEF VAR C-NomCon   AS CHAR FORMAT "X(40)".
+DEF VAR N-ITEM     AS INTEGER INIT 0 NO-UNDO.
+DEF VAR X-Cheque   AS CHAR NO-UNDO.
+DEF VAR x-frmpgo   AS CHARACTER.
+DEF VAR X-OD       AS INTEGER.
+DEF VAR imptotfac like ccbcdocu.imptot.
+
+DEFINE VARIABLE x-dscto AS DECIMAL.
+
+DEF VAR DES-DIV AS CHARACTER FORMAT "X(25)".
+DEF VAR X-VIP   AS CHAR      FORMAT "X(10)".
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+FIND gn-convt WHERE 
+     gn-convt.Codig = CcbCDocu.FmaPgo AND  
+     gn-ConVt.TipVta BEGINS "1" NO-LOCK NO-ERROR.
+IF AVAILABLE gn-convt THEN
+    x-frmpgo = gn-convt.Nombr.
+ELSE 
+    x-frmpgo = "".
+
+FIND GN-DIVI WHERE 
+     GN-DIVI.CodCia = S-CodCia AND  
+     GN-DIVI.CodDiv = ccbcdocu.coddiv  NO-LOCK NO-ERROR.
+IF AVAILABLE GN-DIVI THEN DES-DIV = GN-DIVI.DesDiv.
+ELSE DES-DIV = "".
+
+FIND gn-clie WHERE 
+     gn-clie.codcia = CL-CODCIA AND  
+     gn-clie.codcli = ccbcdocu.codcli NO-LOCK NO-ERROR.
+
+C-NomCon = "".
+
+X-VIP = IF CcbCDocu.NroCard <> "" THEN "V.I.P" ELSE "".
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(ccbcdocu.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = X-EnLetras + (IF ccbcdocu.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+DEFINE TEMP-TABLE Detalle
+    FIELD codcia AS INT
+    FIELD CodAlm LIKE Almmmate.CodAlm
+    FIELD codmat AS CHAR FORMAT 'x(6)'
+    FIELD desmat AS CHAR FORMAT 'x(43)'
+    FIELD desmar AS CHAR FORMAT 'x(10)'
+    FIELD candes AS DEC  FORMAT '>>,>>9.99'
+    FIELD UndBas LIKE Almmmatg.UndBas
+    FIELD undvta AS CHAR FORMAT 'x(8)'
+    FIELD codubi AS CHAR FORMAT 'x(5)'
+    FIELD ruta   AS INT  FORMAT '>9'
+    FIELDS CodKit AS LOGICAL
+    FIELDS Glosa  AS CHARACTER.
+
+DEF BUFFER b-Detalle FOR Detalle.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE FRAME F-DetaFac
+    N-Item          FORMAT "ZZ9"
+    Detalle.codmat 
+    Detalle.desmat 
+    Detalle.desmar 
+    Detalle.candes 
+    Detalle.undbas
+    Detalle.CodUbi 
+    Detalle.Ruta
+    SPACE(3)
+    Detalle.Glosa  FORMAT "x(25)" 
+    WITH NO-LABELS NO-BOX STREAM-IO WIDTH 200.
+
+DEFINE FRAME F-HdrFac
+    HEADER 
+    {&PRN7A} + {&PRN6A} + X-VIP  + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(10)" SKIP  
+    {&PRN7A} + {&PRN6A} + pTitulo + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' SKIP
+    {&PRN7A} + {&PRN6A} + 'ORDENADO POR UBICACION' + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(30)' SKIP
+    DES-DIV FORMAT "X(60)"
+    TODAY FORMAT "99/99/9999" STRING(TIME,"HH:MM:SS") SKIP 
+    {&PRN7A} + {&PRN6A} + gn-clie.aval1[1] + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(10)" SKIP  
+    "Numero " {&PRN7A} + {&PRN6A} + ccbcdocu.coddoc + ": " + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(8)"
+    {&PRN7A} + {&PRN6A} + ccbcdocu.nrodoc + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "XXXXXX-XXXXXXXXXXXX" SKIP
+    "Nro. de Pedido : " {&PRN7A} + {&PRN6A} + CcbCDocu.CodPed CcbCDocu.NroPed + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' SKIP
+    "Orden Despacho : " CcbCDocu.NroSal
+    "Turno :" AT 70 {&PRN7A} + {&PRN6A} + STRING(X-OD,"999") + {&PRN6B} + {&PRN7B} + {&PRN4} SKIP
+    "Cliente   : " CcbCDocu.NomCli FORMAT "x(51)"
+    "Vendedor  : " CcbCDocu.CodVen SKIP
+    "Direccion : " CcbCDocu.DirCli FORMAT "x(51)" 
+    "Almacen   : " {&Prn6a} + X-ALMDES + {&Prn6b} FORMAT "X(20)" SKIP
+    CAPS(x-frmpgo) AT 4 FORMAT "X(20)" SKIP
+    "OBS : " CAPS(CcbCDocu.Glosa) FORMAT "X(50)" SKIP
+    "==========================================================================================================" SKIP
+    "    CODIGO   D E S C R I P C I O N                  M A R C A    CANTIDAD   U.M.   ZONA RUTA OBSERVACIONES" SKIP
+    "==========================================================================================================" SKIP
+/*            1         2         3         4         5         6         7         8         9
+     1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+     Z9 123456 1234567890123456789012345678901234567890123 1234567890 >>,>>9.99 12345678 12345 >9
+*/     
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+
+FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                     AND  FacCorre.CodDoc = "O/D" 
+                     AND  trim(FacCorre.CodAlm) = trim(X-ALMDES) /*CcbCDocu.CodAlm */
+                     NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE FacCorre THEN DO:
+   MESSAGE "Impresora de O/D no esta configurada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+RUN lib/_port-name (FacCorre.Printer, OUTPUT s-port-name).
+IF s-port-name = '' THEN RETURN.
+
+FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                     AND  FacCorre.CodDoc = "TKT" 
+                     AND  trim(FacCorre.CodAlm) = trim(X-ALMDES) /*CcbCDocu.CodAlm */
+                     EXCLUSIVE-LOCK NO-ERROR.
+/* RHC 30-12-2003 PARCHE */
+IF NOT AVAILABLE FacCorre
+THEN FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                     AND  FacCorre.CodDoc = "TKT" 
+                     AND  trim(FacCorre.CodAlm) = SUBSTRING(X-ALMDES,1,2)
+                     EXCLUSIVE-LOCK NO-ERROR.
+IF AVAILABLE FacCorre
+THEN DO:
+    IF FacCorre.Correlativo = 1000 THEN FacCorre.Correlativo = 1 .
+    X-OD = FacCorre.Correlativo .
+    FacCorre.Correlativo = FacCorre.Correlativo + 1 .
+END.
+ELSE X-OD = 1.
+RELEASE FacCorre.
+
+/* Cargamos Temporal */
+RUN Carga-Temporal.
+
+/*OUTPUT TO PRINTER VALUE(s-port-name) PAGE-SIZE 31.*/
+{lib/_printer-to.i 31}
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+FOR EACH Detalle BREAK BY Detalle.codcia BY Detalle.CodUbi:
+    VIEW FRAME F-HdrFac.
+    n-item = n-item + 1.
+    DISPLAY 
+        n-item 
+        Detalle.codmat 
+        Detalle.desmat 
+        Detalle.desmar 
+        Detalle.candes 
+        Detalle.undbas 
+        Detalle.CodUbi 
+        Detalle.Ruta
+        Detalle.Glosa
+        WITH FRAME F-DetaFac.
+    IF LAST-OF(Detalle.codcia)
+    THEN DO:
+        PAGE.
+    END.
+END.
+OUTPUT CLOSE.
+
+
+/* /* ORDENADO POR DESCRIPCION */                                                                                                    */
+/* DEFINE FRAME F-DetaFac-2                                                                                                          */
+/*     N-Item          FORMAT "Z9"                                                                                                   */
+/*     Detalle.codmat                                                                                                                */
+/*     Detalle.desmat                                                                                                                */
+/*     Detalle.desmar                                                                                                                */
+/*     Detalle.candes                                                                                                                */
+/*     Detalle.undbas                                                                                                                */
+/*     Detalle.CodUbi                                                                                                                */
+/*     Detalle.Ruta                                                                                                                  */
+/*     SPACE(3)                                                                                                                      */
+/*     Detalle.Glosa  FORMAT "x(25)"                                                                                                 */
+/*     WITH NO-LABELS NO-BOX STREAM-IO WIDTH 200.                                                                                    */
+/*                                                                                                                                   */
+/* DEFINE FRAME F-HdrFac-2                                                                                                           */
+/*     HEADER                                                                                                                        */
+/*     {&PRN7A} + {&PRN6A} + X-VIP  + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(10)" SKIP                                              */
+/*     {&PRN7A} + {&PRN6A} + pTitulo + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' SKIP                                             */
+/*     {&PRN7A} + {&PRN6A} + 'ORDENADO POR DESCRIPCION' + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(30)' SKIP                          */
+/*     DES-DIV FORMAT "X(60)"                                                                                                        */
+/*     TODAY FORMAT "99/99/9999" STRING(TIME,"HH:MM:SS") SKIP                                                                        */
+/*     {&PRN7A} + {&PRN6A} + gn-clie.aval1[1] + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(10)" SKIP                                    */
+/*     "Numero " {&PRN7A} + {&PRN6A} + ccbcdocu.coddoc + ": " + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(8)"                          */
+/*     {&PRN7A} + {&PRN6A} + ccbcdocu.nrodoc + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "XXXXXX-XXXXXXXXXXXX" SKIP                       */
+/*     "Nro. de Pedido : " {&PRN7A} + {&PRN6A} + CcbCDocu.CodPed CcbCDocu.NroPed + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' SKIP */
+/*     "Orden Despacho : " CcbCDocu.NroSal                                                                                           */
+/*     "Turno :" AT 70 {&PRN7A} + {&PRN6A} + STRING(X-OD,"999") + {&PRN6B} + {&PRN7B} + {&PRN4} SKIP                                 */
+/*     "Cliente   : " CcbCDocu.NomCli FORMAT "x(51)"                                                                                 */
+/*     "Vendedor  : " CcbCDocu.CodVen SKIP                                                                                           */
+/*     "Direccion : " CcbCDocu.DirCli FORMAT "x(51)"                                                                                 */
+/*     "Almacen   : " {&Prn6a} + X-ALMDES + {&Prn6b} FORMAT "X(20)" SKIP                                                             */
+/*     CAPS(x-frmpgo) AT 4 FORMAT "X(20)" SKIP                                                                                       */
+/*     "OBS : " CAPS(CcbCDocu.Glosa) FORMAT "X(50)" SKIP                                                                             */
+/*     "=========================================================================================================" SKIP              */
+/*     "   CODIGO   D E S C R I P C I O N                  M A R C A    CANTIDAD   U.M.   ZONA RUTA OBSERVACIONES" SKIP              */
+/*     "=========================================================================================================" SKIP              */
+/* /*            1         2         3         4         5         6         7         8         9                                   */
+/*      1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890                         */
+/*      Z9 123456 1234567890123456789012345678901234567890123 1234567890 >>,>>9.99 12345678 12345 >9                                 */
+/* */                                                                                                                                */
+/*     WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160.                                                                           */
+/*                                                                                                                                   */
+/* {lib/_printer-to.i 31}                                                                                                            */
+/* PUT CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.                                                                               */
+/* n-item = 0.                                                                                                                       */
+/* FOR EACH Detalle BREAK BY Detalle.codcia BY Detalle.DesMat:                                                                       */
+/*     VIEW FRAME F-HdrFac-2.                                                                                                        */
+/*     n-item = n-item + 1.                                                                                                          */
+/*     DISPLAY                                                                                                                       */
+/*         n-item                                                                                                                    */
+/*         Detalle.codmat                                                                                                            */
+/*         Detalle.desmat                                                                                                            */
+/*         Detalle.desmar                                                                                                            */
+/*         /*Detalle.candes */                                                                                                       */
+/*         Detalle.undbas                                                                                                            */
+/*         Detalle.CodUbi                                                                                                            */
+/*         Detalle.Ruta                                                                                                              */
+/*         Detalle.Glosa                                                                                                             */
+/*         WITH FRAME F-DetaFac-2.                                                                                                   */
+/*     IF LAST-OF(Detalle.codcia)                                                                                                    */
+/*     THEN DO:                                                                                                                      */
+/*         PAGE.                                                                                                                     */
+/*     END.                                                                                                                          */
+/* END.                                                                                                                              */
+/* OUTPUT CLOSE.                                                                                                                     */
+/*                                                                                                                                   */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Temporal) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Temporal Procedure 
+PROCEDURE Carga-Temporal :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE VAR lKit     AS LOGICAL     NO-UNDO.
+
+FOR EACH Ccbddocu OF Ccbcdocu NO-LOCK,
+    FIRST Almmmatg OF Ccbddocu NO-LOCK,
+    FIRST Almmmate NO-LOCK WHERE Almmmate.codcia = Ccbddocu.codcia
+    AND Almmmate.codmat = Ccbddocu.codmat
+    AND Almmmate.codalm = Ccbddocu.almdes:
+    CREATE Detalle.
+    ASSIGN
+        Detalle.codcia = s-codcia
+        Detalle.codalm = Ccbddocu.almdes
+        Detalle.codmat = Almmmatg.codmat
+        Detalle.desmat = Almmmatg.desmat
+        Detalle.desmar = Almmmatg.desmar
+        Detalle.candes = Ccbddocu.candes * Ccbddocu.factor      /* En Unidades Base */
+        Detalle.undvta = Ccbddocu.undvta
+        DEtalle.undbas = Almmmatg.undbas
+        Detalle.codubi = Almmmate.codubi.
+END.
+
+/*Buscando Kits*/
+FOR EACH Detalle:
+    lKit = NO.
+/*     FOR EACH AlmdKits NO-LOCK WHERE AlmDKits.CodCia = s-CodCia                           */
+/*         AND AlmdKits.CodMat = Detalle.CodMat,                                            */
+/*         FIRST Almmmate WHERE Almmmate.CodCia = AlmDKits.CodCia                           */
+/*             AND Almmmate.CodAlm = Detalle.CodAlm                                         */
+/*             AND Almmmate.CodMat = AlmDKits.CodMat2:                                      */
+/*         FIND FIRST b-Detalle WHERE b-Detalle.CodMat = AlmDkits.CodMat2                   */
+/*             AND b-Detalle.CodKit NO-ERROR.                                               */
+/*         IF NOT AVAIL b-Detalle THEN DO:                                                  */
+/*             FIND FIRST almmmatg WHERE almmmatg.codcia = almmmate.codcia                  */
+/*                 AND almmmatg.codmat = AlmDKits.CodMat2 NO-LOCK NO-ERROR.                 */
+/*             CREATE b-Detalle.                                                            */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CodCia = s-CodCia                                              */
+/*                 b-Detalle.CodMat = AlmDKits.CodMat2.                                     */
+/*             IF AVAIL almmmatg THEN DO:                                                   */
+/*                 ASSIGN                                                                   */
+/*                     b-Detalle.DesMat = Almmmatg.DesMat + ' (' + Detalle.CodMat + ')'     */
+/*                     b-Detalle.DesMar = Almmmatg.DesMar                                   */
+/*                     b-Detalle.UndBas = Almmmatg.UndBas.                                  */
+/*             END.                                                                         */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CodAlm = Detalle.CodAlm                                        */
+/*                 b-Detalle.CodUbi = Almmmate.CodUbi                                       */
+/*                 b-Detalle.CanDes = Detalle.CanDes * AlmDKits.Cantidad                    */
+/*                 b-Detalle.Glosa  = STRING(Detalle.CanDes).                               */
+/*         END.                                                                             */
+/*         ELSE DO:                                                                         */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CanDes = b-Detalle.CanDes + Detalle.CanDes * AlmDKits.Cantidad */
+/*                 b-Detalle.DesMat = b-Detalle.DesMat + ' (' + Detalle.CodMat + ')'        */
+/*                 b-Detalle.Glosa  = STRING(DEC(b-Detalle.Glosa) + Detalle.CanDes) .       */
+/*         END.                                                                             */
+/*         b-Detalle.Glosa = b-Detalle.Glosa + " Kit(s)".                                   */
+/*         lKit = YES.                                                                      */
+/*      END.                                                                                */
+     IF lKit THEN DELETE Detalle.
+ END.
+
+ DEF VAR x-Ruta AS INT.
+ FOR EACH Detalle BY Detalle.codubi:
+     x-Ruta = x-Ruta + 1.
+     Detalle.Ruta = x-Ruta.
+ END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

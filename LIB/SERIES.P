@@ -1,0 +1,42 @@
+/* NRO DE SERIE AUTORIZADOS */
+DEFINE INPUT  PARAMETER No-SerieX AS CHARACTER.
+DEFINE OUTPUT PARAMETER No-Serie   AS CHARACTER.
+
+No-Serie =  SUBSTR(No-SerieX, 1, 5).
+
+DEFINE VARIABLE DISPERSOR AS INTEGER EXTENT 27 INITIAL 
+   [ 5, 14, 16, 13,  1,  6, 23, 21, 24,  2,  0, 22,  7, 10, 12,  3,
+     8, 15, 17,  25, 20, 9, 18, 26, 4, 11, 19 ].
+
+DEFINE VARIABLE J AS INTEGER.
+
+DEFINE VARIABLE X AS INTEGER.
+DEFINE VARIABLE Y AS INTEGER.
+
+    /* DIGITO 6 */ 
+    X = INTEGER( SUBSTR( No-Serie, 3, 3) ) + 
+                   ASC( SUBSTR( No-Serie, 1, 1) ) +  
+                   ASC( SUBSTR( No-Serie, 2, 1) ).
+    X = DISPERSOR[ X MODULO 27 + 1 ].    
+    No-Serie = No-Serie + CHR(  ASC("@") + X ).
+    /* DIGITO 7 */     
+    Y =  X MODULO 12.                                                                      
+    Y = 9 * ( LOG( Y + 1.25 )  -  TRUNCATE( LOG( Y + 1.25 ), 0)  ). 
+    No-Serie = No-Serie + STRING( Y , "9" ). 
+    /* DIGITO 8 */
+    X = ( X + Y ) MODULO 10.
+   No-Serie = No-Serie + STRING( X , "9" ).                                                                    
+    /* DIGITO 9 */
+    X = INTEGER( SUBSTR( No-Serie, 7, 2) ) +
+           ASC( SUBSTR(No-Serie, 6, 1) ) - ASC( "@" ). 
+    X = X MODULO 27.
+    Y = DISPERSOR[ X + 1 ].
+    IF Y > 9
+    THEN Y = TRUNCATE(  Y / 10, 0) + Y MODULO 10. 
+    Y = Y MODULO 10.
+    No-Serie = No-Serie + STRING( Y , "9").
+                                             
+    IF SUBSTR( No-SerieX, 6, 4) <> "@@@@"      
+    THEN   IF No-Serie = No-SerieX
+                THEN  No-Serie = "OK".
+                 ELSE  No-Serie = "BAD".

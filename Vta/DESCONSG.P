@@ -1,0 +1,101 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR S-USER-ID AS CHAR.
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DO ON ERROR UNDO, RETURN "ADM-ERROR":
+   FIND FIRST Almcmov WHERE 
+              Almcmov.CodCia = CcbCDocu.CodCia AND  
+              Almcmov.CodAlm = CcbCDocu.CodCob AND  
+              Almcmov.TipMov = "I"             AND  
+              Almcmov.CodMov = CcbCDocu.CodMov AND  
+              Almcmov.NroSer = 0               AND  
+              Almcmov.NroDoc = INTEGER(CcbCDocu.NroSal) 
+              EXCLUSIVE-LOCK NO-ERROR.
+   IF AVAIL Almcmov THEN DO:
+      FOR EACH Almdmov OF Almcmov EXCLUSIVE-LOCK 
+               ON ERROR UNDO, RETURN "ADM-ERROR":
+          RUN ALM\ALMDCSTK (ROWID(Almdmov)).
+          IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+          /* RHC 05.04.04 ACTIVAMOS KARDEX POR ALMACEN */
+          RUN alm/almacpr1 (ROWID(Almdmov), 'D').
+          IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+          
+          DELETE Almdmov.
+      END.
+      Almcmov.FlgEst = "A".
+   END.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

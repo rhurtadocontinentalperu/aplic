@@ -1,0 +1,311 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-impgui.p
+    Purpose     : Impresion de Guias
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR CL-codcia  AS INT.
+DEF SHARED VAR PV-codcia  AS INT.
+DEF SHARED VAR s-coddiv  LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF SHARED VAR s-user-id LIKE ccbcterm.codter.
+DEF SHARED VAR X-NUMORD  AS CHAR.
+DEF SHARED VAR X-obser  AS CHAR format "x(80)".
+
+
+DEF VAR X-EnLetras AS CHAR FORMAT "x(100)" NO-UNDO.
+DEF VAR C-NomVen AS CHAR FORMAT "X(21)".
+DEF VAR C-NomCon AS CHAR FORMAT "X(30)".
+DEF VAR C-RucTra AS CHAR FORMAT "X(30)".
+DEF VAR C-NomTra AS CHAR FORMAT "X(30)".
+DEF VAR C-DirTra AS CHAR FORMAT "X(30)".
+DEF VAR I-NroItm AS INTEGER.
+DEF VAR S-TOTPES AS DECIMAL.
+DEF VAR X-senal  AS CHAR.
+DEF VAR X-ZONA   AS CHAR.
+DEF VAR X-DEPART LIKE TabDepto.NomDepto.
+DEF VAR X-LugPar LIKE Almacen.DirAlm.
+DEF VAR X-FchRef LIKE ccbcdocu.fchdoc.
+DEF VAR X-Lugent AS CHAR NO-UNDO.
+DEFINE SHARED VARIABLE X-CTRANS  AS CHAR. 
+DEFINE SHARED VARIABLE X-RTRANS  AS CHAR. 
+DEFINE SHARED VARIABLE X-DTRANS  AS CHAR. 
+
+DEFINE BUFFER B-DOCU FOR ccbcdocu.
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+FIND B-DOCU WHERE B-DOCU.CODCIA = ccbcdocu.CodCia 
+             AND  B-DOCU.CodDoc = ccbcdocu.CodRef 
+             AND  B-DOCU.NroDoc = ccbcdocu.NroRef 
+            NO-LOCK NO-ERROR.
+IF AVAILABLE B-DOCU THEN X-FchRef = B-DOCU.FchDoc.
+ELSE X-FchRef = ?.
+
+FIND gn-clie WHERE gn-clie.codcia = CL-CODCIA 
+              AND  gn-clie.codcli = ccbcdocu.codcli 
+             NO-LOCK.
+    
+X-senal  = "X".
+C-NomVen = CcbCDocu.CodVen.
+C-NomCon = CcbCDocu.FmaPgo.
+/*C-RucTra = CcbCDocu.CodAge.*/
+
+IF CcbCDocu.CodDpto <> "" AND CcbCDocu.CodProv <> "" AND CcbCDocu.CodDist <> "" THEN DO:
+  IF CcbCDocu.CodDpto = "15" AND CcbCDocu.CodProv = "01" THEN do:
+     FIND TabDistr WHERE TabDistr.CodDepto = "15" 
+                    AND  TabDistr.CodProvi = "01" 
+                    AND  TabDistr.CodDistr = CcbCDocu.CodDist 
+                   NO-LOCK NO-ERROR.
+     IF AVAILABLE TabDistr THEN X-ZONA = TabDistr.NomDistr.
+  END.    
+  ELSE DO:     
+     FIND TabProvi WHERE TabProvi.CodDepto = CcbCDocu.CodDpto 
+                    AND  TabProvi.CodProvi = CcbCDocu.CodProv 
+                   NO-LOCK NO-ERROR.
+     IF AVAILABLE TabProvi THEN X-ZONA = TabProvi.NomProvi.
+  END.        
+END.
+
+FIND gn-ven WHERE gn-ven.CodCia = CcbCDocu.CodCia 
+             AND  gn-ven.CodVen = CcbCDocu.CodVen 
+            NO-LOCK NO-ERROR.
+IF AVAILABLE gn-ven THEN C-NomVen = gn-ven.NomVen.
+
+FIND gn-ConVt WHERE gn-ConVt.Codig = CcbCDocu.FmaPgo NO-LOCK NO-ERROR.
+IF AVAILABLE gn-ConVt THEN C-NomCon = C-NomCon + " - " + gn-ConVt.Nombr.
+
+FIND GN-PROV WHERE gn-prov.codcia = PV-CODCIA AND
+                   GN-PROV.CODPRO = CcbCDocu.CodAge NO-LOCK NO-ERROR.
+IF AVAILABLE GN-PROV THEN DO:
+C-NomTra = GN-PROV.NOMPRO.
+C-DirTra = gn-prov.DirPro.
+C-RucTra = gn-prov.Ruc.
+END.
+
+FIND Almacen WHERE Almacen.CodCia = CcbCDocu.CodCia 
+              AND  Almacen.CodAlm = CcbCDocu.CodAlm 
+             NO-LOCK NO-ERROR.
+IF AVAILABLE Almacen THEN X-LugPar = Almacen.DirAlm.
+ELSE DO:
+    /* buscamos el almacen en la tabla de correlativos */
+    FIND FacCorre WHERE faccorre.codcia = ccbcdocu.codcia
+        AND faccorre.coddoc = ccbcdocu.coddoc
+        AND faccorre.coddiv = ccbcdocu.coddiv
+        AND faccorre.nroser = INTEGER(SUBSTRING(ccbcdocu.nrodoc,1,3))
+        NO-LOCK NO-ERROR.
+    IF AVAILABLE FacCorre
+    THEN DO:
+        FIND Almacen WHERE Almacen.codcia = ccbcdocu.codcia
+            AND Almacen.codalm = Faccorre.codalm
+            NO-LOCK NO-ERROR.
+        IF AVAILABLE Almacen THEN x-LugPar = Almacen.diralm.
+    END.
+END.
+
+FIND TabDepto WHERE TabDepto.CodDepto = CcbCDocu.CodDpto NO-LOCK NO-ERROR.
+IF AVAILABLE TabDepto THEN X-DEPART = TabDepto.NomDepto.
+
+
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(ccbcdocu.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = X-EnLetras + (IF ccbcdocu.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+
+DEFINE FRAME F-HdrGui
+    HEADER
+    skip(6)
+    x-LugPar        AT 12 FORMAT 'x(70)' SKIP
+    ccbcdocu.dircli AT 12 FORMAT "X(50)" 
+    'R E M I T E N T E' AT 92  FORMAT "X(20)" SKIP
+    ccbcdocu.nomcli AT 12 FORMAT "X(70)" SKIP
+    ccbcdocu.RucCli AT 12 FORMAT "X(11)" SKIP 
+    CcbCDocu.CodCli AT 12 FORMAT "X(11)" 
+    C-NomTra   AT 103 FORMAT "X(35)" SKIP
+    "GUIA # "     AT 07 FORMAT "X(9)" ccbcdocu.nrodoc 
+    C-RucTra   AT 87 FORMAT "X(11)" SKIP
+    C-DirTra   AT 87 FORMAT "X(40)" SKIP(3)
+    /*"Placa : " at 78 x-numord skip(1)*/
+    CcbCDocu.CodVen AT 85 FORMAT "X(3)"
+    CcbCDocu.NroRef AT 99 FORMAT "XXX-XXXXXX" 
+    ccbcdocu.fchdoc  AT 119
+    SKIP(2) 
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 200.
+
+DEFINE FRAME F-DetaGui
+    ccbcdocu.codalm  AT 02 FORMAT "99"
+    I-NroItm         AT 04 FORMAT "Z9"
+    ccbddocu.codmat  AT 11 FORMAT "999999"
+    almmmatg.desmat  AT 27 FORMAT "X(40)"
+    almmmatg.desmar  AT 91 FORMAT "X(10)"
+    ccbddocu.candes  AT 108 FORMAT ">>>,>>9.99"
+    ccbddocu.UndVta  AT 119 FORMAT "X(8)"
+    WITH NO-LABELS NO-BOX NO-UNDERLINE STREAM-IO WIDTH 200.
+
+/*DEFINE FRAME F-FtrGui
+ *     HEADER
+ *     "LA MERCADERIA VIAJA POR CUENTA Y RIESGO DEL CLIENTE, EL DESPACHO DE MERCADERIA ABARCA HASTA LA AGENCIA DE TRANSPORTE" skip(2)
+ *     SUBSTRING(x-obser,01,30) format "x(30)"  SKIP
+ *     SUBSTRING(X-OBSER,31,60) format "x(30)"  SKIP
+ *     "Tran.Int: " X-CTRANS format "x(35)" skip
+ *     "Ruc     : " X-RTRANS format "x(35)" skip
+ *     "Direcc. : " X-DTRANS format "x(35)" skip
+ *     WITH PAGE-BOTTOM NO-LABELS NO-UNDERLINE NO-BOX STREAM-IO WIDTH 200.
+ * */
+
+DEFINE FRAME F-FtrGui
+    HEADER
+    "LA MERCADERIA VIAJA POR CUENTA Y RIESGO DEL CLIENTE, EL DESPACHO DE MERCADERIA ABARCA HASTA LA AGENCIA DE TRANSPORTE" skip(2)
+    SUBSTRING(x-obser,01,30) format "x(30)"  SKIP
+    SUBSTRING(X-OBSER,31,60) format "x(30)"  SKIP
+    'Salida  : ' X-Lugpar FORMAT 'X(38)' SKIP
+    'Destino : ' CcbCDocu.LugEnt FORMAT 'X(50)' SKIP
+    'Atencion: ' CcbCDocu.Nomcli FORMAT 'X(30)' SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-UNDERLINE NO-BOX STREAM-IO WIDTH 200.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2.15
+         WIDTH              = 34.14.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/*MLR* 06/12/07 ***
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+*MLR* ***/
+
+FIND FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+               AND  FacCorre.CodDiv = S-CODDIV 
+               AND  FacCorre.CodDoc = CcbCDocu.CodDoc 
+               AND  FacCorre.NroSer = INTEGER(SUBSTRING(CcbCDocu.NroDoc,1,3))  
+              NO-LOCK.
+
+/*MLR* 06/12/07 Nueva librearía de impresión ***/
+RUN lib/_port-name (FacCorre.Printer, OUTPUT s-port-name).
+IF s-port-name = '' THEN RETURN.
+
+/*MLR* 06/12/07 ***
+IF LOOKUP(FacCorre.Printer, s-printer-list) = 0 THEN DO:
+   MESSAGE "Impresora " FacCorre.Printer " no esta instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN ERROR.
+END.
+
+s-port-name = ENTRY(LOOKUP(FacCorre.Printer, s-printer-list), s-port-list).
+s-port-name = REPLACE(S-PORT-NAME, ":", "").
+*MLR* ***/
+
+/*OUTPUT TO PRINTER VALUE(s-port-name) PAGE-SIZE 43.*/
+{lib/_printer-to.i 43}
+
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(48) + {&PRN3}.     
+
+/*PUT CONTROL CHR(27) "@".
+ * PUT CONTROL CHR(27) "C" CHR(66).
+ * PUT CONTROL CHR(27) CHR(120) 0.
+ * PUT CONTROL CHR(15). */
+
+x-lugent = ''.
+IF CcbCDocu.Lugent2  <> '' THEN DO:
+   x-lugent = 'PTO.LLEGADA - 2:' + CcbCDocu.lugent2.
+END.
+
+I-NroItm = 0.
+FOR EACH ccbddocu OF ccbcdocu NO-LOCK , 
+    FIRST almmmatg OF ccbddocu NO-LOCK
+                   BREAK BY ccbddocu.nrodoc 
+                         BY almmmatg.desmat:
+        VIEW FRAME F-HdrGui.
+        VIEW FRAME F-FtrGui.
+        I-NroItm = I-NroItm + 1.
+        DISPLAY ccbcdocu.codalm
+                I-NroItm 
+                ccbddocu.codmat 
+                almmmatg.desmat 
+                almmmatg.desmar
+                ccbddocu.candes 
+                ccbddocu.undvta 
+                WITH FRAME F-DetaGui.
+
+        IF LAST-OF(ccbddocu.nrodoc)
+        THEN DO:
+            PAGE.
+        END.
+END.
+OUTPUT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

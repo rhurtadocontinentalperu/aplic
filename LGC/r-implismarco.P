@@ -1,0 +1,373 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEFINE SHARED VARIABLE S-CODCIA  AS INTEGER.
+DEFINE SHARED VARIABLE PV-CODCIA AS INTEGER.
+DEFINE SHARED VARIABLE S-NOMCIA  AS CHAR.
+DEFINE SHARED VARIABLE S-USER-ID AS CHAR.
+
+{src/bin/_prns1.i}
+{src/bin/_prns.i}
+
+DEF VAR C-ConPgo   AS CHAR FORMAT "x(50)" NO-UNDO.
+DEF VAR X-EnLetras AS CHAR FORMAT "x(100)" NO-UNDO.
+DEF VAR I-NroItm AS INTEGER NO-UNDO.
+DEF VAR C-Moneda AS CHAR INIT "S/." FORMAT "X(3)".
+DEF VAR F-PRENET AS DECIMAL INIT 0 NO-UNDO.
+
+FIND lg-clistamarco WHERE ROWID(lg-clistamarco) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE lg-clistamarco THEN RETURN. 
+
+IF lg-clistamarco.Codmon = 2 THEN C-Moneda = "US$".
+
+FIND gn-prov WHERE gn-prov.CodCia = PV-CODCIA AND
+     gn-prov.CodPro = lg-clistamarco.CodPro NO-LOCK NO-ERROR.
+
+FIND gn-concp WHERE gn-concp.Codig = lg-clistamarco.CndCmp NO-LOCK NO-ERROR.
+IF AVAILABLE gn-concp THEN C-ConPgo = gn-concp.Nombr.
+
+/************************  PUNTEROS EN POSICION  *******************************/
+/* RUN bin/_numero(LG-COCmp.ImpTot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = "SON : " + X-EnLetras + (IF LG-COCmp.Codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+*/
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE IMAGE IMAGE-1 FILENAME "IMG\print1" SIZE 5 BY 1.5.
+DEF VAR FI-MENSAJE AS CHAR FORMAT "X(40)" .
+
+DEFINE FRAME F-Proceso
+     IMAGE-1 AT ROW 1.5 COL 5
+     lg-clistamarco.NroLis VIEW-AS TEXT
+          SIZE 25 BY 1 AT ROW 1.5 COL 12 FONT 6
+     "espere un momento ...." VIEW-AS TEXT
+          SIZE 25 BY 1 AT ROW 2.5 COL 12 FONT 6
+          SKIP
+     Fi-Mensaje NO-LABEL FONT 6
+     SKIP     
+    WITH VIEW-AS DIALOG-BOX KEEP-TAB-ORDER 
+         SIDE-LABELS NO-UNDERLINE THREE-D SCROLLABLE 
+         BGCOLOR 15 FGCOLOR 0 
+         TITLE "IMPRIMIENDO LISTA PRECIOS " FONT 7.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 4.69
+         WIDTH              = 37.29.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+    DEFINE VARIABLE c-Copias AS INTEGER NO-UNDO.
+
+    RUN lib/Imprimir2.
+    IF s-salida-impresion = 0 THEN RETURN.
+
+    IF s-salida-impresion = 1 THEN 
+        s-print-file = SESSION:TEMP-DIRECTORY +
+        STRING(NEXT-VALUE(sec-arc,integral)) + ".prn".
+
+    DO c-Copias = 1 TO s-nro-copias ON ERROR UNDO, LEAVE ON STOP UNDO, LEAVE:
+        CASE s-salida-impresion:
+            WHEN 1 OR WHEN 3 THEN
+                OUTPUT STREAM REPORT TO VALUE(s-print-file) PAGED PAGE-SIZE 62.
+            WHEN 2 THEN
+                OUTPUT STREAM REPORT TO PRINTER PAGED PAGE-SIZE 62. /* Impresora */
+        END CASE.
+        PUT STREAM REPORT CONTROL {&Prn0} + {&Prn5A} + CHR(66) + {&Prn4}.
+        RUN Formato.
+        PAGE STREAM REPORT.
+        OUTPUT STREAM report CLOSE.
+    END.
+    OUTPUT STREAM report CLOSE.
+
+    CASE s-salida-impresion:
+        WHEN 1 OR WHEN 3 THEN DO:
+            RUN LIB/W-README.R(s-print-file).
+            IF s-salida-impresion = 1 THEN OS-DELETE VALUE(s-print-file).
+        END.
+    END CASE.
+
+
+
+
+
+
+
+
+
+
+
+/*
+DEFINE FRAME F-HdrLis
+    HEADER
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN3} + {&PRN6B} FORMAT "X(45)" 
+    {&PRN6A} + " LISTA DE PRECIOS X PROVEEDOR" + {&PRN6B} FORMAT "X(35)" AT 45 
+    {&PRN7A} + {&PRN6A} + "LISTA :" + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(12)" AT 111 
+    {&PRN7A} + {&PRN6A} + STRING(lg-clistamarco.NroLis,"999999") + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(12)" AT 124 SKIP(1)
+    "PROVEEDOR : " AT 10 gn-prov.NomPro  AT 25 FORMAT "x(40)"    
+    "FECHA EMISION    : " AT 75 lg-clistamarco.FchEmi AT 95 
+    "PAG. " AT 126 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP
+    "DIRECCION : " AT 10 gn-prov.DirPro  AT 25 FORMAT "x(40)"    
+    "FECHA ACTIVACION : " AT 75 lg-clistamarco.FchVig AT 95 SKIP
+    "CONTACTO  : " AT 10 gn-prov.Contactos[1] AT 25   
+    "CONDICION COMPRA : " AT 75 C-ConPgo AT 95 SKIP
+    "-----------------------------------------------------------------------------------------------------------------------------------------" SKIP
+    "                CODIGO                                                                      P.LISTA                            COSTO NETO" SKIP
+    "  ITEM CODIGO PROVEEDOR     D E S C R I P C I O N                   MARCA       UND  MON.    ACTUAL   DSCT1 DSCT2 DSCT3  IGV     CON IGV " SKIP
+    "-----------------------------------------------------------------------------------------------------------------------------------------" SKIP
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160.                        
+
+DEFINE FRAME F-DetLis 
+       I-NroItm            AT  01 FORMAT "ZZZZ9"
+       lg-dlistamarco.Codmat    AT  08 /*06*/ FORMAT "X(6)"
+       LG-DOCmp.ArtPro     AT  14 /*12*/ FORMAT "X(10)"
+       Almmmatg.DesMat     AT  25 /*23*/ FORMAT "X(40)"
+       Almmmatg.DesMar     AT  66 /*64*/ FORMAT "X(14)"
+       Almmmatg.UndStk     AT  81 /*79*/ FORMAT "X(4)"
+       C-MONEDA            AT  86 /*84*/ FORMAT "X(3)"
+       lg-dlistamarco.PreAct    AT  89 /*87*/ FORMAT ">>,>>9.9999" 
+       lg-dlistamarco.Dsctos[1] AT 103 /*101*/ FORMAT ">9.99"
+       lg-dlistamarco.Dsctos[2] AT 109 /*107*/ FORMAT ">9.99"
+       lg-dlistamarco.Dsctos[3] AT 115 /*113*/ FORMAT ">9.99"
+       lg-dlistamarco.IgvMat    AT 121 /*119*/ FORMAT ">9.99"
+       F-PRENET     AT 127 /*125*/ FORMAT ">>>>,>>9.99" 
+       WITH NO-LABELS NO-BOX NO-UNDERLINE STREAM-IO WIDTH 170.
+
+DEFINE FRAME F-PagLis
+    HEADER
+    "                                  -------------------    ---------------------    -------------------" SKIP
+    "                                      Operador(a)               Asistente           Jefe de Compras  " SKIP
+    "HORA : " AT 1 STRING(TIME,"HH:MM:SS") S-USER-ID AT 40 FORMAT "X(20)" SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+    
+DEFINE FRAME F-SalLis
+    HEADER
+    " VAN ..." SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+
+OUTPUT STREAM REPORTE TO PRINTER PAGE-SIZE 62.
+PUT STREAM REPORTE CONTROL CHR(27) "@".
+PUT STREAM REPORTE CONTROL CHR(27) "C" CHR(66).
+PUT STREAM REPORTE CONTROL CHR(27) CHR(120) 0.
+PUT STREAM REPORTE CONTROL CHR(15).
+
+
+I-NroItm = 0.
+FOR EACH lg-dlistamarco WHERE 
+    lg-dlistamarco.CodCia = lg-clistamarco.CodCia AND
+    lg-dlistamarco.NroLis = lg-clistamarco.NroLis NO-LOCK,
+    FIRST Almmmatg OF lg-dlistamarco NO-LOCK
+    BREAK BY lg-dlistamarco.NroLis
+          BY lg-dlistamarco.ArtPro
+          BY Almmmatg.DesMar
+          BY Almmmatg.DesMat : 
+          
+    DISPLAY Almmmatg.DesMat @ FI-MENSAJE WITH FRAME F-Proceso.
+    VIEW STREAM REPORTE FRAME F-HdrLis.
+    VIEW STREAM REPORTE FRAME F-PagLis.
+    I-NroItm = I-NroItm + 1.
+    C-MONEDA = IF lg-dlistamarco.Codmon = 1 THEN "S/." ELSE "US$".
+    F-PRENET = ROUND (lg-dlistamarco.PreCos + ( lg-dlistamarco.PreCos * (lg-dlistamarco.IgvMat / 100) ),2).
+    DISPLAY STREAM REPORTE
+       I-NroItm
+       lg-dlistamarco.ArtPro 
+       lg-dlistamarco.Codmat 
+       Almmmatg.DesMat
+       Almmmatg.DesMar
+       Almmmatg.UndStk
+       C-MONEDA 
+       lg-dlistamarco.PreAct  
+       lg-dlistamarco.Dsctos[1] WHEN lg-dlistamarco.Dsctos[1] > 0 
+       lg-dlistamarco.Dsctos[2] WHEN lg-dlistamarco.Dsctos[2] > 0 
+       lg-dlistamarco.Dsctos[3] WHEN lg-dlistamarco.Dsctos[3] > 0 
+       lg-dlistamarco.IgvMat  WHEN lg-dlistamarco.IgvMat > 0
+       F-PRENET WITH FRAME F-DetLis.
+              
+    IF LAST-OF(lg-dlistamarco.NroLis) THEN DO:
+       VIEW STREAM REPORTE FRAME F-PagLis.
+       PAGE STREAM REPORTE .
+    END.
+END.
+HIDE FRAME F-PROCESO.
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Formato) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato Procedure 
+PROCEDURE Formato :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE FRAME F-HdrLis
+    HEADER
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN3} + {&PRN6B} FORMAT "X(45)" 
+    {&PRN6A} + " LISTA DE PRECIOS X PROVEEDOR" + {&PRN6B} FORMAT "X(35)" AT 45 
+    {&PRN7A} + {&PRN6A} + "LISTA :" + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(12)" AT 111 
+    {&PRN7A} + {&PRN6A} + STRING(lg-clistamarco.NroLis,"999999") + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(12)" AT 124 SKIP(1)
+    "PROVEEDOR : " AT 10 gn-prov.NomPro  AT 25 FORMAT "x(40)"    
+    "FECHA EMISION    : " AT 75 lg-clistamarco.FchEmi AT 95 
+    "PAG. " AT 126 PAGE-NUMBER(REPORT) FORMAT ">>9" SKIP
+    "DIRECCION : " AT 10 gn-prov.DirPro  AT 25 FORMAT "x(40)"    
+    "FECHA ACTIVACION : " AT 75 lg-clistamarco.FchVig AT 95 SKIP
+    "CONTACTO  : " AT 10 gn-prov.Contactos[1] AT 25   
+    "CONDICION COMPRA : " AT 75 C-ConPgo AT 95 SKIP
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 320.
+
+DEFINE FRAME F-DetLis 
+       I-NroItm            AT  01 FORMAT "ZZZZ9"        COLUMN-LABEL 'ITEM'
+       lg-dlistamarco.Codmat           FORMAT "X(6)"         COLUMN-LABEL 'CODIGO'
+       lg-dlistamarco.ArtPro            FORMAT "X(10)"        COLUMN-LABEL 'CODIGO!PROVEEDOR'
+       Almmmatg.DesMat            FORMAT "X(40)"        COLUMN-LABEL "D E S C R I P C I O N"
+       Almmmatg.DesMar            FORMAT "X(14)"        COLUMN-LABEL "MARCA"
+       Almmmatg.UndStk            FORMAT "X(4)"         COLUMN-LABEL "UND"
+       C-MONEDA                   FORMAT "X(3)"         COLUMN-LABEL "MON."
+       lg-dlistamarco.PreAct           FORMAT ">>,>>9.9999"  COLUMN-LABEL "P.LISTA!ACUAL"
+       lg-dlistamarco.Dsctos[1]        FORMAT ">9.99"        COLUMN-LABEL "DSCT1"
+       lg-dlistamarco.Dsctos[2]        FORMAT ">9.99"        COLUMN-LABEL "DSCT2"
+       lg-dlistamarco.Dsctos[3]        FORMAT ">9.99"        COLUMN-LABEL "DSCT3"
+       lg-dlistamarco.IgvMat           FORMAT ">9.99"        COLUMN-LABEL "IGV"
+       F-PRENET                   FORMAT ">>>>,>>9.99"  COLUMN-LABEL "COSTO NETO!CON IGV"
+       Almmmatg.PreVta[2]                               COLUMN-LABEL "Precio!A"
+       Almmmatg.MrgUti-A                                 COLUMN-LABEL "% Margen!A"
+       Almmmatg.PreVta[3]                               COLUMN-LABEL "Precio!B"
+       Almmmatg.MrgUti-A                                 COLUMN-LABEL "% Margen!B"
+       Almmmatg.PreVta[4]                               COLUMN-LABEL "Precio!C"
+       Almmmatg.MrgUti-C                                 COLUMN-LABEL "% Margen!C"
+       Almmmatg.Dec__01                                 COLUMN-LABEL "Precio!Oficina"
+       Almmmatg.PreOfi                                  COLUMN-LABEL "% Margen!Oficina"
+    WITH DOWN NO-BOX STREAM-IO WIDTH 320.
+
+DEFINE FRAME F-PagLis
+    HEADER
+    "                                  -------------------    ---------------------    -------------------" SKIP
+    "                                      Operador(a)               Asistente           Jefe de Compras  " SKIP
+    "HORA : " AT 1 STRING(TIME,"HH:MM:SS") S-USER-ID AT 40 FORMAT "X(20)" SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 320.
+    
+DEFINE FRAME F-SalLis
+    HEADER
+    " VAN ..." SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 320.
+
+I-NroItm = 0.
+FOR EACH lg-dlistamarco WHERE lg-dlistamarco.CodCia = lg-clistamarco.CodCia AND
+    lg-dlistamarco.NroLis = lg-clistamarco.NroLis NO-LOCK,
+    FIRST Almmmatg OF lg-dlistamarco NO-LOCK
+    BREAK BY lg-dlistamarco.NroLis
+    BY lg-dlistamarco.ArtPro
+    BY Almmmatg.DesMar
+    BY Almmmatg.DesMat : 
+    DISPLAY Almmmatg.DesMat @ FI-MENSAJE WITH FRAME F-Proceso.
+    VIEW STREAM REPORT FRAME F-HdrLis.
+    VIEW STREAM REPORT FRAME F-PagLis.
+    I-NroItm = I-NroItm + 1.
+    C-MONEDA = IF lg-dlistamarco.Codmon = 1 THEN "S/." ELSE "US$".
+    F-PRENET = ROUND (lg-dlistamarco.PreCos + ( lg-dlistamarco.PreCos * (lg-dlistamarco.IgvMat / 100) ),2).
+    DISPLAY STREAM REPORT
+       I-NroItm
+       lg-dlistamarco.ArtPro 
+       lg-dlistamarco.Codmat 
+       Almmmatg.DesMat
+       Almmmatg.DesMar
+       Almmmatg.UndStk
+       C-MONEDA 
+       lg-dlistamarco.PreAct  
+       lg-dlistamarco.Dsctos[1] WHEN lg-dlistamarco.Dsctos[1] > 0 
+       lg-dlistamarco.Dsctos[2] WHEN lg-dlistamarco.Dsctos[2] > 0 
+       lg-dlistamarco.Dsctos[3] WHEN lg-dlistamarco.Dsctos[3] > 0 
+       lg-dlistamarco.IgvMat  WHEN lg-dlistamarco.IgvMat > 0
+       F-PRENET 
+        Almmmatg.PreVta[2]                               
+        Almmmatg.MrgUti-A                                 
+        Almmmatg.PreVta[3]                               
+        Almmmatg.MrgUti-A                                 
+        Almmmatg.PreVta[4]                               
+        Almmmatg.MrgUti-C                                 
+        Almmmatg.Dec__01                                 
+        Almmmatg.PreOfi                                  
+        WITH FRAME F-DetLis.
+    IF LAST-OF(lg-dlistamarco.NroLis) THEN DO:
+       VIEW STREAM REPORT FRAME F-PagLis.
+       PAGE STREAM REPORT .
+    END.
+END.
+
+HIDE FRAME F-PROCESO.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

@@ -1,0 +1,164 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.31
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR s-user-id AS CHAR.
+DEF SHARED VAR s-codalm  AS CHAR.
+DEF SHARED VAR s-coddiv  AS CHAR.
+
+FIND Ccbcdocu WHERE ROWID(Ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN 'OK'.
+
+FIND FIRST Facdpedi WHERE Facdpedi.codcia = Ccbcdocu.codcia
+    AND Facdpedi.coddoc = 'OF' + Ccbcdocu.codped
+    AND Facdpedi.nroped = Ccbcdocu.nroped
+    NO-LOCK NO-ERROR.
+IF NOT AVAILABLE Facdpedi THEN RETURN 'OK'.
+
+DEF VAR i AS INTEGER INITIAL 1 NO-UNDO.
+
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR" ON STOP UNDO, RETURN 'ADM-ERROR':
+   /* Correlativo de Salida */
+   FIND CURRENT Ccbcdocu EXCLUSIVE-LOCK NO-ERROR.
+   IF ERROR-STATUS:ERROR THEN RETURN 'ADM-ERROR'.
+   FIND Almacen WHERE 
+        Almacen.CodCia = s-codcia AND
+        Almacen.CodAlm = s-codalm       /* OJO */
+        EXCLUSIVE-LOCK NO-ERROR.
+   IF ERROR-STATUS:ERROR THEN UNDO, RETURN 'ADM-ERROR'.
+   CREATE almcmov.
+   ASSIGN Almcmov.CodCia  = CcbCDocu.CodCia 
+          Almcmov.CodAlm  = s-CodAlm 
+          Almcmov.TipMov  = "S"
+          Almcmov.CodMov  = Ccbcdocu.codmov
+          Almcmov.NroSer  = 0 
+          Almcmov.NroDoc  = Almacen.CorrSal 
+          Almacen.CorrSal = Almacen.CorrSal + 1
+          Almcmov.FchDoc  = TODAY
+          Almcmov.HorSal  = STRING(TIME, "HH:MM:SS")
+          Almcmov.CodVen  = Ccbcdocu.CodVen
+          Almcmov.CodCli  = Ccbcdocu.CodCli
+          Almcmov.Nomref  = Ccbcdocu.NomCli
+          Almcmov.CodRef  = Ccbcdocu.CodDoc
+          Almcmov.NroRef  = Ccbcdocu.NroDoc
+          Almcmov.NroRf1  = SUBSTRING(Ccbcdocu.CodDoc,1,1) + Ccbcdocu.NroPed
+          Almcmov.NroRf2  = Ccbcdocu.NroPed
+          Almcmov.usuario = s-user-id
+          CcbCDocu.Libre_c05 = STRING(Almcmov.NroDoc).
+   
+   DETALLE:
+   FOR EACH Facdpedi NO-LOCK WHERE Facdpedi.codcia = Ccbcdocu.codcia
+       AND Facdpedi.coddoc = 'OF' + Ccbcdocu.codped
+       AND Facdpedi.nroped = Ccbcdocu.nroped:
+       CREATE Almdmov.
+       ASSIGN Almdmov.CodCia = Almcmov.CodCia
+              Almdmov.CodAlm = Almcmov.CodAlm
+              Almdmov.CodMov = Almcmov.CodMov 
+              Almdmov.NroSer = almcmov.nroser
+              Almdmov.NroDoc = almcmov.nrodoc
+              Almdmov.AftIgv = Facdpedi.aftigv
+              Almdmov.AftIsc = Facdpedi.aftisc
+              Almdmov.CanDes = Facdpedi.canped
+              Almdmov.codmat = Facdpedi.codmat
+              Almdmov.CodMon = ccbcdocu.codmon
+              Almdmov.CodUnd = Facdpedi.undvta
+              Almdmov.Factor = Facdpedi.factor
+              Almdmov.FchDoc = CcbCDocu.FchDoc
+              Almdmov.ImpDto = Facdpedi.impdto
+              Almdmov.ImpIgv = Facdpedi.impigv
+              Almdmov.ImpIsc = Facdpedi.impisc
+              Almdmov.ImpLin = Facdpedi.implin
+              Almdmov.NroItm = i
+              Almdmov.PorDto = Facdpedi.pordto
+              Almdmov.PreBas = Facdpedi.prebas
+              Almdmov.PreUni = Facdpedi.preuni
+              Almdmov.TipMov = "S"
+              Almdmov.TpoCmb = ccbcdocu.tpocmb
+              Almcmov.TotItm = i
+              Almdmov.HraDoc = Almcmov.HorSal
+              i = i + 1.
+       /* RUN alm/almdgstk (ROWID(almdmov)). */
+       RUN alm/almdcstk (ROWID(almdmov)).
+       IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+       /* RHC 05.04.04 ACTIVAMOS KARDEX POR ALMACEN */
+       RUN alm/almacpr1 (ROWID(almdmov), 'U').
+       IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+
+       RELEASE almdmov.
+   END.
+   RELEASE Almacen.
+   RELEASE almcmov.
+END.
+RETURN "OK".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

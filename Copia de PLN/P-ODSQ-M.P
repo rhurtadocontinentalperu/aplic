@@ -1,0 +1,89 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r2 GUI
+/* Procedure Description
+"C lculo Otros Descuentos
+- 1 PRESTAMOS
+- 2 ADELANTOS"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+{pln/s-global.i}
+{bin/s-global.i}
+
+DEFINE INPUT-OUTPUT PARAMETER s-Var    AS DECIMAL.
+DEFINE INPUT        PARAMETER s-CodCal AS INTEGER NO-UNDO.
+DEFINE INPUT        PARAMETER s-CodPln AS INTEGER NO-UNDO.
+DEFINE INPUT        PARAMETER s-CodPer AS CHARACTER NO-UNDO.
+DEFINE INPUT        PARAMETER s-ClfDto AS INTEGER NO-UNDO.
+DEFINE INPUT        PARAMETER s-TpoDto AS INTEGER NO-UNDO.
+
+DEFINE VARIABLE s-Cuota AS DECIMAL NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+FOR EACH integral.PL-CFG-CTE-MES WHERE
+    integral.PL-CFG-CTE-MES.CodCia = s-CodCia AND
+    integral.PL-CFG-CTE-MES.Periodo = s-Periodo AND
+    integral.PL-CFG-CTE-MES.NroMes = s-NroMes AND
+    integral.PL-CFG-CTE-MES.Clf-Cte-Mes = s-ClfDto AND
+    integral.PL-CFG-CTE-MES.Tpo-Cte-Mes = s-TpoDto AND
+    integral.PL-CFG-CTE-MES.CodPer = s-CodPer AND
+    integral.PL-CFG-CTE-MES.Sdo-Cte-Mes > 0 AND
+    MONTH(integral.PL-CFG-CTE-MES.Fch-Prx-Pgo-Mes) = s-NroMes NO-LOCK:
+    ASSIGN
+        s-Cuota = MINIMUM(PL-CFG-CTE-MES.Sdo-Cte-Mes, PL-CFG-CTE-MES.Cuo-Cte-Mes)
+        s-Var   = s-Var + s-Cuota.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

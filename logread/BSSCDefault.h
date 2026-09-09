@@ -1,0 +1,11 @@
+#define Columns_dialog_box	1
+#define Log_Browse_window	2
+#define Log_Dump_dialog_box	3
+#define Log_Filter_dialog_box	4
+#define Log_Properties_dialog_box	5
+#define LogRead_main_window	6
+#define Merge_Logs_dialog_box	7
+#define New_Merge_dialog_box	8
+#define Open_Log_File_dialog_box	9
+#define Run_Utility_dialog_box	10
+#define Search_dialog_box	11

@@ -1,0 +1,156 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* PROGRAMA QUE MIGRA LA INFORMACION DE CONTABILIDAD A ACTIVOS FIJOS */
+
+DEFINE VAR x-PorDep AS DECIMAL.
+DEFINE VAR x-CodFam AS CHAR.
+DEFINE VAR x-CodPar AS CHAR.
+DEFINE VAR x-Corre  AS INTEGER.
+
+FOR EACH CB-DMOV WHERE cb-dmov.codcia = 10 AND cb-dmov.Periodo = 1998 AND 
+                       cb-dmov.CodOpe = "030" AND cb-dmov.CodCta BEGINS "33" ,
+                       FIRST cb-cmov WHERE cb-cmov.CodCia = cb-dmov.CodCia AND 
+                             cb-cmov.Periodo = cb-dmov.Periodo AND cb-cmov.NroMes = cb-dmov.NroMes AND
+                             cb-cmov.CodOpe = cb-dmov.CodOpe AND cb-cmov.NroAst = cb-dmov.NroAst                                                                                           
+                       BREAK BY cb-dmov.NroAst BY cb-dmov.Codcta :
+            
+    IF FIRST-OF (cb-dmov.NroAst) THEN DO :
+       IF cb-dmov.Codcta BEGINS "332" THEN x-PorDep =  3.00.
+       IF cb-dmov.Codcta BEGINS "333" THEN x-PorDep = 10.00.
+       IF cb-dmov.Codcta BEGINS "334" THEN x-PorDep = 20.00.
+       IF cb-dmov.Codcta BEGINS "335" THEN x-PorDep = 10.00.
+       IF cb-dmov.Codcta BEGINS "336" THEN x-PorDep = 10.00.
+       IF cb-dmov.Codcta = "33611" THEN    x-PorDep = 20.00.        
+    END.
+
+    IF FIRST-OF (cb-dmov.CodCta) THEN DO :
+       FIND FIRST AC-TFAM WHERE AC-TFAM.CodCta = cb-dmov.CodCta NO-LOCK NO-ERROR.       
+       IF AVAILABLE AC-TFAM THEN x-CodFam = AC-TFAM.CodFam.
+          ELSE x-CodFam = "999999".
+       
+       FIND LAST AC-PARTI WHERE AC-PARTI.CodFam = x-CodFam NO-LOCK NO-ERROR.
+       IF AVAILABLE AC-PARTI THEN x-Corre = INTEGER(SUBSTRING(ac-parti.CodPar, 7)) + 1.          
+       ELSE x-Corre = 1.
+
+       x-CodPar = x-CodFam + STRING(x-Corre,"9999").
+       
+    END.    
+    
+    CREATE AC-PARTI.
+    
+    AC-PARTI.Ccosto = cb-dmov.cco.
+    AC-PARTI.CodCia = cb-dmov.CodCia.
+    AC-PARTI.Codcta = cb-dmov.Codcta.
+    AC-PARTI.CodDiv = "00000".
+    AC-PARTI.CodFam = x-CodFam.
+    AC-PARTI.CodMov = "ADIC".
+    AC-PARTI.Codope = cb-dmov.CodOpe.
+    AC-PARTI.CodPar = x-CodPar.
+    AC-PARTI.CodPro = cb-dmov.CodAux.
+    AC-PARTI.CodUbc = "".
+    AC-PARTI.DepAcuMn1 = 0.
+    AC-PARTI.DepAcuMn2 = 0.
+    AC-PARTI.DepBaja   = 0.
+    AC-PARTI.DesPar = cb-dmov.GloDoc.
+    AC-PARTI.DivAct = "00000".
+    /* AC-PARTI.FchCese  = */
+    AC-PARTI.FchComp = cb-dmov.FchDoc.
+    AC-PARTI.FchDepr = DATE("31/01/1999").
+    AC-PARTI.FchIngr = cb-cmov.FchAst.
+    AC-PARTI.FlgEst  = "P".
+    AC-PARTI.Marca   = "".
+    AC-PARTI.MesCon  = cb-dmov.NroMes.
+    AC-PARTI.Modelo  = "".
+    AC-PARTI.MonCmp  = cb-dmov.CodMon.
+    AC-PARTI.NroAst  = cb-dmov.NroAst.
+    AC-PARTI.NroFacCmp = cb-dmov.NroDoc.
+    AC-PARTI.Observaciones = cb-dmov.GloDoc.
+    AC-PARTI.PerCon = cb-dmov.periodo.
+    AC-PARTI.Periodo = cb-dmov.periodo.
+    AC-PARTI.PorDep = x-PorDep.
+    AC-PARTI.Reponsable = "ADMIN".
+    AC-PARTI.Serie = "".
+    AC-PARTI.TpoCal = 1.
+    AC-PARTI.UbiAct  = "".
+    AC-PARTI.ubicacion = "".
+    AC-PARTI.ValActMn1 = cb-dmov.ImpMn1.
+    AC-PARTI.ValActMn2 = cb-dmov.ImpMn2.
+    AC-PARTI.ValAjusMn1 = cb-dmov.ImpMn1.
+    AC-PARTI.ValBaja    = 0.
+    AC-PARTI.ValCmpMn1  = cb-dmov.ImpMn1.
+    AC-PARTI.ValCmpMn2  = cb-dmov.ImpMn2.
+    AC-PARTI.ValDepAjus = 0.
+                        
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

@@ -1,0 +1,8 @@
+    DEFINE VARIABLE db-model AS CHARACTER NO-UNDO.
+    IF CONNECTED( "db-work") THEN DISCONNECT db-work.
+    FILE-INFO:FILE-NAME = ".".
+    db-model = FILE-INFO:FULL-PATHNAME + "/aplic/pln/db-work".
+    DEFINE VARIABLE db-work AS CHARACTER NO-UNDO.
+    db-work = SESSION:TEMP-DIRECTORY + "db-work.db".
+    CREATE DATABASE db-work FROM db-model REPLACE.
+    CONNECT VALUE( db-work ) -1 -ld db-work.

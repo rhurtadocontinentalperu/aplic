@@ -1,0 +1,332 @@
+/*Apertura del Nuevo A¤o Contable */
+DEF VAR l-ctamov AS INTEGER.
+DEF NEW SHARED VAR cb-niveles AS CHARACTER INITIAL "2,3,4,5".
+l-ctamov = INTEGER( ENTRY( NUM-ENTRIES(cb-niveles) , cb-niveles )  ) .
+
+DEF VAR x-sdonac   AS DECIMAL INITIAL 0.
+DEF VAR x-sdousa   AS DECIMAL INITIAL 0.
+DEF VAR rpta       AS LOGICAL.
+DEF VAR seguir     AS LOGICAL.
+DEF VAR cb-codcia AS INTEGER INITIAL 0.
+DEF BUFFER detalle FOR cb-dmov.
+
+DEF VAR x-recid    AS RECID.
+DEF SHARED VAR  s-codcia LIKE cb-dmov.codcia. 
+DEF SHARED VAR  s-periodo    LIKE cb-dmov.periodo.
+
+DEF VAR  x-CodCta  LIKE cb-dmov.codcta .
+DEF VAR  x-CodDiv  LIKE cb-dmov.coddiv.
+DEF VAR  x-CodMon  LIKE cb-dmov.codmon.
+DEF VAR  x-nroitm  AS INTEGER INITIAL  0.
+DEF VAR  x-d1      AS DECIMAL  INITIAL 0.
+DEF VAR  x-h1      AS DECIMAL  INITIAL 0.
+DEF VAR  x-d2      AS DECIMAL  INITIAL 0.
+DEF VAR  x-h2      AS DECIMAL  INITIAL 0.
+
+DEF VAR  x-nromes  AS INTEGER INITIAL 0.
+DEF VAR  x-codope  AS CHAR INITIAL "000".
+DEF VAR  x-tpomov  AS LOGICAL.
+DEF VAR  x-nroast  AS CHAR INITIAL "000001".
+
+DEF VAR  y-glodoc   LIKE cb-dmov.glodoc.
+DEF VAR  x-tpocmb   LIKE cb-dmov.tpocmb.
+DEF VAR  x-clfaux   LIKE cb-dmov.clfaux.
+DEF VAR  x-codaux   LIKE cb-dmov.codaux.
+DEF VAR  x-coddoc   LIKE cb-dmov.coddoc.
+DEF VAR  x-nrodoc   LIKE cb-dmov.nrodoc.
+DEF VAR  x-nroref   LIKE cb-dmov.nroref.
+DEF VAR  x-fchdoc   LIKE cb-dmov.fchdoc.
+DEF VAR  x-fchvto   LIKE cb-dmov.fchvto.
+
+
+DEF VAR ImpCal1  AS DECIMAL.
+DEF VAR ImpCal2  AS DECIMAL.
+DEF VAR ImpCal3  AS DECIMAL.
+DEF VAR ImpCal4  AS DECIMAL.
+DEF VAR ImpCal5  AS DECIMAL.
+DEF VAR ImpCal6  AS DECIMAL.
+DEF VAR x-mensaje AS CHAR FORMAT "X(30)".
+DEF VAR x-estado  AS CHAR FORMAT "X(30)".
+
+DEF VAR x-glodoc  AS CHAR INITIAL "ASIENTO AUTOMATICO DE APERTURA".
+
+x-mensaje = "Verifique la siguiente informaci¢n : ".
+x-estado  = "Compa¤ia:  " + STRING(s-codcia) + "  Periodo: " + STRING(s-periodo).
+message x-mensaje skip(2)
+        x-estado 
+        view-as alert-box
+        BUTTONS YES-NO TITLE "CONFIRME" 
+        UPDATE seguir.
+IF NOT seguir THEN RETURN.        
+
+
+MESSAGE "ESTE PROCEDIMIENTO TIENE POR FINALIDAD TRASLADAR "   SKIP
+        "LOS SALDOS DEL PRESENTE EJERCICIO O A¥O CONTABLE "   SKIP
+        "AL MES DE APERTURA DEL SIGUIENTE EJERCICIO."         SKIP
+        "SI YA SE REALIZO SE ANULARA LA APERTURA ANTERIOR"    SKIP
+        "Y SE TRASLADARAN NUEVAMENTE LOS SALDOS."              SKIP 
+        "LAS CUENTAS DE BALANCE QUE ESTAN CONFIGURADAS COMO"  SKIP  
+         "     PIDE AUXILIAR  = SI                          " SKIP
+         "     PIDE DOCUMENTO = SI                          " SKIP
+         "TRASLADARAN SALDOS INDIVIDUALES POR CADA DOCUMENTO ;" SKIP
+         "Y LAS QUE NO ESTEN CONFIGURADAS DE ESTA MANERA    " SKIP
+         "TRASLADARAN SU SALDO TOTAL."                         SKIP
+         "PARA CORRER ESTE PROCESO ASEGURESE DE QUE SUS BALANCES " SKIP
+         "ESTEN DEBIDAMENTE REVISADOS." 
+         VIEW-AS ALERT-BOX BUTTONS YES-NO  TITLE "APERTURA" 
+         UPDATE rpta.
+         
+DEFINE FRAME f-mensaje            
+       SKIP (2) 
+       x-mensaje NO-LABEL skip
+       x-estado  NO-LABEL
+       SKIP (2)
+       WITH CENTERED 
+       TITLE "Espere un Momento por Favor".        
+
+IF NOT rpta THEN RETURN.         
+RUN ANULA.
+      
+FOR EACH integral.CB-CTAS WHERE  codcia         = cb-codcia AND
+                        LENGTH(codcta) = l-ctamov   AND
+                               codcta  < "6" 
+                        NO-LOCK:
+    /*CALCULO DEL SALDO EN SOLES */  
+    x-codcta = integral.CB-CTAS.codcta.
+    x-mensaje = "  Cuenta en Proceso: " + x-codcta.
+    
+    DISPLAY x-mensaje WITH FRAME f-mensaje.                       
+    PAUSE 0.
+    IF integral.CB-CTAS.pidaux and integral.CB-CTAS.piddoc THEN   RUN GRAB-CTACTE.
+    ELSE
+    DO:
+        x-codmon =  1.
+        x-coddiv = "".                   
+        RUN cbd/cbd_imp.p(INPUT  s-codcia       , 
+                                 x-codcta       ,
+                                 x-coddiv       ,
+                                 s-periodo          ,
+                                 12             ,
+                                 x-codmon       ,
+                          OUTPUT impcal1        ,
+                          OUTPUT impcal2        ,
+                          OUTPUT impcal3        ,
+                          OUTPUT impcal4        ,
+                          OUTPUT impcal5        ,
+                          OUTPUT impcal6).                             
+        x-sdonac = impcal6.
+        x-codmon =  2. 
+        RUN cbd/cbd_imp.p(INPUT  s-codcia       , 
+                                 x-codcta       ,
+                                 x-coddiv       ,
+                                 s-periodo          ,
+                                 12             ,
+                                 x-codmon       ,
+                          OUTPUT impcal1        ,
+                          OUTPUT impcal2        ,
+                          OUTPUT impcal3        ,
+                          OUTPUT impcal4        ,
+                          OUTPUT impcal5        ,
+                          OUTPUT impcal6).                             
+        x-sdousa = impcal6.
+        IF x-sdousa <> 0 OR x-sdonac <> 0 THEN RUN GRAB-TOTAL.
+    END.
+    
+END. /*FIN DE FOR EACH CUENTAS */                                 
+
+x-codcta = "59101".
+x-sdonac = x-h1 - x-d1.
+x-sdousa = x-h2 - x-d2.
+
+RUN GRAB-TOTAL.
+/*
+ASSIGN cb-cmov.dbemn1 = x-d1
+       cb-cmov.hbemn1 = x-h1
+       cb-cmov.dbemn2 = x-d2
+       cb-cmov.hbemn2 = x-h2.
+*/       
+RETURN.
+
+PROCEDURE GRAB-TOTAL :
+  CREATE detalle.
+  x-nroitm = x-nroitm + 1.
+  IF (x-sdonac <>0 ) THEN x-tpomov  = (x-sdonac < 0).       
+                      ELSE x-tpomov = (x-sdousa < 0).
+  x-sdousa = ABS(x-sdousa).
+  x-sdonac = ABS(x-sdonac).
+  ASSIGN
+        detalle.CodCia   = s-codcia
+        detalle.Codcta   = x-codcta
+        detalle.Codmon   = 1
+        detalle.Codope   = x-codope
+        detalle.Glodoc   = x-glodoc
+        detalle.ImpMn1   = x-sdonac
+        detalle.ImpMn2   = x-sdousa
+        detalle.Nroast   = x-nroast
+        detalle.Nroitm   = x-nroitm 
+        detalle.NroMes   = x-nromes
+        detalle.Periodo  = s-periodo + 1
+        detalle.Tpocmb   = 1
+        detalle.TpoMov   = x-tpomov.
+   RUN SUMA. 
+   RUN cb-acmd.p(RECID(detalle), YES, NO). 
+END PROCEDURE.
+
+PROCEDURE GRAB-CTACTE :
+DEF VAR y-fecha  AS DATE.
+FOR EACH cb-dmov  NO-LOCK
+                  WHERE  cb-dmov.codcia  = s-codcia       AND
+                         cb-dmov.periodo = s-periodo          AND
+                         cb-dmov.codcta  = x-codcta       
+                         BREAK 
+                         BY cb-dmov.codaux  
+                         BY cb-dmov.coddoc 
+                         BY cb-dmov.nrodoc 
+                          :    
+    IF FIRST-OF(cb-dmov.nrodoc) THEN 
+    DO:
+        x-estado = "      " + cb-dmov.codaux + "-" + 
+                   cb-dmov.coddoc + "-" + cb-dmov.nrodoc.         
+        DISPLAY x-estado WITH frame f-mensaje.
+        PAUSE 0.
+        x-recid  = RECID(cb-dmov).
+        y-fecha  = cb-dmov.fchdoc.
+        x-codmon = cb-dmov.codmon.
+        x-sdonac = 0.
+        x-sdousa = 0.
+        y-glodoc = cb-dmov.glodoc.
+        x-tpocmb = cb-dmov.tpocmb.
+        x-clfaux = cb-dmov.clfaux.
+        x-codaux = cb-dmov.codaux.
+        x-coddoc = cb-dmov.coddoc.
+        x-nrodoc = cb-dmov.nrodoc.
+        x-nroref = cb-dmov.nroref.
+        x-fchdoc = cb-dmov.fchdoc.
+        x-fchvto = cb-dmov.fchvto.
+
+    END.                                            
+    IF NOT cb-dmov.TpoMov 
+      THEN ASSIGN x-Sdonac = x-SdoNac + cb-dmov.ImpMn1           
+                  x-Sdousa = x-SdoUsa + cb-dmov.ImpMn2.
+      ELSE ASSIGN x-Sdonac = x-SdoNac - cb-dmov.ImpMn1           
+                  x-Sdousa = x-SdoUsa - cb-dmov.ImpMn2.           
+     IF cb-dmov.fchdoc < y-fecha  THEN
+        DO:
+           y-fecha  = cb-dmov.fchdoc.
+           x-recid  = RECID(cb-dmov).
+           x-codmon = cb-dmov.codmon.
+           y-glodoc = cb-dmov.glodoc.
+           x-tpocmb = cb-dmov.tpocmb.
+           x-clfaux = cb-dmov.clfaux.
+           x-codaux = cb-dmov.codaux.
+           x-coddoc = cb-dmov.coddoc.
+           x-nrodoc = cb-dmov.nrodoc.
+           x-nroref = cb-dmov.nroref.
+           x-fchdoc = cb-dmov.fchdoc.
+           x-fchvto = cb-dmov.fchvto.
+        END.             
+              
+     IF LAST-OF(cb-dmov.nrodoc) THEN
+     DO:            
+        IF (x-sdonac <> 0) AND (x-sdousa <> 0) THEN RUN GRAB-DETALLE.
+        ELSE
+        IF (x-codmon = 1 AND x-sdonac <> 0) 
+           THEN RUN GRAB-DETALLE.
+           ELSE 
+               IF (x-codmon = 2 AND x-sdousa <> 0) 
+                    THEN RUN GRAB-DETALLE.
+ 
+     END.
+END. /*FIN DEL FOR EACH */
+
+END PROCEDURE.
+
+                  
+PROCEDURE GRAB-DETALLE :
+CREATE detalle.
+  x-nroitm = x-nroitm + 1.
+  IF (x-sdonac <>0 )  THEN x-tpomov = (x-sdonac < 0).       
+                      ELSE x-tpomov = (x-sdousa < 0).
+  x-sdousa = ABS(x-sdousa).
+  x-sdonac = ABS(x-sdonac).
+  ASSIGN
+        detalle.CodCia   = s-codcia
+        detalle.Codcta   = x-codcta
+        detalle.Codmon   = x-codmon
+        detalle.Codope   = x-codope
+        detalle.Glodoc   = y-glodoc
+        detalle.ImpMn1   = x-sdonac
+        detalle.ImpMn2   = x-sdousa
+        detalle.Nroast   = x-nroast
+        detalle.Nroitm   = x-nroitm 
+        detalle.NroMes   = x-nromes
+        detalle.Periodo  = s-periodo + 1
+        detalle.Tpocmb   = x-tpocmb
+        detalle.clfaux   = x-clfaux
+        detalle.codaux   = x-codaux
+        detalle.coddoc   = x-coddoc
+        detalle.nrodoc   = x-nrodoc
+        detalle.nroref   = x-nroref
+        detalle.fchdoc   = x-fchdoc
+        detalle.fchvto   = x-fchvto
+        detalle.TpoMov   = x-tpomov.
+  RUN SUMA.
+  RUN cbd/cb-acmd.p(RECID(detalle), YES, YES). 
+   
+END PROCEDURE.
+
+PROCEDURE SUMA :
+IF detalle.tpomov  THEN
+DO:
+   x-h1 = x-h1 + detalle.impmn1.
+   x-h2 = x-h2 + detalle.impmn2.
+END.
+ELSE
+DO:
+   x-d1 = x-d1 + detalle.impmn1.
+   x-d2 = x-d2 + detalle.impmn2.
+END.   
+END PROCEDURE.
+
+PROCEDURE GRABA-CAB :
+CREATE integral.cb-cmov.
+     ASSIGN 
+        integral.cb-cmov.CodCia  = s-codcia
+        integral.cb-cmov.Periodo = s-periodo + 1
+        integral.cb-cmov.NroMes  = x-nromes
+        integral.cb-cmov.CodOpe  = x-CodOpe
+        integral.cb-cmov.NroAst  = STRING(1,"999999")
+        integral.cb-cmov.FchAst  = DATE( 1, 1, s-periodo + 1) - 1
+        integral.cb-cmov.TpoCmb  = 1
+        integral.cb-cmov.Notast  = x-glodoc
+        integral.cb-cmov.GloAst  = x-glodoc
+        integral.cb-cmov.codmon  = 1.
+END PROCEDURE.
+
+
+PROCEDURE ANULA :
+x-mensaje = "Eliminando movimiento Anterior".
+DISPLAY x-mensaje WITH FRAME f-mensaje.
+FOR EACH cb-dmov WHERE      cb-dmov.codcia   = s-codcia          AND
+                            cb-dmov.periodo  = s-periodo + 1         AND
+                            cb-dmov.nromes   = x-nromes          AND   
+                            cb-dmov.codope   = x-codope          AND
+                            cb-dmov.nroast   = x-nroast :
+    RUN cbd/cb-acmd.p(RECID(cb-dmov), NO, YES). 
+    DELETE cb-dmov.
+END.
+
+
+    FIND cb-cmov WHERE cb-cmov.codcia   = s-codcia   AND
+                       cb-cmov.periodo  = s-periodo + 1  AND
+                       cb-cmov.nromes   = x-nromes   AND
+                       cb-cmov.codope   = x-codope   AND
+                       cb-cmov.nroast   = x-nroast  
+                       NO-ERROR.
+    IF AVAIL cb-cmov THEN DELETE cb-cmov.                   
+    RUN GRABA-CAB.
+
+END PROCEDURE.
+
+
+

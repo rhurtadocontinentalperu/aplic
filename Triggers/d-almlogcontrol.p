@@ -1,0 +1,14 @@
+TRIGGER PROCEDURE FOR DELETE OF AlmLogControl.
+
+DEF VAR hRutinas AS HANDLE NO-UNDO.
+
+RUN alm\actualizaalmacen PERSISTEN SET hRutinas.
+/* Actualizamos Tablas asociadas */
+DO TRANSACTION ON ERROR UNDO, RETURN ERROR ON STOP UNDO, RETURN ERROR:
+    RUN ExtornaMateControl IN hRutinas ( BUFFER AlmLogControl ) NO-ERROR.
+    IF ERROR-STATUS:ERROR THEN DO:
+        DELETE PROCEDURE hRutinas NO-ERROR.
+        RETURN ERROR.
+    END.
+END.
+DELETE PROCEDURE hRutinas NO-ERROR.

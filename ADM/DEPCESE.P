@@ -1,0 +1,26 @@
+
+/* RUN ADM/DEPCESE.P(P-FECHA-1 , B-ACTF.FECHA-CESE , OUTPUT P-DEP ).
+   p-fecha fecha de inicio de depreciaci¢n
+   p-dep    porcentaje de depreciaci¢n anual
+   p-fecha-cese fecha de cese de depreciaci¢n
+*/
+            
+define input parameter  p-fecha-1      as date.
+define input parameter  p-fecha-2      as date.
+define output parameter p-dep          as decimal.
+
+p-dep = ?.
+def var N-ANOS as decimal.
+
+
+if p-fecha-1   = ? then return "ERROR".
+if p-fecha-2   = ? then return "ERROR".
+
+
+
+p-dep =   100 /  ( (p-fecha-2 - p-fecha-1) / 365 )  .
+
+
+
+
+ 

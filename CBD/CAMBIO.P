@@ -1,0 +1,16 @@
+DEF SHARED VAR cb-codcia AS INT.
+FOR EACH cbdastos where cbdastos.codcia = 2:
+    for each cb-dmov where cb-dmov.codcia = cbdastos.codcia and
+         cb-dmov.periodo = cbdastos.periodo and
+         cb-dmov.nromes = cbdastos.nromes and
+         cb-dmov.codope = cbdastos.codope and
+         cb-dmov.nroast = cbdastos.nroast:
+         find cb-ctas where cb-ctas.codcia = cb-codcia and
+              cb-ctas.codcta = cb-dmov.codcta no-lock no-error.
+         IF AVAILABLE cb-ctas and cb-ctas.piddoc then 
+            assign cb-dmov.fchdoc = cbdastos.fchdoc
+                   cb-dmov.fchvto = cbdastos.fchvto
+                   cb-dmov.nroruc = cbdastos.nroruc
+                   cb-dmov.cndcmp = cbdastos.cndcmp.
+    end.
+end.

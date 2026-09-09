@@ -1,0 +1,226 @@
+
+The Progress Standard Libraries
+ 
+
+In general the libraries are compatible with Progress version 9 and upwards and are O/S neutral unless specified differently.
+
+
+To install the libraries place them on the propath and you're ready to go.
+
+I usually copy the lib dir to every project I do.
+
+
+For you MFG users you can copy all the files to the xxsrc dir and compile them to the xx dir.
+
+
+To use a library add the library include file to the external procedure file.
+
+Although the libraries are essentially persistent super procedures.
+
+
+If you're looking for something, look in the libraries first.
+
+
+Short overview -
+
+
+    libpro.i - PROGRESS related commands.
+
+
+        Sample:
+
+        pro_getRunFile - Returns the actual .r or .p file a run statement will run.
+
+        pro_breakWords - Basic code parsing command for breaking down code statements (See xml_getElementByAttr for an example use).
+
+
+        Includes pro_cDlc, pro_cWorkDir, pro_cFullProPath etc. variables for the various PROGRESS directories.
+
+        And &pro_xProversion preprocessor which has a double digit major release e.g. "09.1D" so comparing &PROVERSION 9 will *not* be bigger the "10".
+
+
+    liberr.i - try/catch/throw etc. exception handling library.
+
+
+        You'll find many example uses through out the libraries.
+
+	But watchout!
+
+
+        If a library command throws an exception and there are no try blocks to catch the exception.
+
+        The exception will abort the current block, procedure, calling procedure etc. all the way up the calling stack until it quits the program.
+
+
+    libdate.i - Date related commands.
+
+
+        Sample:
+
+        date_Date2Str - Converts date time values to strings in any thinkable format (almost).
+
+        date_Str2Date - Converts strings to date time values back again.
+
+        Includes week, quarter, month start/end dates etc. commands.
+
+
+    libmath.i - Math related commands.
+
+
+        Sample:
+
+        math_getShortNum - For fitting large numbers in small formats.
+
+        Includes various sin/cos/tan etc. trigonometric commands.
+
+
+    libstr.i - String related commands.
+
+    libmem.i - Memptr related commands.
+
+    libtimeevnt.i - Timing events library.
+
+
+        Modeled after JavaScript setTimeout/clearTimeout timing events commands.
+        
+        setInterval/clearInterval are not yet included but are planned for a future release.
+
+        Unfortunately the library is based on the PSTIMER.OCX making it Windows GUI dependant.
+
+
+    libos.i - O/S neutral commands.
+
+
+        Sample:
+
+        os_getTempFile - Returns a unused random temp filename in the session temp-dir (similar to adecomm/_tmpfile.p).
+
+        os_getNextFile - Adds a counter the the file if the file aready exists.
+
+        os_deleteTempFiles -
+
+
+            Deletes stale PROGRESS temp files e.g. srt*, lbi*, dbi* and files created with os_getTempFile etc.
+
+            A general cleanup command for deleting old temp files left over from previous sessions.
+
+
+        os_breakPath/os_getSubPath -
+
+
+            Breaks down a path into dir/file/ext.
+
+            The libwin version includes host/shared dir/drive specific to Windows path/UNC.
+
+
+    libwin.i - An extensive WIN32 API library.
+
+
+        Sample:
+
+        win_batch -
+
+
+            Mainly used as a replacement to OS-COMMAND on Windows because OS-COMMAND does not always work.
+
+            Also supports multiple commands and saves the errorlevel.
+
+
+        Includes various file system, processes, mouse/keyboards etc. commands.
+
+
+    libunix.i - UNIX related commands.
+
+    liblog.i - Library for creating PROGRESS style log files prior to the LOG-MANAGER object.
+
+    libxml.i - 
+
+
+        Sample:
+
+        xml_getElementByAttr - Iterates through an XML document searching for specific tags and attributes (supports namespace-uri's).
+
+        xml_getNextTag[SkipBlanks] - Used for drawing selective parts of an XML document.
+
+
+    libzip.i - ZIP library.
+
+
+        The library shells out to an external util.
+
+        I used Info-ZIP because of the license and because it already comes pre-installed on most UNIX and Linux installations.
+
+
+    libz.i - ZLIB library.
+
+    libhttp.i - GET/POST etc. HTTP library.
+
+    libweb.i - Webspeed and Webstate Library.
+
+    libbidi.i - Bidirectional Algorithm library.
+
+
+        Those of us with right-to-left languages will know what I'm talking about, especially, with a mixed Character and GUI enviroment.
+
+        Currently only supports Hebrew although adding support for Arabic and Persian should be fairly easy.
+
+
+    keybhe.i - Adds support for typing right-to-left languages in Character widgets.
+
+
+        Named after KEYBHE.COM a similar DOS util (that unfortunatley does not work on PROGRESS and UNIX).
+
+        Currently only supports Hebrew although adding support for Arabic and Persian should be fairly easy.
+
+
+    libxlsx.i - Excel OpenXML library (not included with the standard libraries and still in beta).
+
+
+        Library for generating Excel OpenXML (.xlsx) files.
+
+        Also supports printing and converting to other file formats e.g. PDF, ODF, HTML, JPEG etc.
+
+        Works on both Windows and UNIX/Linux and does not require Microsoft Office.
+
+
+    libdocx.i - Word OpenXML library (not included with the standard libraries and still in beta).
+
+    libqry.i - 4GL "Rank-Based" Query Optimizer library (not included with the standard libraries and still in beta).
+
+    libsfdc.i - Salesforce.com API library (not included with the standard libraries).
+
+
+Misc -
+
+
+    office-html-2-dotp.p - Used for generating Excel .HTML files.
+
+    getbarcode128b.p - Used for generating 128b barcodes with PDFInclude.
+
+    cdomail.p - Mail util built on Windows CDO. Used as a version 8 replacement for smtpmail.p
+
+
+Future Libraries -
+
+
+    libipc.i - Interprocess Communication Library.
+
+
+        A library intended to offer some of the capabilities similar to multi-threading.
+
+        That will allow for spawning processes and reliable communication between these processes using PUBLISH/SUBSCRIBE type commands.
+
+
+        Will also include a TICKER feature due to the lack of native timing events support.
+
+
+Although there are no documentations at this time please contact me if you have any questions or requests.
+
+Or help start a documentation project :)
+
+
+Alon Blich
+
+Email: alonblich@gmail.com
+
+Phone: +972-54-2188086

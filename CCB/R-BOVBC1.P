@@ -1,0 +1,204 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-cjabov.p
+    Purpose     : Transferencia de Dinero de Caja a Boveda
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE SHARED VAR S-CODCIA        AS INT.
+DEFINE SHARED VAR S-CODDOC        AS CHAR.
+DEFINE SHARED VAR S-CODDIV        LIKE gn-divi.coddiv.
+DEFINE SHARED VAR S-CODTER        LIKE ccbcterm.codter.
+DEFINE SHARED VAR S-NOMCIA        AS CHAR.
+DEFINE SHARED VAR S-User-Id       AS CHAR.
+
+DEF VAR X-EnLetras AS CHAR FORMAT "X(60)" NO-UNDO.
+DEF VAR X-Total    AS DECIMAL.
+
+DEF VAR Y-Total    AS DECIMAL.
+
+DEFINE VAR E-VISUAL AS CHARACTER VIEW-AS EDITOR SIZE 50 BY 2.
+DEFINE VAR Y-VISUAL AS CHARACTER VIEW-AS EDITOR SIZE 50 BY 2.
+
+DEFINE SHARED TEMP-TABLE T-CcbDMvt1 LIKE CcbDMvto.
+
+DEFINE VARIABLE x-nrodoc LIKE CcbDMvto.nrodoc.
+
+FIND FIRST T-CcbDMvt1 WHERE T-CcbDMvt1.FchEmi = TODAY NO-ERROR.
+IF AVAIL T-CcbDMvt1 THEN x-nrodoc = T-CcbDMvt1.nrodoc .
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2.01
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+
+FIND FacCorre WHERE FacCorre.CodCia = s-codcia
+               AND  FacCorre.CodDoc = s-coddoc
+              NO-LOCK.
+
+IF LOOKUP(FacCorre.Printer, s-printer-list) = 0 THEN DO:
+   MESSAGE "Impresora " FacCorre.Printer " no esta instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+s-port-name = ENTRY(LOOKUP(FacCorre.Printer, s-printer-list), s-port-list).
+s-port-name = REPLACE(S-PORT-NAME, ":", "").
+
+DEFINE FRAME F-HdrFac
+    HEADER
+    SKIP
+    S-NOMCIA  AT 1 FORMAT "X(30)" "Pag.  :" AT 122 PAGE-NUMBER FORMAT ">>>9" SKIP
+    "TRANSFERENCIA DE BOVEDA A BANCO Nro. " AT 46 FORMAT "X(43)" x-nrodoc FORMAT "XXX-XXXXXX"
+    "Fecha :" AT 122 TODAY FORMAT "99/99/9999" SKIP
+    "Cajero :" AT 1 S-CODTER "Hecho por :" AT 56 FORMAT "X(12)" S-User-Id FORMAT "X(12)" 
+    "Hora  :" AT 122 STRING(TIME, "HH:MM:SS") SKIP(1)
+    FILL("-", 140) FORMAT "X(140)" SKIP
+    "MOVIMIENTO                 Nro. Doc        TOTAL S/.   DEPOSITO S/.      TOTAL US$      DEPOSITO US$ " SKIP
+    FILL("-", 140) FORMAT "X(140)" SKIP
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 200.
+
+DEFINE FRAME F-DetaFac
+    WITH NO-LABELS NO-BOX STREAM-IO WIDTH 200.
+    
+DEFINE FRAME F-Ftrfac
+    HEADER
+    space(35) "--------------------" space(20) "--------------------"SKIP
+    space(35) "Vo.Bo ADMINISTRACION" space(20) "    Vo.Bo CAJERO    "SKIP
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 200.    
+
+DEF VAR x-desc AS CHARACTER NO-UNDO.
+DEF VAR tot_nac AS DECIMAL NO-UNDO.
+DEF VAR tot_usa AS DECIMAL NO-UNDO.
+DEF VAR tot_nac1 AS DECIMAL NO-UNDO.
+DEF VAR tot_usa1 AS DECIMAL NO-UNDO.
+    
+OUTPUT TO VALUE(s-port-name) PAGE-SIZE 31.
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.
+    FOR EACH T-CcbDMvt1 WHERE T-CcbDMvt1.FchEmi = TODAY 
+                        BREAK BY T-CcbDMvt1.CodDoc BY T-CcbDMvt1.CodRef:
+
+        VIEW FRAME F-HdrFac.
+        VIEW FRAME F-Ftrfac.
+        x-desc = "".
+        CASE T-CcbDMvt1.CodRef:
+            WHEN "EFEC" THEN x-desc = "EFECTIVO".
+            WHEN "CHEC" THEN x-desc = "CHEQUES DEL DIA".
+            WHEN "CHED" THEN x-desc = "CHEQUES DIFERIDOS".
+            WHEN "TARC" THEN x-desc = "TARJETAS DE CREDITO".
+            WHEN "BOLD" THEN x-desc = "BOLETAS DE DEPOSITO".
+        END CASE.
+
+        ACCUMULATE T-CcbDMvt1.DepNac[2] (TOTAL COUNT BY T-CcbDMvt1.CodRef).
+        ACCUMULATE T-CcbDMvt1.DepUsa[2] (TOTAL BY T-CcbDMvt1.CodRef).
+
+        ACCUMULATE T-CcbDMvt1.DepNac[1] (TOTAL BY T-CcbDMvt1.CodRef).
+        ACCUMULATE T-CcbDMvt1.DepUsa[1] (TOTAL BY T-CcbDMvt1.CodRef).
+        
+        IF LAST-OF(T-CcbDMvt1.CodRef) THEN DO:
+          tot_nac = 0.
+          tot_usa = 0.
+          FIND ccbpendep WHERE CcbPenDep.CodCia = t-CcbDmvt1.CodCia 
+                          AND  CcbPenDep.CodDoc = t-CcbDmvt1.CodDoc 
+                          AND  CcbPenDep.CodDiv = t-CcbDmvt1.CodCli
+                          AND  CcbPenDep.CodRef = t-CcbDmvt1.CodRef
+                          AND  CcbPenDep.NroRef = t-CcbDmvt1.NroRef
+                          AND  CcbPendep.FchCie = t-CcbDmvt1.FchCie
+                         NO-LOCK NO-ERROR.
+          IF AVAIL ccbpendep THEN DO:
+            tot_nac = CcbPenDep.ImpNac.
+            tot_usa = CcbPenDep.ImpUsa.
+          END.
+          tot_nac1 = ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepNac[2].
+          tot_usa1 = ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepUsa[2].
+                         
+          DISPLAY
+            x-desc FORMAT "X(30)"
+            ACCUM COUNT BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepNac[2] format ">>>>>9" WHEN T-CcbDMvt1.CodRef <> "EFEC"
+/*            tot_nac format "->>,>>>,>>9.99"*/
+            ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepNac[1] format "->>,>>>,>>9.99"
+            ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepNac[2] format "->>,>>>,>>9.99"
+/*            (tot_nac - tot_nac1) format "->>,>>>,>>9.99"*/
+/*            tot_usa format "->>,>>>,>>9.99" */
+            ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepUsa[1] format "->>,>>>,>>9.99"
+            ACCUM TOTAL BY T-CcbDMvt1.CodRef T-CcbDMvt1.DepUsa[2] format "->>,>>>,>>9.99"
+/*            (tot_usa - tot_usa1) format "->>,>>>,>>9.99"*/
+            WITH FRAME F-DetaFac.
+        END.
+        IF LAST(T-CcbDMvt1.CodDoc) THEN DO:
+           PAGE.
+       END.
+    END.
+
+OUTPUT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

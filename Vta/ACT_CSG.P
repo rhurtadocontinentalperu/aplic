@@ -1,0 +1,199 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR s-user-id AS CHAR.
+DEF SHARED VAR s-codalm  AS CHAR.
+DEF SHARED VAR s-coddiv  AS CHAR.
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+DEF VAR I-CODMOV AS INTEGER INIT 26.
+FIND FacDocum WHERE 
+     FacDocum.CodCia = S-CODCIA AND
+     FacDocum.CodDoc = "LIQ" NO-LOCK NO-ERROR.
+
+I-CODMOV = FacDocum.CodMov.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2.04
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+DEF VAR i AS INTEGER INITIAL 1 NO-UNDO.
+  
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR":
+   /* **** Primero Descargamos del almacen de consignacion **** */
+   CREATE AlmCMov.
+   ASSIGN AlmCMov.CodCia = CcbCDocu.CodCia 
+          AlmCMov.CodAlm = CcbCDocu.CodCob  /* ALMACEN DE CONSIGNACION */
+          AlmCMov.TipMov = "S" 
+          AlmCMov.CodMov = CcbCDocu.CodMov 
+          AlmCMov.NroSer = 0 
+          AlmCMov.NroDoc = INTEGER(CcbCDocu.NroSal) 
+          AlmCMov.FchDoc = CcbCDocu.FchDoc 
+          AlmCMov.CodMon = CcbCDocu.CodMon 
+          AlmCMov.TpoCmb = CcbCDocu.TpoCmb 
+          AlmCMov.HorSal = STRING(TIME, "HH:MM:SS") 
+          AlmCMov.CodVen = CcbCDocu.CodVen 
+          AlmCMov.CodTra = CcbCDocu.CodAge 
+          AlmCMov.Observ = CcbCDocu.Glosa 
+          AlmCMov.CodCli = CcbCDocu.CodCli 
+          AlmCMov.Nomref = CcbCDocu.NomCli 
+          AlmCMov.CodRef = CcbCDocu.CodDoc 
+          AlmCMov.NroRef = CcbCDocu.nrodoc 
+          AlmCMov.NroRf1 = CcbCDocu.NroPed 
+          AlmCMov.NroRf2 = SUBSTRING(CcbCDocu.CodDoc,1,1) + CcbCDocu.nrodoc
+          AlmCMov.usuario= s-user-id.
+   FOR EACH CcbDDocu OF CcbCDocu NO-LOCK
+            ON ERROR UNDO, RETURN "ADM-ERROR":
+       CREATE AlmDMov.
+       ASSIGN AlmDMov.CodCia = AlmCMov.CodCia
+              AlmDMov.TipMov = AlmCMov.TipMov
+              AlmDMov.CodAlm = AlmCMov.CodAlm
+              AlmDMov.CodMov = AlmCMov.CodMov 
+              AlmDMov.NroSer = AlmCMov.nroser
+              AlmDMov.NroDoc = AlmCMov.nrodoc
+              AlmDMov.FchDoc = AlmCMov.FchDoc
+              AlmDMov.CodMon = AlmCMov.codmon
+              AlmDMov.TpoCmb = AlmCMov.tpocmb
+              AlmDMov.codmat = CcbDDocu.codmat
+              AlmDMov.CodUnd = CcbDDocu.undvta
+              AlmDMov.Factor = CcbDDocu.factor
+              AlmDMov.CanDes = CcbDDocu.candes
+              AlmDMov.PreUni = CcbDDocu.preuni
+              AlmDMov.PreBas = CcbDDocu.prebas
+              AlmDMov.PorDto = CcbDDocu.pordto
+              AlmDMov.ImpDto = CcbDDocu.impdto
+              AlmDMov.ImpIgv = CcbDDocu.impigv
+              AlmDMov.ImpIsc = CcbDDocu.impisc
+              AlmDMov.ImpLin = CcbDDocu.implin
+              AlmDMov.AftIgv = CcbDDocu.aftigv
+              AlmDMov.AftIsc = CcbDDocu.aftisc
+              AlmDMov.NroItm = i
+              AlmCMov.TotItm = i
+              i = i + 1.
+       RUN alm/almdgstk (ROWID(AlmDMov)).
+   END.  
+   /* **** Segundo cargamos el almacen de despacho **** */
+   CREATE AlmCMov.
+   ASSIGN AlmCMov.CodCia = CcbCDocu.CodCia
+          AlmCMov.CodAlm = CcbCDocu.Codalm   /* ALMACEN PRINCIPAL */
+          AlmCMov.TipMov = "I"
+          AlmCMov.CodMov = I-CODMOV
+          AlmCMov.NroSer = 0
+          AlmCMov.NroDoc = INTEGER(CcbCDocu.NroSal)
+          AlmCMov.FchDoc = CcbCDocu.FchDoc 
+          AlmCMov.CodMon = CcbCDocu.CodMon 
+          AlmCMov.TpoCmb = CcbCDocu.TpoCmb 
+          AlmCMov.HorSal = STRING(TIME, "HH:MM:SS")
+          AlmCMov.CodVen = CcbCDocu.CodVen
+          AlmCMov.CodTra = CcbCDocu.CodAge 
+          AlmCMov.Observ = CcbCDocu.Glosa
+          AlmCMov.Codcli = CcbCDocu.Codcli
+          AlmCMov.Nomref = CcbCDocu.NomCli
+          AlmCMov.CodRef = CcbCDocu.CodDoc
+          AlmCMov.NroRef = CcbCDocu.NroDoc
+          AlmCMov.NroRf1 = CcbCDocu.NroPed
+          AlmCMov.NroRf2 = SUBSTRING(CcbCDocu.CodDoc,1,1) + CcbCDocu.nrodoc
+          AlmCMov.usuario= s-user-id.
+   i= 1.       
+   FOR EACH CcbDDocu OF CcbCDocu NO-LOCK
+            ON ERROR UNDO, RETURN "ADM-ERROR":
+       CREATE AlmDMov.
+       ASSIGN AlmDMov.CodCia = AlmCMov.CodCia
+              AlmDMov.TipMov = AlmCMov.TipMov
+              AlmDMov.CodAlm = AlmCMov.CodAlm
+              AlmDMov.CodMov = AlmCMov.CodMov 
+              AlmDMov.NroSer = AlmCMov.nroser
+              AlmDMov.NroDoc = AlmCMov.nrodoc
+              AlmDMov.FchDoc = AlmCMov.FchDoc
+              AlmDMov.CodMon = AlmCMov.codmon
+              AlmDMov.TpoCmb = AlmCMov.tpocmb
+              AlmDMov.codmat = CcbDDocu.codmat
+              AlmDMov.CodUnd = CcbDDocu.undvta
+              AlmDMov.Factor = CcbDDocu.factor
+              AlmDMov.CanDes = CcbDDocu.candes
+              AlmDMov.PreUni = CcbDDocu.preuni
+              AlmDMov.PreBas = CcbDDocu.prebas
+              AlmDMov.PorDto = CcbDDocu.pordto
+              AlmDMov.ImpDto = CcbDDocu.impdto
+              AlmDMov.ImpIgv = CcbDDocu.impigv
+              AlmDMov.ImpIsc = CcbDDocu.impisc
+              AlmDMov.ImpLin = CcbDDocu.implin
+              AlmDMov.AftIgv = CcbDDocu.aftigv
+              AlmDMov.AftIsc = CcbDDocu.aftisc
+              AlmDMov.NroItm = i
+              AlmCMov.TotItm = i
+              i = i + 1.
+       RUN ALM\ALMACSTK (ROWID(AlmDMov)).
+   END.  
+  RELEASE CcbCDocu.
+  RELEASE AlmCMov.
+END.
+RETURN "OK".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

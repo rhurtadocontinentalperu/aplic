@@ -1,0 +1,14 @@
+DEFINE VAR C-ALM AS CHAR INIT "".
+FOR EACH Almmmatg:
+    CREATE Almmmate.
+    ASSIGN Almmmate.CodAlm = "T01"               
+           Almmmate.CodCia = Almmmatg.CodCia
+           Almmmate.CodMar = Almmmatg.CodMar
+           Almmmate.codmat = Almmmatg.codmat
+           Almmmate.desmat = Almmmatg.Desmat
+           Almmmate.FacEqu = Almmmatg.FacEqu
+           Almmmate.UndVta = Almmmatg.UndStk.
+           C-ALM = Almmmatg.almacenes.
+    IF LOOKUP(Almmmate.CodAlm,Almmmatg.almacenes) = 0 THEN 
+       ASSIGN Almmmatg.almacenes = Almmmatg.almacenes + "," + Almmmate.CodAlm.
+END.

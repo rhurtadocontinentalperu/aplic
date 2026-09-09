@@ -1,0 +1,5 @@
+  FIELD CodCia LIKE FacCPedi.CodCia VALIDATE ~
+  FIELD CodDiv LIKE FacCPedi.CodDiv VALIDATE ~
+  FIELD CodDoc LIKE FacCPedi.CodDoc VALIDATE ~
+  FIELD FchPed LIKE FacCPedi.FchPed VALIDATE ~
+  FIELD NroPed LIKE FacCPedi.NroPed VALIDATE 

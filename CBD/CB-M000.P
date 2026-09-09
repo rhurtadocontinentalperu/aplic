@@ -1,0 +1,119 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE OUTPUT PARAMETER P-LIST AS CHAR.
+
+{BIN/S-GLOBAL.I}
+
+DEFINE SHARED VARIABLE  S-PERIODO    AS INTEGER FORMAT "9999" INIT 1996.
+DEFINE SHARED VARIABLE  S-NROMES     AS INTEGER FORMAT "9999" .
+DEFINE SHARED VARIABLE  s-CodFam     AS CHAR.
+/* DEFINE SHARED VARIABLE  CB-codcia    AS INTEGER INIT 0. */
+/* DEFINE SHARED VARIABLE  PV-codcia    AS INTEGER INIT 0. */
+/* DEFINE SHARED VARIABLE  CL-codcia    AS INTEGER INIT 0. */
+DEFINE SHARED VARIABLE  CB-MaxNivel  AS INTEGER.
+DEFINE SHARED VARIABLE  CB-Niveles   AS CHAR.
+DEFINE SHARED VARIABLE  xterm as char.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+FIND EMPRESAS WHERE EMPRESAS.CODCIA  = S-CodCia NO-LOCK NO-ERROR.
+IF NOT AVAIL EMPRESAS THEN DO:
+   MESSAGE "La empresa " S-CodCia SKIP
+           "no se encuentra registrada en " SKIP
+           "EMPRESAS" SKIP (2)
+           "Se recomienda no hacer ninguna" skip
+           "actualizaci¢n Contable" VIEW-AS ALERT-BOX WARNING.
+END.
+ASSIGN CB-CODCIA = 0
+       PV-CODCIA = 0
+       CL-CODCIA = 0.
+   
+IF NOT EMPRESAS.CAMPO-CODCBD THEN CB-CODCIA = S-CODCIA.
+IF NOT EMPRESAS.CAMPO-CODPRO THEN PV-CODCIA = S-CODCIA.
+IF NOT EMPRESAS.CAMPO-CODCLI THEN CL-CODCIA = S-CODCIA.
+
+RUN ADM/CB-NIVEL.P (S-CODCIA , OUTPUT CB-Niveles , OUTPUT CB-MaxNivel ).
+IF CB-NIVELES = ? OR CB-MAXNIVEL = ? THEN DO:
+   MESSAGE "La empresa " S-CodCia SKIP
+           "tiene mal configurado el plan de cuentas" SKIP
+           "CB-CFGA" SKIP (2)
+           "Se recomienda no hacer ninguna" skip
+           "actualizaci¢n Contable"
+           VIEW-AS ALERT-BOX WARNING.
+END.                   
+
+P-LIST = "".
+FOR EACH CB-PERI NO-LOCK WHERE 
+         CB-PERI.CODCIA   = S-CODCIA AND
+         CB-PERI.PERIODO <> 0
+         BREAK BY CB-PERI.PERIODO :
+    P-LIST = P-LIST + STRING(CB-PERI.PERIODO, "9999" ) + ",".       
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

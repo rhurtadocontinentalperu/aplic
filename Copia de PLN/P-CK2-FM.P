@@ -1,0 +1,252 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+/* Procedure Description
+"Genera formula por cada concepto en la
+planilla de empleados"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+    DEFINE INPUT  PARAMETER TEXT-DEFI      AS CHARACTER NO-UNDO.
+    DEFINE INPUT  PARAMETER TEXT-PROC      AS CHARACTER NO-UNDO.
+    DEFINE INPUT  PARAMETER CODI-PROC      AS INTEGER   NO-UNDO.
+    DEFINE INPUT  PARAMETER TIPO-FML       AS CHARACTER NO-UNDO.
+    DEFINE OUTPUT PARAMETER TEXT-PROGRESS  AS CHARACTER NO-UNDO.
+    DEFINE OUTPUT PARAMETER ERROR-MSG      AS CHARACTER NO-UNDO.
+    
+    DEFINE VARIABLE         ERROR-NUM      AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE         OK AS LOGICAL NO-UNDO.
+    DEFINE VARIABLE         CIERRE-BUCLE AS INTEGER NO-UNDO.
+
+    DEFINE VARIABLE SEC-DEFINE AS CHARACTER NO-UNDO.
+
+    DEFINE VARIABLE PRE-ASG    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE CHR-IN     AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE NUM-VAR    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE SEL-VAR    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE WRD-ASSIGN AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE Tipo       AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE i          AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE y          AS INTEGER   NO-UNDO.    
+    DEFINE VARIABLE LEN-TEXT   AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE TEMP-FILE  AS CHARACTER NO-UNDO.
+
+    OK = SESSION:SET-WAIT-STATE("GENERAL").
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+ASSIGN Tipo      = 0
+           TEXT-PROGRESS  = ""
+           ERROR-NUM = 0
+           LEN-TEXT  = LENGTH(Text-PROC)
+           CHR-IN    = "".
+
+CIERRE-BUCLE = 0.
+DO i = 1 TO LEN-TEXT:
+        
+    /* TRADUCCIONES */
+    IF Tipo = 0
+    THEN DO:                  
+        IF SUBSTR( TEXT-PROC, I, 23) = "NO INSCRITO EN UNA AFP:"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "IF NOT AVAILABLE integral.PL-AFP THEN DO:"
+                    I = I + 23
+                    CIERRE-BUCLE = CIERRE-BUCLE + 1.
+
+        IF SUBSTR( TEXT-PROC, I, 20) = "INSCRITO EN UNA AFP:"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "IF AVAILABLE integral.PL-AFP THEN DO:"
+                    I = I + 20
+                    CIERRE-BUCLE = CIERRE-BUCLE + 1.
+                    
+        IF SUBSTR( TEXT-PROC, I, 8) = "VARIABLE"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "DEFINE VARIABLE"
+                    I = I + 8.
+        
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO NUMERO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS DECIMAL NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO LOGICO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS LOGICAL NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 11) = "COMO ENTERO"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS INTEGER NO-UNDO"
+                    I = I + 11.
+
+        IF SUBSTR( TEXT-PROC, I, 13) = "COMO CARACTER"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS CHARACTER NO-UNDO"
+                    I = I + 13.
+
+        IF SUBSTR( TEXT-PROC, I, 10) = "COMO FECHA"
+        THEN ASSIGN TEXT-PROGRESS = TEXT-PROGRESS + "AS DATE NO-UNDO"
+                    I = I + 10.
+    END.
+      
+    /* ************ inicio de macros ************** */        
+    CHR-IN = SUBSTR(Text-PROC, i, 1).
+        
+    /*   Macros */
+
+    /* Adelantos y Prestamos */
+    IF Tipo = 0 AND SUBSTR(TEXT-PROC, I, 6) = "@PRES(" THEN
+        ASSIGN
+            Tipo       = 2
+            WRD-ASSIGN = "pln/p-odst-m.p(INPUT-OUTPUT VAR, s-CodCal,PL-FLG-MES.CodPln,PL-FLG-MES.CodPer,NETO,TPO-CAMBIO,DESCUENTO,1,"
+            I          = I + 6
+            CHR-IN     = "".
+
+    IF Tipo = 0 AND SUBSTR(TEXT-PROC, I, 6) = "@ADEL(" THEN
+        ASSIGN
+            Tipo       = 2
+            WRD-ASSIGN = "pln/p-odst-m.p(INPUT-OUTPUT VAR, s-CodCal,PL-FLG-MES.CodPln,PL-FLG-MES.CodPer,NETO,TPO-CAMBIO,DESCUENTO,2,"
+            I          = I + 6
+            CHR-IN     = "".
+
+    IF Tipo = 0 AND SUBSTR(TEXT-PROC, I, 7) = "@PRESQ(" THEN
+        ASSIGN
+            Tipo       = 2
+            WRD-ASSIGN = "pln/p-odsq-m.p(INPUT-OUTPUT VAR, s-CodCal,PL-FLG-MES.CodPln,PL-FLG-MES.CodPer,1,"
+            I          = I + 7
+            CHR-IN     = "".
+
+    IF Tipo = 2 AND CHR-IN <> ")" 
+    THEN WRD-ASSIGN = WRD-ASSIGN + CHR-IN.
+
+    IF Tipo = 2 AND CHR-IN = ")"
+    THEN DO:
+        WRD-ASSIGN = WRD-ASSIGN + CHR-IN.
+        TEXT-PROGRESS = TEXT-PROGRESS + "RUN " + WRD-ASSIGN.
+        Tipo = 0.
+        NEXT.
+    END.
+
+    /* Conceptos */
+    IF Tipo = 0  AND INDEX( "^$" , CHR-IN ) > 0
+    THEN ASSIGN Tipo = 1
+                WRD-ASSIGN = "".
+
+    IF Tipo = 1 AND INDEX( "-^0123456789()$," , CHR-IN ) > 0 
+    THEN WRD-ASSIGN = WRD-ASSIGN + CHR-IN.
+            
+    IF Tipo = 1 AND INDEX( "-^0123456789()$," , CHR-IN ) = 0 
+    THEN DO:
+
+        NUM-VAR = LOOKUP( WRD-ASSIGN, SEL-VAR, ";").
+
+        IF NUM-VAR = 0
+        THEN DO:
+             NUM-VAR = NUM-ENTRIES( SEL-VAR, ";" ) + 1.
+             IF SEL-VAR = ""
+             THEN SEL-VAR = WRD-ASSIGN.
+             ELSE SEL-VAR = SEL-VAR + ";" + WRD-ASSIGN.
+        END.
+        
+        TEXT-PROGRESS = TEXT-PROGRESS + "VAL-VAR" + "[" + STRING( NUM-VAR ) + "]".
+        Tipo = 0.
+    END.            
+    
+    /* ********** */
+    IF Tipo = 0 THEN TEXT-PROGRESS   = TEXT-PROGRESS + CHR-IN.
+
+END.    
+
+IF SEL-VAR <> "" 
+THEN TEXT-PROGRESS = 
+    "RUN PLN/P-CALC-M.R(" + CHR(10) +
+    "   integral.PL-FLG-MES.Codcia," + CHR(10) +
+    "   integral.PL-FLG-MES.PERIODO," + CHR(10) +
+    "   integral.PL-FLG-MES.NroMes," + CHR(10) +
+    "   integral.PL-FLG-MES.codpln," + CHR(10) +
+    "   s-codcal," + CHR(10) +
+    "   integral.PL-FLG-MES.codper," +  CHR(10) + 
+    "   " + CHR(34) + SEL-VAR + CHR(34) + " )." + CHR(10) + 
+    TEXT-PROGRESS.
+
+DO I = 1 TO CIERRE-BUCLE:
+    TEXT-PROGRESS = TEXT-PROGRESS + CHR(10) + "END.".        
+END.
+
+/* Compilando para verificar errores */
+TEMP-FILE = SESSION:TEMP-DIRECTORY + "Errpln.p".
+RUN PLN/P-CK2-DF.R( 1, 1, 1, OUTPUT SEC-DEFINE ).
+       
+OUTPUT TO VALUE( TEMP-FILE ) NO-MAP NO-CONVERT.
+PUT UNFORMATTED SEC-DEFINE. 
+PUT UNFORMATTED TEXT-DEFI. 
+PUT UNFORMATTED SKIP.
+PUT UNFORMATTED TEXT-PROGRESS.
+OUTPUT CLOSE.
+
+COMPILE VALUE( TEMP-FILE) NO-ERROR.
+IF COMPILER:ERROR
+THEN ASSIGN ERROR-NUM = ERROR-STATUS:NUM-MESSAGES 
+            ERROR-MSG = ERROR-STATUS:GET-MESSAGE( ERROR-NUM ).
+
+
+OK = SESSION:SET-WAIT-STATE("").
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

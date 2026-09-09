@@ -1,0 +1,24 @@
+
+
+def var x as integer.                                         
+for each PF-G002 where lookup(PF-G002.aplic-id ,"CBD,CJA,CXP,ALM,ACT") > 0 :
+    delete pf-g002.
+end.
+
+for each menus where lookup(menus.modulo ,"CBD,CJA,CXP") > 0 :
+    IF LOOKUP (MENUS.TIPO,"S,P") = 0 THEN NEXT.         
+    create pf-g002.
+     assign PF-G002.Acceso-directo = NO
+            PF-G002.Aplic-Id       = menus.modulo
+            PF-G002.CodMnu         = menus.codmnu
+            PF-G002.Etiqueta       = Menus.Etiqueta
+            PF-G002.Programa       = menus.programa.
+            case menus.tipo :
+                 when "P" THEN  PF-G002.Tipo   = "PROCESO".
+                 when "S" THEN  PF-G002.Tipo   = "SUB-MENU".
+            end case.
+           
+    x = x + 1.
+    display x with 1 down.
+    pause 0.
+end.

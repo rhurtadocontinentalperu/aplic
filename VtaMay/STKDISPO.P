@@ -1,0 +1,179 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER s-codcia AS INT.
+DEFINE INPUT PARAMETER s-codalm AS CHAR.
+DEFINE INPUT PARAMETER s-codmat AS CHAR.
+DEFINE INPUT PARAMETER s-candes AS DEC.
+DEFINE OUTPUT PARAMETER s-ok AS LOG.
+DEFINE OUTPUT PARAMETER s-stkdis AS DEC. 
+/*
+DEFINE OUTPUT PARAMETER s-stkcom AS DEC. 
+*/
+
+DEFINE VAR X-CanPed AS DEC NO-UNDO.
+DEFINE VAR X-PedCon AS DEC NO-UNDO.
+/*
+MESSAGE s-codcia SKIP
+        s-codalm SKIP
+        s-codmat SKIP
+        s-candes SKIP
+        s-ok SKIP
+        s-stkdis SKIP
+        VIEW-AS ALERT-BOX.
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.85
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *******************************/
+ASSIGN  X-CanPed = 0
+        X-PedCon = 0.
+
+/****       Si Ud. hace alguna modificacion en este programa haga lo mismo en 
+            los siguientes programas :
+            - lkup\l-uniabc.w
+            - 
+****/
+
+/*********** Ubica Almmmatg correspondiente al codigo  ********************/
+FIND Almmmatg WHERE Almmmatg.CodCia = S-CODCIA 
+               AND  Almmmatg.codmat = S-CODMAT 
+              NO-LOCK NO-ERROR.
+
+/*********** Ubica Almmmate correspondiente al codigo y al almacen  ********/
+FIND almmmate WHERE Almmmate.CodCia = s-codcia 
+               AND  Almmmate.CodAlm = s-codalm 
+               AND  Almmmate.codmat = s-codmat 
+              NO-LOCK NO-ERROR.
+
+/**********   Barremos para los pedidos de credito   ***********************/ 
+/*******            AND  FacDPedi.almdes = s-codalm*************************/
+FOR EACH FacCPedi USE-INDEX Llave06 NO-LOCK WHERE FacCPedi.codcia = s-codcia
+        AND FacCPedi.codalm = s-codalm
+        AND FacCPedi.flgest = 'P'
+        AND FacCPedi.tpoped = "1"
+        AND FacCPedi.coddoc = 'PED',
+        EACH FacDPedi OF FacCPedi NO-LOCK WHERE FacDPedi.codmat = s-codmat
+            AND (Facdpedi.canped - Facdpedi.canate) > 0:
+    X-CanPed = X-CanPed + FacDPedi.Factor * (FacDPedi.CanPed - FacDPedi.canate ).
+END.
+
+/*********   Barremos las O/D que son parciales y totales    ****************/
+FOR EACH FacDPedi USE-INDEX Llave04 NO-LOCK WHERE FacDPedi.CodCia = s-codcia
+        AND  FacDPedi.almdes = trim(s-codalm)
+        AND  FacDPedi.codmat = trim(s-codmat) 
+        AND  FacDPedi.CodDoc = 'O/D'
+        AND  LOOKUP(FacDPedi.FlgEst, 'P,X,') > 0,
+        FIRST FacCPedi OF FacDPedi NO-LOCK WHERE Faccpedi.FlgEst = "P":
+    X-CanPed = X-CanPed + FacDPedi.Factor * (FacDPedi.CanPed - FacDPedi.canate ).
+END.
+/*******************************************************/
+
+/* Segundo barremos los pedidos de mostrador de acuerdo a la vigencia */
+DEF VAR TimeOut AS INTEGER NO-UNDO.
+DEF VAR TimeNow AS INTEGER NO-UNDO.
+FIND FacCfgGn WHERE faccfggn.codcia = s-codcia NO-LOCK.
+TimeOut = (FacCfgGn.Dias-Res * 24 * 3600) +
+          (FacCfgGn.Hora-Res * 3600) + 
+          (FacCfgGn.Minu-Res * 60).
+IF TimeOut > 0 THEN DO:
+    FOR EACH Facdpedm USE-INDEX Llave03 NO-LOCK WHERE Facdpedm.CodCia = s-codcia 
+            AND  Facdpedm.AlmDes = trim(S-CODALM)
+            AND  Facdpedm.codmat = trim(s-codmat) 
+            AND  Facdpedm.CodDoc = 'P/M'
+            AND  Facdpedm.FlgEst = "P",
+            FIRST Faccpedm OF Facdpedm NO-LOCK WHERE Faccpedm.FlgEst = "P":
+        TimeNow = (TODAY - FacCPedm.FchPed) * 24 * 3600.
+        TimeNow = TimeNow + TIME - ( (INTEGER(SUBSTRING(FacCPedm.Hora, 1, 2)) * 3600) +
+                  (INTEGER(SUBSTRING(FacCPedm.Hora, 4, 2)) * 60) ).
+        IF TimeNow <= TimeOut   /* Dentro de la valides */
+        THEN DO:
+            /* cantidad en reservacion */
+            X-CanPed = X-CanPed + FacDPedm.Factor * FacDPedm.CanPed.
+        END.
+    END.
+END.
+X-PedCon = X-CanPed.  
+
+/* Tercero buscamos el stock actual */
+FIND almmmate WHERE Almmmate.CodCia = s-codcia 
+               AND  Almmmate.CodAlm = s-codalm 
+               AND  Almmmate.codmat = s-codmat 
+              NO-LOCK NO-ERROR.
+IF AVAILABLE almmmate THEN DO:
+   IF Almmmate.StkAct <= X-CanPed THEN DO: 
+      s-ok = NO. 
+      s-stkdis = Almmmate.StkAct - X-PedCon.
+      RETURN. 
+   END. 
+   X-CanPed = Almmmate.StkAct - X-CanPed.
+END.
+
+s-ok = IF s-candes > X-CanPed THEN NO ELSE YES.
+s-stkdis = Almmmate.StkAct - X-PedCon.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

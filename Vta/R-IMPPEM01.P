@@ -1,0 +1,202 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-ImpPed.p
+    Purpose     : Impresion de Pedidos y Cotizaciones
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR S-USER-ID AS CHAR. 
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR cl-CODCIA AS INTEGER.
+DEF SHARED VAR s-codalm  AS CHAR.
+DEF SHARED VAR S-NomCia  AS CHAR.
+DEF SHARED VAR s-coddiv  LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF        VAR C-NomVen  AS CHAR FORMAT "X(30)".
+DEF        VAR C-TitDoc  AS CHAR FORMAT "X(50)".
+DEF        VAR I-NroItm  AS INTEGER.
+DEF        VAR F-PreNet  AS DECIMAL.
+DEF        VAR W-DIRALM  AS CHAR FORMAT "X(50)".
+DEF        VAR W-TLFALM  AS CHAR FORMAT "X(13)".
+
+DEFINE VARIABLE x-dscto AS DECIMAL.
+
+FIND faccpedm WHERE ROWID(faccpedm) = X-ROWID NO-LOCK NO-ERROR.
+
+IF NOT AVAILABLE faccpedm THEN RETURN.
+
+IF faccpedm.CodDoc = "P/M" THEN 
+     C-TitDoc = "    PEDIDO :". 
+
+FIND gn-clie WHERE 
+     gn-clie.codcia = cl-codcia AND  
+     gn-clie.codcli = faccpedm.codcli NO-LOCK NO-ERROR.
+     
+FIND gn-ven WHERE 
+     gn-ven.CodCia = faccpedm.CodCia AND  
+     gn-ven.CodVen = faccpedm.CodVen 
+     NO-LOCK NO-ERROR.
+     
+IF AVAILABLE gn-ven THEN C-NomVen = C-NomVen + " - " + gn-ven.NomVen.
+
+FIND Almacen WHERE 
+     Almacen.CodCia = S-CODCIA AND  
+     Almacen.CodAlm = S-CODALM 
+     NO-LOCK NO-ERROR.
+IF AVAILABLE Almacen THEN  W-DIRALM = Almacen.DirAlm. 
+W-TLFALM = Almacen.TelAlm. 
+
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE FRAME F-DetaPed2
+    I-NroItm FORMAT ">>>9"
+    facdpedm.codmat FORMAT "X(6)"
+    facdpedm.CanPed FORMAT ">>,>>>,>>9.99"
+    facdpedm.undvta FORMAT "X(4)"
+    almmmatg.desmat FORMAT "X(45)"
+    almmmatg.desmar FORMAT "X(11)"  SKIP
+    WITH NO-LABELS NO-BOX NO-UNDERLINE STREAM-IO WIDTH 160.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.92
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+/* Definimos impresoras */
+
+/*RUN bin/_prnctr2.p.
+ *    IF s-salida-impresion = 0 THEN RETURN.
+ * RUN aderb/_prlist.p(
+ *     OUTPUT s-printer-list,
+ *     OUTPUT s-port-list,
+ *     OUTPUT s-printer-count).*/
+
+/*s-port-name = ENTRY(LOOKUP(s-printer-name, s-printer-list), s-port-list).
+ * s-port-name = REPLACE(S-PORT-NAME, ":", "").*/
+
+DEF VAR rpta AS LOG NO-UNDO.
+SYSTEM-DIALOG PRINTER-SETUP UPDATE rpta.
+IF rpta = NO THEN RETURN.
+
+DEFINE FRAME F-HdrPed2
+    HEADER 
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(45)" 
+    "( " + faccpedm.CodDiv + ")" AT 1 W-DIRALM AT 10 
+    {&PRN7A} + {&PRN6A} + C-TitDoc + {&PRN6B} + {&PRN7B} + {&PRN3} AT 82 FORMAT "X(22)" 
+    {&PRN7A} + {&PRN6A} + faccpedm.NroPed + {&PRN6B} + {&PRN7B} + {&PRN3} AT 104 FORMAT "XXXXXX-XXXXXXXXXXXX" SKIP
+    "TELEFAX. " AT 2 W-TLFALM AT 11  "Señor(es) : " TO 40 faccpedm.Codcli FORMAT "X(8)" TO 50 faccpedm.nomcli FORMAT "x(50)" SKIP(2)
+    /***
+    "Direccion : " TO 40 faccpedm.DirCli FORMAT "x(40)" "Emision         : " TO 100 faccpedm.FchPed SKIP
+    "R.U.C.    : " TO 40 gn-clie.Ruc    "Vencimiento     : " TO 100 faccpedm.fchven FORMAT "99/99/9999" SKIP    
+    "Vendedor  : " TO 40 C-NomVen       X-ORDCOM TO 100 faccpedm.ordcmp SKIP    
+    ***/
+    "-------------------------------------------------------------------------------------------" SKIP
+    "ITEM CODIGO   CANTIDAD UND.             D E S C R I P C I O N             M A R C A        " SKIP
+    "-------------------------------------------------------------------------------------------" SKIP
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+                         
+/*OUTPUT TO VALUE(s-port-name) PAGE-SIZE 60.*/
+OUTPUT TO PRINTER PAGE-SIZE 60.
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(66) + {&PRN3}.     
+              
+I-NroItm = 0.
+FOR EACH facdpedm NO-LOCK WHERE 
+    facdpedm.CodCia = faccpedm.CodCia AND  
+    facdpedm.CodDoc = faccpedm.CodDoc AND  
+    facdpedm.NroPed = faccpedm.NroPed , 
+    FIRST almmmatg OF facdpedm NO-LOCK 
+    BREAK BY facdpedm.NroPed
+    /* BY facdpedm.CodMat*/:
+    
+    I-NroItm = I-NroItm + 1.
+    F-PreNet = facdpedm.preuni * ( 1 - facdpedm.PorDto / 100 ).
+    VIEW FRAME F-HdrPed2.    
+    x-dscto = 0.
+    /*
+        IF facdpedm.undvta = Almmmatg.UndA THEN 
+            x-dscto = Almmmatg.dsctos[1]. ELSE 
+        IF facdpedm.undvta = Almmmatg.UndB THEN
+            x-dscto = Almmmatg.dsctos[2]. ELSE 
+        IF facdpedm.undvta = Almmmatg.UndC THEN
+            x-dscto = Almmmatg.dsctos[3].
+    */ 
+
+    DISPLAY I-NroItm
+        facdpedm.codmat
+        facdpedm.CanPed
+        facdpedm.undvta
+        almmmatg.desmat
+        almmmatg.desmar        
+        WITH FRAME F-DetaPed2.
+    IF LAST-OF(facdpedm.NroPed) THEN DO:
+        PAGE.
+    END.
+END. 
+
+OUTPUT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

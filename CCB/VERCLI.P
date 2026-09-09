@@ -1,0 +1,10 @@
+/*for each ccbdcaja where codref = "fac" and nroref = "001000016":
+display codcia codcli coddoc nrodoc fchdoc nroref codref  imptot. 
+end.
+  */
+
+for each ccbcdocu  where codcli = "25252525"  and coddoc = "FAC": /*   where  fchvto <  today :*/
+display coddoc nrodoc flgest fchvto codcli codmon ccbcdocu.CodCia imptot sdoact.
+
+end.
+

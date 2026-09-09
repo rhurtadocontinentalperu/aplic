@@ -1,0 +1,352 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEFINE SHARED VAR s-user-id AS CHAR.
+
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN "OK".
+
+/* PEDIDO MOSTRADOR YA HA DESCARGADO STOCK EN CAJA */
+IF CcbCDocu.CodDoc = "G/R" AND CcbCDocu.CodPed = "P/M" THEN RETURN "OK".
+
+/* BUSCAMOS O/D */
+/*
+FIND Faccpedi WHERE Faccpedi.codcia = Ccbcdocu.codcia
+    AND Faccpedi.coddoc = Ccbcdocu.libre_c01
+    AND Faccpedi.nroped = Ccbcdocu.libre_c02
+    NO-LOCK NO-ERROR.
+IF NOT AVAILABLE Faccpedi THEN DO:
+    MESSAGE 'No se pudo encontrar la' Ccbcdocu.Libre_c01 Ccbcdocu.libre_c02
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN 'ADM-ERROR'.
+END.
+
+*/
+
+DEF VAR s-NroSer AS INT NO-UNDO.
+DEF VAR s-NroDoc AS INT64 NO-UNDO.
+
+ASSIGN
+    s-NroSer = 0
+    s-NroDoc = 0.
+FIND gn-divi WHERE gn-divi.codcia = ccbcdocu.codcia AND gn-divi.coddiv = ccbcdocu.coddiv
+     NO-LOCK NO-ERROR.                                                                    
+/* IF AVAILABLE gn-divi AND gn-divi.canalventa = "MIN" THEN s-NroSer = 999.                 */
+/* ****************************************************************** 
+     RHC 26/02/2015 SOLO EN CASO DE VENTAS UTILEX :
+    * SOLO CUANDO LA VENTA SEA POR TICKETS (TCK)
+    * SOLO PARA DIVISIONES CON CANAL DE VENTA MIN
+    ***************************************************************** */
+IF AVAILABLE gn-divi AND gn-divi.CanalVenta = "MIN" AND Ccbcdocu.coddoc = "TCK" THEN 
+    ASSIGN 
+    s-NroSer = INTEGER(SUBSTRING(Ccbcdocu.nrodoc,1,3))
+    s-NroDoc = INTEGER(SUBSTRING(Ccbcdocu.nrodoc,4)).
+/* ****************************************************************** */
+/* ****************************************************************************** */
+/* RHC 17/08/2015 RUTINA GENERAL: SOLO FAC BOL TCK GENERAN MOVIMIENTOS DE ALMACEN */
+/* ****************************************************************************** */
+IF LOOKUP(Ccbcdocu.coddoc, 'FAC,BOL,TCK') > 0 THEN DO:
+    ASSIGN 
+        s-NroSer = INTEGER(SUBSTRING(Ccbcdocu.nrodoc,1,3)).
+    /* Formato del Correlativo: c123456 
+        c: código contable (1) factura (3) boleta (2) ticket
+        1234567: correlativo
+        */
+    CASE Ccbcdocu.coddoc:
+        WHEN 'FAC' THEN s-NroDoc = 1000000.
+        WHEN 'TCK' THEN s-NroDoc = 2000000.
+        WHEN 'BOL' THEN s-NroDoc = 3000000.
+    END CASE.
+    IF INTEGER(SUBSTRING(Ccbcdocu.nrodoc,4)) <= 999999 
+        THEN s-NroDoc = s-NroDoc + INTEGER(SUBSTRING(Ccbcdocu.nrodoc,4)).
+    ELSE s-NroDoc = (s-NroDoc * 10) + INTEGER(SUBSTRING(Ccbcdocu.nrodoc,4)).
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 4.46
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+DEF VAR i AS INTEGER INITIAL 1 NO-UNDO.
+DEF VAR LocalCounter AS INTEGER INITIAL 0 NO-UNDO.
+DEF VAR x-CorrSal LIKE Almacen.CorrSal NO-UNDO.
+
+PRINCIPAL:
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR" ON STOP UNDO, RETURN 'ADM-ERROR':
+    FOR EACH Ccbddocu OF Ccbcdocu NO-LOCK WHERE Ccbddocu.implin >= 0
+        BREAK BY Ccbddocu.AlmDes:
+        IF FIRST-OF(Ccbddocu.AlmDes) THEN DO:
+            /* CABECERA */
+            IF s-NroSer = 0 THEN DO:
+                /* EN CASO DE NO SER UNA VENTA UTILEX EL CORRELATIVO VA POR ALMACEN */
+                LocalCounter = 0.
+                GetLock:
+                REPEAT ON STOP UNDO, RETRY GetLock ON ERROR UNDO, LEAVE GetLock:
+                    IF RETRY THEN DO:
+                        LocalCounter = LocalCounter + 1.
+                        IF LocalCounter = 5 THEN LEAVE GetLock.
+                    END.
+                    FIND Almacen WHERE Almacen.CodCia = Ccbddocu.codcia 
+                        AND Almacen.CodAlm = Ccbddocu.almdes       
+                        EXCLUSIVE-LOCK NO-ERROR.
+                    IF AVAILABLE Almacen THEN LEAVE.
+                END.
+                IF LocalCounter = 5 OR NOT AVAILABLE Almacen THEN DO:
+                    MESSAGE 'NO se pudo bloquear el almacén:' Ccbddocu.almdes SKIP
+                        'Proceso Abortado'
+                        VIEW-AS ALERT-BOX ERROR.
+                    UNDO PRINCIPAL, RETURN 'ADM-ERROR'.
+                END.
+                REPEAT:
+                    ASSIGN
+                        x-CorrSal = Almacen.CorrSal.
+                    IF NOT CAN-FIND(FIRST Almcmov WHERE Almcmov.codcia = CcbDDocu.CodCia 
+                                    AND Almcmov.codalm = CcbDDocu.AlmDes
+                                    AND Almcmov.tipmov = "S"
+                                    AND Almcmov.codmov = 02
+                                    AND Almcmov.nroser = s-NroSer
+                                    AND Almcmov.nrodoc = x-CorrSal
+                                    NO-LOCK)
+                        THEN LEAVE.
+                    ASSIGN
+                        Almacen.CorrSal = Almacen.CorrSal + 1.
+                END.
+                ASSIGN
+                    s-NroDoc = Almacen.CorrSal
+                    Almacen.CorrSal = Almacen.CorrSal + 1.
+            END.
+
+            /* ************************* */
+            CREATE almcmov.
+            ASSIGN Almcmov.CodCia  = CcbDDocu.CodCia 
+                   Almcmov.CodAlm  = CcbDDocu.AlmDes
+                   Almcmov.TipMov  = "S"
+                   Almcmov.CodMov  = 02     
+                   Almcmov.NroSer  = s-NroSer
+                   Almcmov.NroDoc  = s-NroDoc 
+                   /*Almcmov.NroDoc  = Almacen.CorrSal */
+                   /*Almacen.CorrSal = Almacen.CorrSal + 1*/
+                   Almcmov.FchDoc  = CcbCDocu.FchDoc
+                   Almcmov.HorSal  = STRING(TIME, "HH:MM:SS")
+                   Almcmov.CodVen  = ccbcdocu.CodVen
+                   Almcmov.CodCli  = ccbcdocu.CodCli
+                   Almcmov.Nomref  = ccbcdocu.NomCli
+                   Almcmov.CodRef  = ccbcdocu.CodDoc
+                   Almcmov.NroRef  = ccbcdocu.nrodoc
+                   Almcmov.NroRf1  = STRING(CcbCDocu.CodDoc, 'x(3)') + CcbCDocu.NroDoc
+                   Almcmov.NroRf2  = CcbCDocu.CodPed + CcbCDocu.NroPed
+                   Almcmov.usuario = s-user-id
+                NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                RUN show-errors.
+                UNDO PRINCIPAL, RETURN "ADM-ERROR".
+            END.
+        END.
+        /* DETALLE */
+        CREATE Almdmov.
+        ASSIGN Almdmov.CodCia = Almcmov.CodCia
+               Almdmov.CodAlm = Almcmov.CodAlm
+               Almdmov.CodMov = Almcmov.CodMov 
+               Almdmov.NroSer = almcmov.nroser
+               Almdmov.NroDoc = almcmov.nrodoc
+               Almdmov.AftIgv = ccbddocu.aftigv
+               Almdmov.AftIsc = ccbddocu.aftisc
+               Almdmov.CanDes = ccbddocu.candes
+               Almdmov.codmat = ccbddocu.codmat
+               Almdmov.CodMon = ccbcdocu.codmon
+               Almdmov.CodUnd = ccbddocu.undvta
+               Almdmov.Factor = ccbddocu.factor
+               Almdmov.FchDoc = CcbCDocu.FchDoc
+               Almdmov.ImpDto = ccbddocu.impdto
+               Almdmov.ImpIgv = ccbddocu.impigv
+               Almdmov.ImpIsc = ccbddocu.impisc
+               Almdmov.ImpLin = ccbddocu.implin
+               Almdmov.NroItm = i
+               Almdmov.PorDto = ccbddocu.pordto
+               Almdmov.PreBas = ccbddocu.prebas
+               Almdmov.PreUni = ccbddocu.preuni
+               Almdmov.TipMov = "S"
+               Almdmov.TpoCmb = ccbcdocu.tpocmb
+               Almcmov.TotItm = i
+               Almdmov.HraDoc = Almcmov.HorSal
+               i = i + 1.
+        RUN alm/almdcstk (ROWID(almdmov)).
+        IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO PRINCIPAL, RETURN 'ADM-ERROR'.
+        /* RHC 05.04.04 ACTIVAMOS KARDEX POR ALMACEN */
+        RUN alm/almacpr1 (ROWID(almdmov), 'U').
+        IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO PRINCIPAL, RETURN 'ADM-ERROR'.
+    END.
+    IF AVAILABLE(Almacen) THEN RELEASE Almacen.
+    IF AVAILABLE(Almcmov) THEN RELEASE Almcmov.
+    IF AVAILABLE(Almdmov) THEN RELEASE Almdmov.
+END.
+
+RETURN 'OK'.
+
+/*
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR" ON STOP UNDO, RETURN 'ADM-ERROR':
+    FOR EACH Facdpedi OF Faccpedi BREAK BY Facdpedi.AlmDes:
+        IF FIRST-OF(Facdpedi.AlmDes) THEN DO:
+            /* CABECERA */
+            FIND Almacen WHERE 
+                 Almacen.CodCia = Facdpedi.codcia AND
+                 Almacen.CodAlm = Facdpedi.almdes       /* OJO */
+                 EXCLUSIVE-LOCK NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN UNDO, RETURN 'ADM-ERROR'.
+            CREATE almcmov.
+            ASSIGN Almcmov.CodCia  = Facdpedi.CodCia 
+                   Almcmov.CodAlm  = Facdpedi.AlmDes
+                   Almcmov.TipMov  = "S"
+                   Almcmov.CodMov  = CcbCDocu.CodMov
+                   Almcmov.NroSer  = 0 /* INTEGER(SUBSTRING(ccbcdocu.NroDoc,1,3)) */
+                   Almcmov.NroDoc  = Almacen.CorrSal 
+                   Almacen.CorrSal = Almacen.CorrSal + 1
+                   Almcmov.FchDoc  = CcbCDocu.FchDoc
+                   Almcmov.HorSal  = STRING(TIME, "HH:MM:SS")
+                   Almcmov.CodVen  = ccbcdocu.CodVen
+                   Almcmov.CodCli  = ccbcdocu.CodCli
+                   Almcmov.Nomref  = ccbcdocu.NomCli
+                   Almcmov.CodRef  = ccbcdocu.CodDoc
+                   Almcmov.NroRef  = ccbcdocu.nrodoc
+                   Almcmov.NroRf1  = STRING(CcbCDocu.CodDoc, 'x(3)') + CcbCDocu.NroDoc
+                   Almcmov.NroRf2  = CcbCDocu.CodPed + CcbCDocu.NroPed
+                   Almcmov.usuario = s-user-id.
+        END.
+        /* DETALLE */
+        CREATE Almdmov.
+        ASSIGN Almdmov.CodCia = Almcmov.CodCia
+               Almdmov.CodAlm = Almcmov.CodAlm
+               Almdmov.CodMov = Almcmov.CodMov 
+               Almdmov.NroSer = almcmov.nroser
+               Almdmov.NroDoc = almcmov.nrodoc
+               Almdmov.AftIgv = Facdpedi.aftigv
+               Almdmov.AftIsc = Facdpedi.aftisc
+               Almdmov.CanDes = Facdpedi.canped
+               Almdmov.codmat = Facdpedi.codmat
+               Almdmov.CodMon = ccbcdocu.codmon
+               Almdmov.CodUnd = Facdpedi.undvta
+               Almdmov.Factor = Facdpedi.factor
+               Almdmov.FchDoc = CcbCDocu.FchDoc
+               Almdmov.ImpDto = Facdpedi.impdto
+               Almdmov.ImpIgv = Facdpedi.impigv
+               Almdmov.ImpIsc = Facdpedi.impisc
+               Almdmov.ImpLin = Facdpedi.implin
+               Almdmov.NroItm = i
+               Almdmov.PorDto = Facdpedi.pordto
+               Almdmov.PreBas = Facdpedi.prebas
+               Almdmov.PreUni = Facdpedi.preuni
+               Almdmov.TipMov = "S"
+               Almdmov.TpoCmb = ccbcdocu.tpocmb
+               Almcmov.TotItm = i
+               Almdmov.HraDoc = Almcmov.HorSal
+               i = i + 1.
+        RUN alm/almdcstk (ROWID(almdmov)).
+        IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+        /* RHC 05.04.04 ACTIVAMOS KARDEX POR ALMACEN */
+        RUN alm/almacpr1 (ROWID(almdmov), 'U').
+        IF RETURN-VALUE = 'ADM-ERROR' THEN UNDO, RETURN 'ADM-ERROR'.
+    END.
+
+    IF AVAILABLE(Almacen) THEN RELEASE Almacen.
+    IF AVAILABLE(Almcmov) THEN RELEASE Almcmov.
+    IF AVAILABLE(Almdmov) THEN RELEASE Almdmov.
+END.
+  
+RETURN "OK".
+
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-show-errors) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE show-errors Procedure 
+PROCEDURE show-errors :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    DEFINE VARIABLE        cntr                  AS INTEGER   NO-UNDO.
+
+    DO cntr = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        MESSAGE ERROR-STATUS:GET-MESSAGE(cntr) 
+            VIEW-AS ALERT-BOX ERROR TITLE "ERROR: Generación de Movimientos de Almacén".
+    END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

@@ -1,0 +1,126 @@
+ÑStartup parameters:
+-pf C:\Progress\OpenEdge\startup.pf,-cpinternal ISO8859-1,-cpstream ISO8859-1,-cpcoll Spanish9,-cpcase Basic,-d dmy,-numsep 44,-numdec 46,-Mm 16384,(end .pf),-pf on_in_db_210qa.pf,-lng Spanish,-cpcase Basic,-cpcoll Basic,-rereadnolock,-evtlevel none,-cpinternal iSO8859-1,-cpstream ISO8859-1,-cpprint ibm850,-d dmy,-T c:\sie\tmp,-s 512,-nb 255,-inp 32000,-rand 2,-D 500,-l 2000000000,-Bt 12500,-db INTEGRAL,-ld INTEGRAL,-H 192.168.100.209,-N TCP,-S 65010,-TB 31,-TM 32,-tmpbsize 8,-mmax 65534,-Mm 16384,(end .pf),-ininame on_in_co_213qa.ini,-p src/bin/_inicio.p
+
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  776D3B78 01:00023B78 C:\Windows\SysWOW64\ntdll.dll
+
+Registers:
+EAX:0E4D5F00
+EBX:0E4D6FE0
+ECX:00000000
+EDX:00000000
+ESI:0E4D5EF8
+EDI:00570000
+CS:EIP:0023:776D3B78
+SS:ESP:002B:0018D908  EBP:0018D930
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210246
+
+Call Stack:
+Address   Frame
+776D3B78  00000000  RtlQueryPerformanceCounter+11C4
+776DACDD  00000000  RtlDecodeSystemPointer+5F5
+776DAC2E  00000000  RtlDecodeSystemPointer+546
+776D3491  00000000  RtlQueryPerformanceCounter+ADD
+7277495A  00000000  AtcQueryRegion+1B26A
+72723F9D  00000000  0001:00002F9D C:\Program Files\Bitdefender\Endpoint Security\atcuf\dlls_265769131949644968\atcuf32.dll
+75585AAE  00000000  LocalAlloc+5F
+758C7568  00000000  SHChangeNotifyRegisterThread+1061
+758C765C  00000000  SHChangeNotifyRegisterThread+1155
+758C7DDB  00000000  SHChangeNotifyRegisterThread+18D4
+75A08B2A  00000000  Ordinal65+69D
+758C7F14  00000000  SHChangeNotifyRegisterThread+1A0D
+758C7F3E  00000000  SHChangeNotifyRegisterThread+1A37
+758C7F3E  00000000  SHChangeNotifyRegisterThread+1A37
+758C7F3E  00000000  SHChangeNotifyRegisterThread+1A37
+758C81E2  00000000  SHChangeNotifyRegisterThread+1CDB
+7581F9B7  00000000  SHGetViewStatePropertyBag+7A6
+7581FAD1  00000000  SHGetViewStatePropertyBag+8C0
+7581F8E2  00000000  SHGetViewStatePropertyBag+6D1
+7581F864  00000000  SHGetViewStatePropertyBag+653
+7581E70E  00000000  Ordinal531+4D
+7581F43F  00000000  SHGetViewStatePropertyBag+22E
+7581F3CF  00000000  SHGetViewStatePropertyBag+1BE
+739FC88E  00000000  PSPropertyBag_ReadType+29
+73A0093A  00000000  PSPropertyBag_ReadStr+3F
+759E3693  00000000  Ordinal893+2B4
+759DFE12  00000000  Ordinal681+3E9
+759DFD56  00000000  Ordinal681+32D
+759A2789  00000000  Ordinal818+34B
+759A6012  00000000  Ordinal818+3BD4
+759A5E3A  00000000  Ordinal818+39FC
+759A5D09  00000000  Ordinal818+38CB
+7593D095  00000000  RegenerateUserEnvironment+2916
+76A4630A  00000000  gapfnScSendMessage+33A
+76A46D4A  00000000  GetThreadDesktop+D7
+76A477D7  00000000  CharPrevW+138
+76A4789A  00000000  DispatchMessageW+F
+76A721F0  00000000  IsDialogMessageW+55C
+76A7234F  00000000  DialogBoxIndirectParamAorW+108
+76A7227D  00000000  DialogBoxIndirectParamAorW+36
+76A5EAF8  00000000  DialogBoxIndirectParamW+1B
+74EE597B  00000000  PrintDlgW+25D8
+74F21B50  00000000  Ordinal101+3B4
+74F229D0  00000000  Ordinal101+1234
+74F22B15  00000000  Ordinal101+1379
+74F22B71  00000000  Ordinal101+13D5
+74F19A9B  00000000  dwLBSubclass+6C49
+74F1A33F  00000000  GetOpenFileNameW+6A
+1044AA2D  00000000  wwProxInterfaceReadIcon+2578D
+0018F8A0  00000000  0000:00000000 
+10214ABF  00000000  dbut_firstByte+4BCF
+1002EDC5  00000000  0001:0002DDC5 C:\Progress\OpenEdge\bin\prow32.dll
+104636AB  00000000  wwProxInterfaceReadIcon+3E40B
+10032084  00000000  0001:00031084 C:\Progress\OpenEdge\bin\prow32.dll
+
+
+** ABL Stack Trace **
+
+--> adecomm/_getfile.p (adecomm/_getfile.r) at line 191
+    choose_open adeuib/_uibmain.p (adeuib/_uibmain.r) at line 8038
+    choose_file_open adeuib/_uibmain.p (adeuib/_uibmain.r) at line 6821
+    USER-INTERFACE-TRIGGER adeuib/_uibmain.p (adeuib/_uibmain.r) at line 4697
+    adeuib/_uibmain.p (adeuib/_uibmain.r) at line 17218
+    _ab.p (C:\Progress\OpenEdge\gui\_ab.r) at line 394
+
+** Persistent procedures/Classes **
+
+Handle  File Name
+001959  d:\newsie\on_in_co\src\adm-vm\objects\p-updv97.r
+001931  d:\newsie\on_in_co\SRC\adm-vm\objects\p-updv10.r
+001907  d:\newsie\on_in_co\aplic\logis\b-confg-divi-abast-excep.r
+001883  d:\newsie\on_in_co\aplic\logis\b-confg-divi-abast-alm.r
+001856  d:\newsie\on_in_co\src\adm-vm\objects\p-updv97.r
+001835  d:\newsie\on_in_co\SRC\adm\objects\broker.r
+001831  d:\newsie\on_in_co\aplic\logis\b-confg-divi-abast.r
+001798  adeuib/_semain.r
+001717  adecomm/as-utils.r
+001124  adecomm/_winmenu.r
+001123  adeshar/_mlmgr.r
+001001  adeuib/_abfuncs.r
+
+//=====================================================
+PROGRESS stack trace as of Fri Feb 04 10:10:05 2022
+//=====================================================
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  776D3B78 01:00023B78 C:\Windows\SysWOW64\ntdll.dll
+
+Registers:
+EAX:0E4D5F00
+EBX:0E4D6FE0
+ECX:00000000
+EDX:00000000
+ESI:0E4D5EF8
+EDI:00570000
+CS:EIP:0023:776D3B78
+SS:ESP:002B:0018FA90  EBP:0018D930
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210246
+
+Call Stack:
+Address   Frame
+776D3B78  0018FAE8  RtlQueryPerformanceCounter+11C4
+104636AB  0018FAF4  wwProxInterfaceReadIcon+3E40B
+102323A2  0018FB60  dbut_firstByte+224B2
+102979C4  0018FB98  dbut_firstByte+87AD4
+

@@ -1,0 +1,29 @@
+def var c as integer init 0.
+def var p as integer init 0.
+for each tmpcli98 :
+    find first integral.gn-clie where gn-clie.codcli = tmpcli98.tabnrruc no-error.
+    if not available integral.gn-clie then do:                                                
+/*       CREATE gn-clie.
+       ASSIGN 
+          gn-clie.CodCli  = THGERENC.tmpcli98.tabnrruc
+          gn-clie.Ruc     = THGERENC.tmpcli98.tabnrruc
+          gn-clie.CodVen  = THGERENC.tmpcli98.tabcodve
+          gn-clie.CodAnt  = THGERENC.tmpcli98.tabcodan
+          gn-clie.NomCli  = THGERENC.tmpcli98.tabnombr
+          gn-clie.DirCli  = THGERENC.tmpcli98.tabdirec 
+          gn-clie.Contac  = THGERENC.tmpcli98.tabconta
+          gn-clie.CodDept = THGERENC.tmpcli98.tabdepar
+          gn-clie.CodProv = THGERENC.tmpcli98.tabprovi
+          gn-clie.CodDist = THGERENC.tmpcli98.tabdistr
+          gn-clie.Telfnos[1] = THGERENC.tmpcli98.tabtele1
+          gn-clie.Telfnos[2] = THGERENC.tmpcli98.tabtele2
+          gn-clie.FaxCli = THGERENC.tmpcli98.tabtefax
+          gn-clie.Fching = THGERENC.tmpcli98.tabfecma.*/
+          c = c + 1.    
+    end. 
+    else do:
+       p = p + 1.
+    end.
+end.    
+display c skip
+        p.

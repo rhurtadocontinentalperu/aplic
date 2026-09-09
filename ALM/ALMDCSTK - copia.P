@@ -1,0 +1,175 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : ALMDCSTK.P
+    Purpose     :
+    Syntax      : DO ALMDCSTK(ROWID(AlmDMov)).
+    Description : Procedimiento de Desactualizar el Stock por Ingresos.
+    Author(s)   : O.G.L.
+    Created     : 17/09/97
+    Notes       : Recibe como parametro el ROWID del mov. de detalle.
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER R-DMov AS ROWID.
+DEFINE VARIABLE I-CODMAT AS CHAR NO-UNDO.
+DEFINE VARIABLE C-CODALM AS CHAR NO-UNDO.
+DEFINE VARIABLE F-CANDES AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PREUNI AS DECIMAL NO-UNDO.
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+
+/* Ubicamos el detalle a Actualizar */
+FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+IF NOT AVAILABLE AlmDMov THEN RETURN 'OK'.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 6
+         WIDTH              = 41.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+DO TRANSACTION ON ERROR UNDO, RETURN 'ADM-ERROR' ON STOP UNDO, RETURN 'ADM-ERROR':
+    ASSIGN 
+      I-CODMAT = AlmDMov.CodMaT
+      C-CODALM = AlmDMov.CodAlm
+      F-CANDES = AlmDMov.CanDes
+      F-PREUNI = AlmDMov.PreUni.
+    IF AlmDMov.Factor > 0 
+    THEN ASSIGN 
+              F-CANDES = AlmDMov.CanDes * AlmDMov.Factor
+              F-PREUNI = AlmDMov.PreUni / AlmDMov.Factor.
+    RUN Asigna-Producto (Almdmov.codalm, Almdmov.codmat).
+    IF RETURN-VALUE = 'ADM-ERROR' THEN DO:
+        MESSAGE 'ERROR al crear el código' Almdmov.codmat 'en el almacén' Almdmov.codalm
+            VIEW-AS ALERT-BOX ERROR.
+        UNDO, RETURN 'ADM-ERROR'.
+    END.
+    /* Des-Actualizamos a los Materiales por Almacen */
+    FIND Almmmate WHERE Almmmate.CodCia = S-CODCIA AND
+        Almmmate.CodAlm = C-CODALM AND 
+        Almmmate.CodMat = I-CODMAT EXCLUSIVE-LOCK NO-ERROR.
+    IF NOT AVAILABLE Almmmate THEN DO:
+        MESSAGE 'Codigo' i-codmat 'NO asignado en el almacén' c-codalm
+            VIEW-AS ALERT-BOX ERROR.
+        UNDO, RETURN 'ADM-ERROR'.
+    END.
+    Almmmate.StkAct = Almmmate.StkAct - F-CANDES.
+    RELEASE Almmmate.
+END.
+
+RETURN 'OK'.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Asigna-Producto) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Asigna-Producto Procedure 
+PROCEDURE Asigna-Producto :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEF INPUT PARAMETER pCodAlm AS CHAR.
+DEF INPUT PARAMETER pCodMat AS CHAR.
+
+DEF BUFFER AMATE FOR Almmmate.
+DEF BUFFER BMATG FOR Almmmatg.
+
+FIND AMATE WHERE AMATE.CodCia = s-CodCia AND
+    AMATE.CodAlm = pCodAlm AND
+    AMATE.CodMat = pCodMat NO-LOCK NO-ERROR.
+IF AVAILABLE AMATE THEN RETURN 'OK'.     /* Ya Asignado */
+
+FIND BMATG WHERE BMATG.codcia = s-codcia
+    AND BMATG.codmat = pCodMat
+    NO-LOCK NO-ERROR.
+IF NOT AVAILABLE BMATG THEN RETURN 'OK'.
+FIND CURRENT BMATG EXCLUSIVE-LOCK NO-ERROR.
+IF ERROR-STATUS:ERROR THEN RETURN 'ADM-ERROR'.
+
+CREATE AMATE.
+ASSIGN 
+    AMATE.CodCia = s-CodCia
+    AMATE.CodAlm = pCodAlm
+    AMATE.CodMat = pCodMat
+    AMATE.DesMat = BMATG.DesMat
+    AMATE.UndVta = BMATG.UndStk
+    AMATE.CodMar = BMATG.CodMar
+    AMATE.FacEqu = BMATG.FacEqu
+    NO-ERROR.
+IF ERROR-STATUS:ERROR THEN RETURN 'ADM-ERROR'.
+FIND FIRST almautmv WHERE almautmv.CodCia = BMATG.codcia AND
+    almautmv.CodFam = BMATG.codfam AND
+    almautmv.CodMar = BMATG.codMar AND
+    almautmv.Almsol = AMATE.CodAlm NO-LOCK NO-ERROR.
+IF AVAILABLE almautmv THEN 
+    ASSIGN 
+    AMATE.AlmDes = almautmv.Almdes
+    AMATE.CodUbi = almautmv.CodUbi.
+/* Actualizamos la lista de Almacenes */ 
+IF TRUE <> (BMATG.almacenes > "") THEN BMATG.Almacenes = TRIM(AMATE.CodAlm).
+IF LOOKUP(TRIM(AMATE.CodAlm),BMATG.almacenes) = 0 THEN
+    ASSIGN BMATG.almacenes = TRIM(BMATG.almacenes) + "," + TRIM(AMATE.CodAlm).
+RELEASE AMATE.
+RELEASE BMATG.
+RETURN 'OK'.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

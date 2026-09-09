@@ -1,0 +1,172 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : ALMACPRE.P
+    Purpose     :
+    Syntax      : DO ALMACPRE(ROWID(AlmDMov)).
+    Description : Procedimiento de Actualizacion de Precios Promedios.
+                  Primero: Actualizamos Stock por Sub-Almacen (Sin Valorizar) 
+    Author(s)   : O.G.L.
+    Created     : 17/09/97
+    Notes       : Recibe como parametro el ROWID del mov. de detalle.
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER R-DMov AS ROWID.
+DEFINE INPUT PARAMETER C-UD   AS CHAR.
+
+DEFINE VARIABLE I-CODMAT   AS CHAR NO-UNDO.
+DEFINE VARIABLE C-CODALM   AS CHAR NO-UNDO.
+DEFINE VARIABLE F-CANDES   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-IMPCTO   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-STKSUB   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-STKACT   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-VCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-VCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-TCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-TCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE L-INGRESO  AS LOGICAL NO-UNDO.
+
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+
+/* Ubicamos el detalle a Actualizar */
+FIND FIRST AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+IF NOT AVAILABLE AlmDMov THEN RETURN 'OK'.
+
+/* ******************************************************************************** */
+/* RHC 15/06/2020 Los artículos de línea cuya cat. contab. = "SV" NO generan kardex */
+/* ******************************************************************************** */
+FIND Almmmatg OF Almdmov NO-LOCK NO-ERROR.
+IF AVAILABLE Almmmatg THEN DO:
+    FIND Almtfami OF Almmmatg NO-LOCK NO-ERROR.
+    IF AVAILABLE Almtfami AND Almtfami.Libre_c01 = "SV" THEN RETURN "OK".
+END.
+/* ******************************************************************************** */
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.73
+         WIDTH              = 42.43.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DEF BUFFER B-DMOV FOR Almdmov.
+DEF VAR x-Contador AS INTE NO-UNDO.
+DEF VAR x-First-Record AS LOG NO-UNDO.
+
+/* Inicio de Transaccion */
+RLOOP:
+DO TRANSACTION ON ERROR UNDO, RETURN "ADM-ERROR" ON STOP UNDO, RETURN 'ADM-ERROR':
+    /* ************** RHC 30.03.04 ******************* */
+    FIND FIRST B-DMOV WHERE ROWID(B-DMOV) = r-dmov NO-LOCK NO-ERROR.
+    ASSIGN 
+        I-CODMAT = B-DMOV.CodMat
+        C-CODALM = B-DMOV.CodAlm
+        F-CANDES = B-DMOV.CanDes
+        F-IMPCTO = B-DMOV.ImpCto.
+    IF B-DMOV.Factor > 0 THEN ASSIGN F-CANDES = B-DMOV.CanDes * B-DMOV.Factor.
+    /* Buscamos el stock inicial */
+    FIND PREV B-DMOV USE-INDEX ALMD03 WHERE B-DMOV.codcia = s-codcia
+        AND B-DMOV.codmat = i-codmat
+        AND B-DMOV.codalm = c-codalm
+        NO-LOCK NO-ERROR.
+    IF AVAILABLE B-DMOV
+    THEN f-StkSub = B-DMOV.stksub.
+    ELSE f-StkSub = 0.
+    /* actualizamos el kardex por almacen */
+    {lib/lock-genericov3.i
+        &Tabla="B-DMOV"
+        &Alcance="FIRST"
+        &Condicion="ROWID(B-DMOV) = r-dmov"
+        &Bloqueo="EXCLUSIVE-LOCK NO-ERROR NO-WAIT"
+        &Accion="RETRY"
+        &Mensaje="NO"
+        &TipoError="UNDO, RETURN 'ADM-ERROR'"
+        &Intentos="10"
+        }
+    /*
+    IF C-UD = 'D'       /* Eliminar */
+    THEN B-DMOV.candes = 0.        /* OJO */
+    */
+    x-First-Record = YES.
+    REPEAT WHILE AVAILABLE B-DMOV:
+        L-INGRESO = LOOKUP(B-DMOV.TipMov,"I,U") <> 0.
+        F-CANDES = B-DMOV.CanDes.
+        IF B-DMOV.Factor > 0 THEN F-CANDES = B-DMOV.CanDes * B-DMOV.Factor.
+
+        IF C-UD = "D" AND x-First-Record = YES THEN F-CANDES = 0.
+        x-First-Record = NO.
+
+        IF L-INGRESO 
+        THEN F-STKSUB = F-STKSUB + F-CANDES.
+        ELSE F-STKSUB = F-STKSUB - F-CANDES.
+        B-DMOV.StkSub = F-STKSUB.      /* OJO */
+        FIND NEXT B-DMOV USE-INDEX ALMD03 WHERE B-DMOV.codcia = s-codcia
+            AND B-DMOV.codmat = i-codmat
+            AND B-DMOV.codalm = c-codalm
+            NO-LOCK NO-ERROR.
+        IF AVAILABLE B-DMOV THEN DO:
+            x-Contador = 0.
+            REPEAT:
+                x-Contador = x-Contador + 1.
+                IF x-Contador >= 10 THEN UNDO RLOOP, RETURN 'ADM-ERROR'.
+                FIND CURRENT B-DMOV EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                IF AVAILABLE B-DMOV THEN LEAVE.
+            END.
+        END.
+    END.
+    RELEASE B-DMOV.
+END.        
+RETURN 'OK'.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

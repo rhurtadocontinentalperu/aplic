@@ -1,0 +1,228 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       : SOLO FUNCIONA PARA BASE DE DATOS INTEGRAL
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+/* PARAMETROS */
+
+DEF INPUT PARAMETER RB-REPORT-LIBRARY AS CHAR.              /* Archivo PRL a usar */
+DEF INPUT PARAMETER RB-REPORT-NAME AS CHAR.                 /* Nombre del reporte */
+DEF INPUT PARAMETER RB-INCLUDE-RECORDS AS CHAR.             /* "O" si necesita filtro */
+DEF INPUT PARAMETER RB-FILTER AS CHAR.                      /* Filtro de impresion */
+DEF INPUT PARAMETER RB-OTHER-PARAMETERS AS CHAR INITIAL "". /* Otros parametros */
+
+/* VARIABLES A USAR */
+/* Variables compartidas */
+DEFINE NEW SHARED VAR s-pagina-final AS INTEGER.
+DEFINE NEW SHARED VAR s-pagina-inicial AS INTEGER.
+DEFINE NEW SHARED VAR s-salida-impresion AS INTEGER.
+DEFINE NEW SHARED VAR s-printer-name AS CHAR.
+DEFINE NEW SHARED VAR s-printer-port AS CHARACTER.
+DEFINE NEW SHARED VAR s-print-file AS CHAR.
+DEFINE NEW SHARED VAR s-nro-copias AS INTEGER.
+DEFINE NEW SHARED VAR s-orientacion AS INTEGER.
+
+/* Variables locales */
+DEF VAR RB-DB-CONNECTION AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-MEMO-FILE AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-PRINT-DESTINATION AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-PRINTER-NAME AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-PRINTER-PORT AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-OUTPUT-FILE AS CHAR INITIAL "" NO-UNDO.
+DEF VAR RB-NUMBER-COPIES AS INTEGER INITIAL 1 NO-UNDO.
+DEF VAR RB-BEGIN-PAGE AS INTEGER INITIAL 0 NO-UNDO.
+DEF VAR RB-END-PAGE AS INTEGER INITIAL 0 NO-UNDO.
+DEF VAR RB-TEST-PATTERN AS LOGICAL INITIAL NO NO-UNDO.
+DEF VAR RB-WINDOW-TITLE AS CHARACTER INITIAL "" NO-UNDO.
+DEF VAR RB-DISPLAY-ERRORS AS LOGICAL INITIAL YES NO-UNDO.
+DEF VAR RB-DISPLAY-STATUS AS LOGICAL INITIAL YES NO-UNDO.
+DEF VAR RB-NO-WAIT AS LOGICAL INITIAL NO NO-UNDO.
+DEF VAR RB-STATUS-FILE AS CHAR INITIAL "" NO-UNDO. 
+
+DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+
+GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+
+
+ASSIGN cDelimeter = CHR(32).
+
+IF NOT (cDatabaseName = ? OR
+    cHostName = ? OR
+    cNetworkProto = ? OR
+    cPortNumber = ?) THEN DO:
+    DEFINE VAR x-rb-user AS CHAR.
+    DEFINE VAR x-rb-pass AS CHAR.
+
+    RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+
+    IF x-rb-user = "**NOUSER**" THEN DO:
+        MESSAGE "No se pudieron ubicar las credenciales para" SKIP
+                "la conexion del REPORTBUILDER" SKIP
+                "--------------------------------------------" SKIP
+                "Comunicarse con el area de sistemas - desarrollo"
+            VIEW-AS ALERT-BOX INFORMATION.
+
+        RETURN "ADM-ERROR".
+    END.
+
+   ASSIGN
+       cNewConnString =
+       "-db" + cDelimeter + cDatabaseName + cDelimeter +
+       "-H" + cDelimeter + cHostName + cDelimeter +
+       "-N" + cDelimeter + cNetworkProto + cDelimeter +
+       "-S" + cDelimeter + cPortNumber + cDelimeter +
+       "-U " + x-rb-user  + cDelimeter + cDelimeter +
+       "-P " + x-rb-pass + cDelimeter + cDelimeter.
+
+    /*
+    ASSIGN
+        cNewConnString =
+        "-db" + cDelimeter + cDatabaseName + cDelimeter +
+        "-H" + cDelimeter + cHostName + cDelimeter +
+        "-N" + cDelimeter + cNetworkProto + cDelimeter +
+        "-S" + cDelimeter + cPortNumber + cDelimeter +
+        "-U usrddigger" + cDelimeter + cDelimeter +
+        "-P udd1456" + cDelimeter + cDelimeter.
+    */
+    RB-DB-CONNECTION = cNewConnString.
+END.
+
+/*
+        cHostName = ? OR
+        cNetworkProto = ? OR
+        cPortNumber = ?) THEN DO:
+        ASSIGN
+            cNewConnString =
+            "-db" + cDelimeter + cDatabaseName + cDelimeter +
+            "-H" + cDelimeter + cHostName + cDelimeter +
+            "-N" + cDelimeter + cNetworkProto + cDelimeter +
+            "-S" + cDelimeter + cPortNumber + cDelimeter +
+            "-U usrddigger"  + cDelimeter + cDelimeter +
+            "-P udd1456" + cDelimeter + cDelimeter.
+            cOtherParams.
+        RB-DB-CONNECTION = cNewConnString.
+
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.08
+         WIDTH              = 51.29.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* Pantalla general de parametros de impresion */
+
+RUN lib/Imprimir-Rb.
+IF s-salida-impresion = 0 THEN RETURN "ADM-ERROR".
+
+ASSIGN
+    RB-BEGIN-PAGE = s-pagina-inicial
+    RB-END-PAGE = s-pagina-final
+    RB-PRINTER-NAME = s-printer-name
+    RB-PRINTER-PORT = s-printer-port
+    RB-OUTPUT-FILE = s-print-file
+    RB-NUMBER-COPIES = s-nro-copias.
+
+CASE s-salida-impresion:
+    WHEN 1 THEN RB-PRINT-DESTINATION = "D".     /* Pantalla */
+    WHEN 2 THEN RB-PRINT-DESTINATION = "".      /* Impresora */
+    WHEN 3 THEN RB-PRINT-DESTINATION = "A".     /* Archivo */
+END CASE.
+
+RUN aderb/_prntrb2(
+    RB-REPORT-LIBRARY,
+    RB-REPORT-NAME,
+    RB-DB-CONNECTION,
+    RB-INCLUDE-RECORDS,
+    RB-FILTER,
+    RB-MEMO-FILE,
+    RB-PRINT-DESTINATION,
+    RB-PRINTER-NAME,
+    RB-PRINTER-PORT,
+    RB-OUTPUT-FILE,
+    RB-NUMBER-COPIES,
+    RB-BEGIN-PAGE,
+    RB-END-PAGE,
+    RB-TEST-PATTERN,
+    RB-WINDOW-TITLE,
+    RB-DISPLAY-ERRORS,
+    RB-DISPLAY-STATUS,
+    RB-NO-WAIT,
+    RB-OTHER-PARAMETERS,
+    RB-STATUS-FILE
+    ).
+
+RETURN "OK".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

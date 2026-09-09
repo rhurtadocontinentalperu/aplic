@@ -1,0 +1,1094 @@
+/* 
+    VALMIESA SOFTWARE 
+*/ 
+
+DEFINE INPUT PARAMETER ROWID-FLG-MES AS ROWID.
+{bin/s-global.i}
+{pln/s-global.i}
+
+FIND integral.PL-FLG-MES WHERE
+    ROWID(integral.PL-FLG-MES) = ROWID-FLG-MES NO-ERROR.
+IF NOT AVAILABLE integral.PL-FLG-MES THEN DO:
+    BELL.
+    MESSAGE 'Registro de personal no existe'
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN.
+END.
+
+DEFINE VARIABLE s-CodPln AS INTEGER NO-UNDO.
+DEFINE VARIABLE s-CodCal AS INTEGER NO-UNDO.
+DEFINE VARIABLE s-CodRed AS INTEGER NO-UNDO.
+
+ASSIGN
+    s-CodPln = 1
+    s-CodCal = 8
+    s-CodRed = 0.
+DEFINE VARIABLE FECHA-INICIO-MES    AS DATE NO-UNDO.
+DEFINE VARIABLE FECHA-FIN-MES       AS DATE NO-UNDO.
+
+FECHA-INICIO-MES   = DATE(S-NROMES, 01, S-PERIODO).
+IF S-NROMES < 12
+THEN FECHA-FIN-MES  = DATE(S-NROMES + 1, 01, S-PERIODO) - 1.
+ELSE FECHA-FIN-MES  = DATE(S-NROMES, 31, S-PERIODO).
+
+FIND integral.PL-MOV-MES WHERE
+    integral.PL-MOV-MES.CodCia  = integral.PL-FLG-MES.CodCia AND
+    integral.PL-MOV-MES.Periodo = integral.PL-FLG-MES.Periodo AND
+    integral.PL-MOV-MES.NroMes  = integral.PL-FLG-MES.NroMes AND
+    integral.PL-MOV-MES.CodPln  = integral.PL-FLG-MES.CodPln AND
+    integral.PL-MOV-MES.CodPer  = integral.PL-FLG-MES.CodPer AND
+    integral.PL-MOV-MES.CodCal  = s-CodCal AND
+    integral.PL-MOV-MES.CodMov  = s-CodRed NO-LOCK NO-ERROR.
+IF AVAILABLE integral.PL-MOV-MES THEN
+    ASSIGN
+        integral.PL-FLG-MES.Exceso-Mes =
+        integral.PL-MOV-MES.valcal-Mes.
+ELSE ASSIGN integral.PL-FLG-MES.Exceso-Mes = 0.
+
+FOR EACH integral.PL-MOV-MES WHERE
+    integral.PL-MOV-MES.CodCia  = integral.PL-FLG-MES.CodCia AND
+    integral.PL-MOV-MES.Periodo = integral.PL-FLG-MES.Periodo AND
+    integral.PL-MOV-MES.NroMes  = integral.PL-FLG-MES.NroMes AND
+    integral.PL-MOV-MES.CodPln  = integral.PL-FLG-MES.CodPln AND
+    integral.PL-MOV-MES.CodPer  = integral.PL-FLG-MES.CodPer AND
+    integral.PL-MOV-MES.CodCal  = s-CodCal:
+    DELETE integral.PL-MOV-MES.
+END.
+
+/* EXTORNAMOS LOS SALDOS DE CUENTA CORRIENTE */
+FOR EACH integral.PL-MOV-CTE-MES WHERE
+    integral.PL-MOV-CTE-MES.CodCia  = integral.PL-FLG-MES.CodCia AND
+    integral.PL-MOV-CTE-MES.Periodo = integral.PL-FLG-MES.Periodo AND
+    integral.PL-MOV-CTE-MES.NroMes  = integral.PL-FLG-MES.NroMes AND
+    integral.PL-MOV-CTE-MES.CodPer  = integral.PL-FLG-MES.CodPer:
+    FIND integral.PL-CFG-CTE-MES WHERE
+        integral.PL-CFG-CTE-MES.CodCia  = integral.PL-FLG-MES.CodCia AND
+        integral.PL-CFG-CTE-MES.Periodo = integral.PL-FLG-MES.Periodo AND
+        integral.PL-CFG-CTE-MES.NroMes  = integral.PL-FLG-MES.NroMes AND
+        integral.PL-CFG-CTE-MES.Clf-Cte-Mes = integral.PL-MOV-CTE-MES.Clf-Cte-Mes AND
+        integral.PL-CFG-CTE-MES.Tpo-Cte-Mes = integral.PL-MOV-CTE-MES.Tpo-Cte-Mes AND
+        integral.PL-CFG-CTE-MES.CodPer = integral.PL-MOV-CTE-MES.CodPer AND
+        integral.PL-CFG-CTE-MES.Nro-Cte-Mes = integral.PL-MOV-CTE-MES.Nro-Cte-Mes NO-ERROR.
+    IF AVAILABLE integral.PL-CFG-CTE-MES THEN
+        ASSIGN
+            integral.PL-CFG-CTE-MES.Sdo-Cte-Mes =
+                integral.PL-CFG-CTE-MES.Sdo-Cte-Mes +
+                integral.PL-MOV-CTE-MES.Val-Cte-Mes
+            integral.PL-CFG-CTE-MES.Sdo-Usa-Mes =
+                integral.PL-CFG-CTE-MES.Sdo-Usa-Mes +
+                integral.PL-MOV-CTE-MES.Val-Usa-Mes.
+    DELETE integral.PL-MOV-CTE-MES.
+END.
+
+IF integral.PL-FLG-MES.SitAct = 'Inactivo' THEN RETURN.
+
+DEFINE NEW SHARED VARIABLE VAL-VAR AS DECIMAL EXTENT 30.
+DEFINE VARIABLE VAR                AS DECIMAL NO-UNDO.
+DEFINE VARIABLE NETO               AS DECIMAL NO-UNDO.
+DEFINE VARIABLE TOTAL-REMUNERACION AS DECIMAL NO-UNDO.
+DEFINE VARIABLE TOTAL-DESCUENTO    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE TOTAL-APORTE       AS DECIMAL NO-UNDO.
+DEFINE VARIABLE GRATIFICACION      AS LOGICAL NO-UNDO.
+DEFINE VARIABLE MES-ACTUAL         AS INTEGER NO-UNDO.
+
+ASSIGN
+    MES-ACTUAL    = s-NroMes
+    GRATIFICACION = FALSE.
+
+FIND FIRST integral.PL-SEM WHERE
+    integral.PL-SEM.CodCia  = s-CodCia AND
+    integral.PL-SEM.Periodo = s-Periodo AND
+    integral.PL-SEM.NroMes  = s-NroMes AND
+    integral.PL-SEM.FlgGtf  = TRUE NO-LOCK NO-ERROR.
+IF AVAILABLE integral.PL-SEM THEN
+    ASSIGN GRATIFICACION = TRUE.
+
+FIND integral.PL-PERS WHERE integral.PL-PERS.CodPer = integral.PL-FLG-MES.CodPer NO-LOCK NO-ERROR.
+FIND integral.PL-AFPS WHERE integral.PL-AFPS.CodAfp = integral.PL-FLG-MES.CodAfp NO-LOCK NO-ERROR.
+FIND integral.PL-CLAS WHERE integral.PL-CLAS.Clase = integral.PL-FLG-MES.Clase NO-LOCK NO-ERROR.
+FIND LAST integral.PL-VAR-SEM WHERE
+    integral.PL-VAR-SEM.Periodo = s-Periodo AND
+    integral.PL-VAR-SEM.NroSem <= s-NroSem NO-LOCK.
+FIND LAST integral.PL-VAR-MES WHERE
+    integral.PL-VAR-MES.Periodo = s-Periodo AND
+    integral.PL-VAR-MES.NroMes <= MES-ACTUAL NO-LOCK.
+
+DEFINE VARIABLE ASIGNACION-FAMILIAR AS DECIMAL NO-UNDO.
+ASSIGN ASIGNACION-FAMILIAR = integral.PL-VAR-MES.ValVar-Mes[1].
+
+DEFINE VARIABLE UIT-PROMEDIO AS DECIMAL NO-UNDO.
+ASSIGN UIT-PROMEDIO = integral.PL-VAR-MES.ValVar-Mes[2].
+
+DEFINE VARIABLE REG-PREST-SALUD AS DECIMAL NO-UNDO.
+ASSIGN REG-PREST-SALUD = integral.PL-VAR-MES.ValVar-Mes[3].
+
+DEFINE VARIABLE SIST-NAC-PENSIONES AS DECIMAL NO-UNDO.
+ASSIGN SIST-NAC-PENSIONES = integral.PL-VAR-MES.ValVar-Mes[4].
+
+DEFINE VARIABLE FONAVI AS DECIMAL NO-UNDO.
+ASSIGN FONAVI = integral.PL-VAR-MES.ValVar-Mes[5].
+
+DEFINE VARIABLE TPO-CAMBIO AS DECIMAL NO-UNDO.
+ASSIGN TPO-CAMBIO = integral.PL-VAR-MES.ValVar-Mes[6].
+
+DEFINE VARIABLE TOPE-SEGURO-AFP AS DECIMAL NO-UNDO.
+ASSIGN TOPE-SEGURO-AFP = integral.PL-VAR-MES.ValVar-Mes[7].
+
+DEFINE VARIABLE MOVILIDAD AS DECIMAL NO-UNDO.
+ASSIGN MOVILIDAD = integral.PL-VAR-MES.ValVar-Mes[8].
+
+DEFINE VARIABLE MINIMO-LEGAL AS DECIMAL NO-UNDO.
+ASSIGN MINIMO-LEGAL = integral.PL-VAR-MES.ValVar-Mes[9].
+
+DEFINE VARIABLE CALCULO-MENSUAL-CTS AS DECIMAL NO-UNDO.
+ASSIGN CALCULO-MENSUAL-CTS = integral.PL-VAR-MES.ValVar-Mes[10].
+
+DEFINE VARIABLE HORAS-EFECTIVAS-MES AS DECIMAL NO-UNDO.
+ASSIGN HORAS-EFECTIVAS-MES = integral.PL-VAR-MES.ValVar-Mes[11].
+
+DEFINE VARIABLE CALCULO-VAC-TRUNCAS AS DECIMAL NO-UNDO.
+ASSIGN CALCULO-VAC-TRUNCAS = integral.PL-VAR-MES.ValVar-Mes[12].
+
+DEFINE VARIABLE CALCULO-GRAT-TRUNCA AS DECIMAL NO-UNDO.
+ASSIGN CALCULO-GRAT-TRUNCA = integral.PL-VAR-MES.ValVar-Mes[13].
+
+DEFINE VARIABLE SENATI AS DECIMAL NO-UNDO.
+ASSIGN SENATI = integral.PL-VAR-MES.ValVar-Mes[14].
+
+/* FIN DE CABECERA */
+
+
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^015(0);^016(0);^013(0);^012(0)" ).
+DEFINE VARIABLE ING-FONDO-AFP    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE ING-FONDO-SPP    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE ING-FONDO-SNP    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE ING-FONAVI       AS DECIMAL NO-UNDO.  
+DEFINE VARIABLE ING-ASEGURABLE   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE CESE             AS LOGICAL NO-UNDO.
+DEFINE VARIABLE ANOS-TRAB        AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-TRAB       AS DECIMAL NO-UNDO.
+DEFINE VARIABLE DIAS-TRAB        AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV       AS DECIMAL NO-UNDO.
+DEFINE VARIABLE FECHA-CIERRE     AS DATE NO-UNDO.
+DEFINE VARIABLE FACTOR           AS DECIMAL NO-UNDO.
+DEFINE VARIABLE FACTOR-VAC       AS DECIMAL NO-UNDO.
+DEFINE VARIABLE DIAS-SERV        AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV1      AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV2      AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV-GRATI AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV-VACAC AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MESES-SERV-LIQUI AS DECIMAL NO-UNDO.
+DEFINE VARIABLE FECHA-CESE       AS DATE NO-UNDO.
+DEFINE VARIABLE GRATI-VAC        AS DECIMAL NO-UNDO.
+DEFINE VARIABLE ACUMULADO-HEX     AS DECIMAL NO-UNDO.
+DEFINE VARIABLE VAR-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE MES-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE ANO-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE VEC-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE MAX-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE ULT-i            AS INTEGER NO-UNDO.
+DEFINE VARIABLE BASICO-ESPECIAL  AS DECIMAL NO-UNDO.
+DEFINE VARIABLE SALDO-CTA-CTE    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE no-afecto-senati AS DECIMAL NO-UNDO.
+DEFINE VARIABLE REM-ORDINARIA    AS DECIMAL NO-UNDO.
+
+FECHA-CESE = PL-FLG-MES.Vcontr.
+FACTOR = 1.
+
+IF PL-FLG-MES.Vcontr = ? THEN RETURN.
+/* rhc 18.03.09 
+CESE = ( PL-FLG-MES.Vcontr >= FECHA-INICIO-MES AND
+         PL-FLG-MES.Vcontr <= FECHA-FIN-MES ).
+*/
+CESE = PL-FLG-MES.Vcontr <= FECHA-FIN-MES.
+
+IF NOT CESE THEN RETURN.
+
+/* DIAS TRABAJADOS CALENDARIO */
+DIAS-SERV = PL-FLG-MES.Vcontr - PL-FLG-MES.FECING + 1.
+
+/* RHC 04.05.05 NUEVA RUTINA 
+RUN PLN/P-TSERV.P( 
+            PL-FLG-MES.FECING - 1,
+            PL-FLG-MES.Vcontr,
+            OUTPUT ANOS-TRAB,OUTPUT MESES-TRAB,OUTPUT DIAS-TRAB).
+***************************** */
+/* RHC 20.04.09 NUEVA RUTINA
+RUN PLN/P-TSERV02.P( 
+            PL-FLG-MES.FECING - 1,
+            PL-FLG-MES.Vcontr,
+            OUTPUT ANOS-TRAB,OUTPUT MESES-TRAB,OUTPUT DIAS-TRAB).
+***************************** */
+DIAS-TRAB = 0.
+FOR EACH PL-MOV-MES NO-LOCK WHERE PL-MOV-MES.CODCIA = S-CODCIA
+    AND PL-MOV-MES.CODPER = PL-FLG-MES.CODPER
+    AND ( PL-MOV-MES.PERIODO >= YEAR(PL-FLG-MES.FECING)
+    AND PL-MOV-MES.PERIODO <= YEAR(PL-FLG-MES.VCONTR) )
+    AND PL-MOV-MES.CODCAL = 001       /* SUELDOS */
+    AND PL-MOV-MES.CODMOV = 100:
+    IF PL-MOV-MES.PERIODO = YEAR(PL-FLG-MES.FECING) 
+        AND PL-MOV-MES.NROMES < MONTH(PL-FLG-MES.FECING) THEN NEXT.
+    IF PL-MOV-MES.PERIODO = YEAR(PL-FLG-MES.VCONTR) 
+        AND PL-MOV-MES.NROMES > MONTH(PL-FLG-MES.VCONTR) THEN NEXT.
+    DIAS-TRAB = DIAS-TRAB + PL-MOV-MES.VALCAL-MES.
+END.
+MESES-TRAB = TRUNCATE(DIAS-TRAB / 30, 0).
+DIAS-TRAB = DIAS-TRAB - MESES-TRAB * 30.
+ANOS-TRAB = TRUNCATE(MESES-TRAB / 12, 0).
+MESES-TRAB = MESES-TRAB - ANOS-TRAB * 12.
+
+MESES-SERV  = ANOS-TRAB * 12 + MESES-TRAB + DIAS-TRAB / 30.
+
+/* MLR-Requerimiento Nro 48 (Con Karyn Sernaqué) */
+IF MESES-SERV < 1 THEN RETURN.
+
+MESES-SERV1 = MESES-SERV.
+MESES-SERV2 = MESES-SERV.
+/* MESES DE SERVICIO COMPUTABLES PARA LA LIQUIDACION */
+MESES-SERV-LIQUI = MESES-SERV.
+
+/* VERIFICAR LAS VACACIONES PAGADAS */
+VEC-i = 0.
+ULT-i = 0.
+ANO-i = 0.
+FOR EACH PL-MOV-MES WHERE 
+        PL-MOV-MES.CodCia  = s-CodCia          AND
+        PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln AND
+        PL-MOV-MES.CodCal  = 3                 AND
+        PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer AND
+        PL-MOV-MES.CODMOV  = 401               AND
+        PL-MOV-MES.VALCAL-MES <> 0
+             NO-LOCK :
+    VEC-i = VEC-i + 1.
+    ULT-i = PL-MOV-MES.NroMes.
+    ANO-i = PL-MOV-MES.PERIODO.
+END.
+FACTOR-VAC        = (ANOS-TRAB - VEC-i) + MESES-TRAB / 12 + DIAS-TRAB / 360.
+MESES-SERV-VACAC  = (ANOS-TRAB - VEC-i) * 12 + MESES-TRAB + DIAS-TRAB / 30.
+
+IF VAL-VAR[1] > 0 OR VAL-VAR[2] > 0 THEN DO:
+   MESES-SERV-VACAC = VAL-VAR[1] + (VAL-VAR[2] / 30).
+   FACTOR-VAC       = MESES-SERV-VACAC / 12.
+END.
+
+IF MESES-SERV-VACAC < 0 THEN MESES-SERV-VACAC = 0.
+IF FACTOR-VAC < 0       THEN FACTOR-VAC = 0.
+
+/* VERIFICAR EL ULTIMO PAGO REALIZADO DE CTS */
+    IF DAY(PL-FLG-MES.Vcontr) > 1 AND MONTH(PL-FLG-MES.Vcontr) <= 5
+    THEN MESES-SERV2 = 1 + DAY(PL-FLG-MES.Vcontr) / 30.
+
+    IF DAY(PL-FLG-MES.Vcontr) > 5
+    THEN MESES-SERV2 = DAY(PL-FLG-MES.Vcontr) / 30.
+    
+
+IF VAL-VAR[3] > 0 OR VAL-VAR[4] > 0 THEN
+   MESES-SERV2 = VAL-VAR[3] + (VAL-VAR[4] / 30).
+
+FACTOR = MESES-SERV2 / 12.
+
+
+/* ACUMULADO DE HORAS EXTRAS */
+ACUMULADO-HEX = 0.
+VEC-i = 0.
+MAX-i = 0.
+ANO-i = s-Periodo.
+MES-i = MES-ACTUAL.
+DO VAR-i = 1 TO 6:
+    FOR EACH PL-MOV-MES WHERE 
+        PL-MOV-MES.CodCia  = s-CodCia          AND
+        PL-MOV-MES.Periodo = ANO-i             AND
+        PL-MOV-MES.NroMes  = MES-i             AND
+        PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln AND
+        PL-MOV-MES.CodCal  = 1                 AND
+        PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer AND
+        PL-MOV-MES.CODMOV  >= 125              AND
+        PL-MOV-MES.CODMOV  <= 127             
+             NO-LOCK :
+        ACUMULADO-HEX = ACUMULADO-HEX + PL-MOV-MES.ValCal-Mes.
+        VEC-i = VEC-i + 1.
+    END.
+    MES-i = MES-i - 1.
+    IF MES-i = 0
+    THEN ASSIGN MES-i = 12
+                ANO-i = ANO-i - 1.
+
+END.
+IF VEC-i < 3 THEN ACUMULADO-HEX = 0.
+IF DIAS-SERV < 90 THEN ACUMULADO-HEX = 0.
+
+/* Calculo del Importe Pendiente de Cuenta Corriente */
+FOR EACH PL-CFG-CTE-MES WHERE PL-CFG-CTE-MES.CodCia = s-codcia AND
+    PL-CFG-CTE-MES.CodPer = PL-FLG-MES.CodPer AND
+    PL-CFG-CTE-MES.NroMes = PL-FLG-MES.NroMes AND
+    PL-CFG-CTE-MES.Periodo = PL-FLG-MES.Periodo NO-LOCK:
+    Saldo-Cta-Cte = Saldo-Cta-Cte + PL-CFG-CTE-MES.Sdo-Cte-Mes.
+END.
+
+/* ACUMULADO DE COMISION */
+DEFINE VARIABLE ACUMULADO-COMISION AS DECIMAL NO-UNDO.
+ACUMULADO-COMISION = 0.
+ANO-i = s-Periodo.
+MES-i = MES-ACTUAL.
+DO VAR-i = 1 TO 6:
+    FOR EACH PL-MOV-MES WHERE 
+        PL-MOV-MES.CodCia  = s-CodCia          AND
+        PL-MOV-MES.Periodo = ANO-i             AND
+        PL-MOV-MES.NroMes  = MES-i             AND
+        PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln AND
+        PL-MOV-MES.CodCal  = 1                 AND
+        PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer AND
+        PL-MOV-MES.CODMOV  = 209               NO-LOCK :
+        ACUMULADO-COMISION = ACUMULADO-COMISION + PL-MOV-MES.ValCal-Mes.
+    END.
+    MES-i = MES-i - 1.
+    IF MES-i < 0
+    THEN ASSIGN MES-i = 12
+                ANO-i = ANO-i - 1.
+END.
+
+/* CALCULO GRATIFICACIONES TRUNCAS */
+DEFINE VAR X-MES AS INTEGER.
+DEFINE VAR X-MESI AS INTEGER.
+DEFINE VAR X-MESF AS INTEGER.
+DEFINE VAR X-LOG AS LOGICAL .
+DEFINE VAR X-DIA-FIN-MES AS INTEGER.
+
+IF YEAR(PL-FLG-MES.FECING) <> YEAR(FECHA-CESE) THEN DO:
+   IF MONTH(FECHA-CESE) >= 1 AND MONTH(FECHA-CESE) <= 6 THEN X-MESI = 1.  
+   IF MONTH(FECHA-CESE) > 6 AND MONTH(FECHA-CESE) <= 11 THEN X-MESI = 6.  
+END.
+
+IF YEAR(PL-FLG-MES.FECING) = YEAR(FECHA-CESE) THEN DO:
+   X-MESI = IF (MONTH(FECHA-CESE) >= 1 AND MONTH(FECHA-CESE) <= 6) AND (DAY(PL-FLG-MES.FECING) = 1 ) THEN  MONTH(PL-FLG-MES.FECING) ELSE (MONTH(PL-FLG-MES.FECING) + 1).  
+   IF MONTH(FECHA-CESE) > 6 AND MONTH(FECHA-CESE) <= 11 THEN X-MESI = 6.  
+END.
+
+IF MONTH(FECHA-CESE) = 12
+THEN X-DIA-FIN-MES = DAY( DATE(01, 01, YEAR(FECHA-CESE) + 1) ) - 1 .
+ELSE X-DIA-FIN-MES = DAY( DATE( MONTH(FECHA-CESE) + 1, 01, YEAR(FECHA-CESE) ) ) - 1 .
+
+/*X-MESF = IF DAY(FECHA-CESE) >= 30 THEN MONTH(FECHA-CESE) ELSE MONTH(FECHA-CESE) - 1. */
+X-MESF = IF DAY(FECHA-CESE) >= X-DIA-FIN-MES 
+THEN MONTH(FECHA-CESE) 
+ELSE MONTH(FECHA-CESE) - 1.
+
+X-LOG = FALSE.
+FOR EACH PL-MOV-MES WHERE 
+        PL-MOV-MES.CodCia  = s-CodCia          AND
+        PL-MOV-MES.Periodo = ANO-i             AND
+        PL-MOV-MES.NroMes  = X-MESF            AND
+        PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln AND
+        PL-MOV-MES.CodCal  = 4                 AND
+        PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer AND
+        PL-MOV-MES.CODMOV  = 401
+             NO-LOCK :
+        X-LOG = TRUE.
+END.
+
+IF X-MESF = 12 THEN X-MESF = 11.
+IF X-MESF = 7  THEN X-MESF = 6.
+
+X-MES = X-MESF - X-MESI + 1.
+IF X-LOG THEN X-MES = 0.
+
+MESES-SERV-GRATI = X-MES / 6.
+
+
+/* 11 Tipo de Cambio */ 
+ASSIGN VAR = 0.
+/* TIPO DE CAMBIO */
+
+var = TPO-CAMBIO.
+RUN @GRABA(11,'Otros').
+
+/* 17 Moti. Cese (1,2,3,4) */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^017(0)" ).
+/* MOTI CESE (1 RENUNCIA 2 VTO 3 DESP  */
+
+VAR = VAL-VAR[1].
+RUN @GRABA(17,'Otros').
+
+/* 18 SENATI (0 -> No  1 -> 100%   2 -> 50% */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^018(0)" ).
+VAR = VAL-VAR[1].
+RUN @GRABA(18,'Otros').
+
+/* 601 Años de Servicio */ 
+ASSIGN VAR = 0.
+/* ANOS DE SERVICIO  */
+
+var = ANOS-TRAB.
+RUN @GRABA(601,'Otros').
+
+/* 602 Meses de Servicio */ 
+ASSIGN VAR = 0.
+/* MESES DE SERVICIO */
+
+var = MESES-TRAB.
+RUN @GRABA(602,'Otros').
+
+/* 603 Dias de Servicio */ 
+ASSIGN VAR = 0.
+/* DIAS DE SERVICIO */
+
+var = DIAS-TRAB.
+RUN @GRABA(603,'Otros').
+
+/* 101 SUELDO BASICO */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^101(0);^010(0)" ).
+/*  SUELDO BASICO  */
+
+var = VAL-VAR[1].
+IF VAL-VAR[2] = 1 AND TPO-CAMBIO > 0 THEN
+   var = VAL-VAR[1] * TPO-CAMBIO.
+
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+
+
+
+RUN @GRABA(101,'Otros').
+
+/* 103 ASIGNAC. FAMILIAR LEY */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^103(0)" ).
+/* ASIGNACION FAMILIAR */
+
+VAR = VAL-VAR[1].
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+
+RUN @GRABA(103,'Otros').
+
+/* 120 Incremento 3.3% SNP */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^120(0)" ).
+/* INCREMENTO 3.3 % SNP */
+
+VAR = VAL-VAR[1].
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+RUN @GRABA(120,'Otros').
+
+/* 134 BONIFICACION ESPECIAL */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^134(0)" ).
+/* BONIFICACION ESPECIAL */
+
+VAR = VAL-VAR[1].
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+
+RUN @GRABA(134,'Otros').
+
+/* 141 AFP  3.00% */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^141(0)" ).
+/* AFP 3.00 %  */
+
+VAR = VAL-VAR[1].
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+RUN @GRABA(141,'Otros').
+
+/* 605 Promedio H.Extras */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^605(0)" ).
+/* PROMEDIO H EXTRAS */
+IF VAL-VAR[1] > 0 THEN
+   VAR = VAL-VAR[1].
+ELSE IF MESES-TRAB > 0 
+    THEN VAR = ACUMULADO-HEX / (IF MESES-TRAB <= 6 THEN MESES-TRAB ELSE 6). 
+
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+GRATI-VAC = GRATI-VAC + VAR.
+
+RUN @GRABA(605,'Otros').
+
+/* 606 1/6 Ultima Gratificacion */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^606(0)" ).
+/* PROMEDIO GRATIFICACION */
+/*
+VAR = VAL-VAR[1].
+/* VAR = ACUM-GRATIFICACION / 6. */
+BASICO-ESPECIAL = BASICO-ESPECIAL + VAR.
+*/
+RUN @GRABA(606,'Otros').
+
+/* 15 Liq Meses de Servicio Vacaciones */ 
+ASSIGN VAR = 0.
+/* LIQ MESES DE SERVICIO VACACIONES */
+
+
+VAR = MESES-SERV-VACAC.
+RUN @GRABA(15,'Otros').
+
+/* 13 Liq Meses de Servicio */ 
+ASSIGN VAR = 0.
+/* LIQ MESES DE SERVICIO  */
+
+VAR = MESES-SERV2.
+VAR = MESES-SERV-LIQUI. /* RHC 02.12.04 */
+RUN @GRABA(13,'Otros').
+
+/* 414 Base de Liquidación */ 
+ASSIGN VAR = 0.
+/* BASE DE LIQUIDACION  */
+
+VAR = BASICO-ESPECIAL.
+
+RUN @GRABA(414,'Otros').
+
+/* 114 Liquidación */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^414(8);^601(8);^602(8);^603(8)" ).
+DEFINE VARIABLE PERIODO-INICIO AS DECIMAL NO-UNDO.
+DEFINE VARIABLE MES-INICIO     AS DECIMAL NO-UNDO.
+
+/* RHC 05.04.05 */
+VAR =   ( VAL-VAR[1] ) * VAL-VAR[2] +
+        ( VAL-VAR[1] ) / 12 * VAL-VAR[3] +
+        ( VAL-VAR[1] ) / 12 / 30 * VAL-VAR[4].
+
+/* RHC 08.04.05 *************************
+PERIODO-INICIO = YEAR(PL-FLG-MES.fecing).
+MES-INICIO     = MONTH(PL-FLG-MES.fecing).
+VAR = 0.
+/* PRIMERO EL SUELDO */
+FIND LAST PL-MOV-MES USE-INDEX IDX02 WHERE
+    PL-MOV-MES.codcia = PL-FLG-MES.codcia
+    AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+    AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+    AND PL-MOV-MES.codcal = 001
+    AND PL-MOV-MES.codper = PL-FLG-MES.codper
+    AND PL-MOV-MES.codmov = 101
+    NO-LOCK NO-ERROR.
+REPEAT WHILE AVAILABLE PL-MOV-MES
+        AND PL-MOV-MES.Periodo >= PERIODO-INICIO
+        AND PL-MOV-MES.NroMes  >= MES-INICIO:
+    VAR = VAR + PL-MOV-MES.ValCal-Mes.
+    FIND PREV PL-MOV-MES USE-INDEX IDX02 WHERE
+        PL-MOV-MES.codcia = PL-FLG-MES.codcia
+        AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+        AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+        AND PL-MOV-MES.codcal = 001
+        AND PL-MOV-MES.codper = PL-FLG-MES.codper
+        AND PL-MOV-MES.codmov = 101
+        NO-LOCK NO-ERROR.
+END.
+/* SEGUNDO LA ASIGNACION FAMILIAR */
+FIND LAST PL-MOV-MES USE-INDEX IDX02 WHERE
+    PL-MOV-MES.codcia = PL-FLG-MES.codcia
+    AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+    AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+    AND PL-MOV-MES.codcal = 001
+    AND PL-MOV-MES.codper = PL-FLG-MES.codper
+    AND PL-MOV-MES.codmov = 103
+    NO-LOCK NO-ERROR.
+REPEAT WHILE AVAILABLE PL-MOV-MES
+        AND PL-MOV-MES.Periodo >= PERIODO-INICIO
+        AND PL-MOV-MES.NroMes  >= MES-INICIO:
+    VAR = VAR + PL-MOV-MES.ValCal-Mes.
+    FIND PREV PL-MOV-MES USE-INDEX IDX02 WHERE
+        PL-MOV-MES.codcia = PL-FLG-MES.codcia
+        AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+        AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+        AND PL-MOV-MES.codcal = 001
+        AND PL-MOV-MES.codper = PL-FLG-MES.codper
+        AND PL-MOV-MES.codmov = 103
+        NO-LOCK NO-ERROR.
+END.
+VAR = VAR * CALCULO-MENSUAL-CTS / 100.
+****************************************** */
+
+/* *********** RHC 02.12.04 CALCULO ANTERIOR
+FIND LAST PL-MOV-MES USE-INDEX IDX02 WHERE
+    PL-MOV-MES.codcia = PL-FLG-MES.codcia
+    AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+    AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+    AND PL-MOV-MES.codcal = 001
+    AND PL-MOV-MES.codper = PL-FLG-MES.codper
+    AND PL-MOV-MES.codmov = 401
+    NO-LOCK NO-ERROR.
+REPEAT WHILE AVAILABLE PL-MOV-MES
+        AND PL-MOV-MES.Periodo >= PERIODO-INICIO
+        AND PL-MOV-MES.NroMes  >= MES-INICIO:
+    VAR = VAR + PL-MOV-MES.ValCal-Mes.
+    FIND PREV PL-MOV-MES USE-INDEX IDX02 WHERE
+        PL-MOV-MES.codcia = PL-FLG-MES.codcia
+        AND PL-MOV-MES.periodo <= PL-FLG-MES.periodo
+        AND PL-MOV-MES.codpln = PL-FLG-MES.codpln
+        AND PL-MOV-MES.codcal = 001
+        AND PL-MOV-MES.codper = PL-FLG-MES.codper
+        AND PL-MOV-MES.codmov = 401
+        NO-LOCK NO-ERROR.
+END.
+VAR = VAR * CALCULO-MENSUAL-CTS / 100.
+************************************************ */
+RUN @GRABA(114,'Remuneraciones').
+
+/* 431 Liq Acumula Vacaciones */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^606(8)" ).
+/* LIQ ACUMULA VACACIONES   */
+var = BASICO-ESPECIAL - VAL-VAR[1].
+var = var * FACTOR-VAC.
+ING-ASEGURABLE = ING-ASEGURABLE + VAR.
+RUN @GRABA(431,'Remuneraciones').
+
+/* 110 CAPACITACION Y ENTRENAMIENTO */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^110(0)" ).
+VAR = VAL-VAR[1].
+RUN @GRABA(110,'Remuneraciones').
+
+/* 160 GRATIF. EXTRAORD. POR TERMINO DE CAMPAÑA */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^160(0)" ).
+VAR = VAL-VAR[1] / 30 * (ANOS-TRAB * 12 * 30 + MESES-TRAB * 30 + DIAS-TRAB).
+RUN @GRABA(160,'Remuneraciones').
+
+/* 611 GRATIFICACIONES JULIO Y DICIEMBRE */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^611(0);^414(8)" ).
+/* GRATIFICACIONES JULIO Y DICIEMBRE  */
+/*
+VAR = VAL-VAR[1].
+ING-ASEGURABLE = ING-ASEGURABLE + VAR.
+*/
+
+MESES-SERV-GRATI = 0.
+FOR EACH PL-MOV-MES NO-LOCK WHERE PL-MOV-MES.CODCIA = S-CODCIA
+    AND PL-MOV-MES.CODPER = PL-FLG-MES.CODPER
+    AND ( PL-MOV-MES.PERIODO >= YEAR(PL-FLG-MES.FECING)
+    AND PL-MOV-MES.PERIODO <= YEAR(PL-FLG-MES.VCONTR) )
+    AND PL-MOV-MES.CODCAL = 001       /* SUELDOS */
+    AND PL-MOV-MES.CODMOV = 100:
+    IF PL-MOV-MES.PERIODO = YEAR(PL-FLG-MES.FECING) 
+        AND PL-MOV-MES.NROMES < MONTH(PL-FLG-MES.FECING) THEN NEXT.
+    IF PL-MOV-MES.PERIODO = YEAR(PL-FLG-MES.VCONTR) 
+        AND PL-MOV-MES.NROMES > MONTH(PL-FLG-MES.VCONTR) THEN NEXT.
+    IF PL-MOV-MES.VALCAL-MES >= 30
+    THEN MESES-SERV-GRATI = MESES-SERV-GRATI + 1.
+END.
+VAR = VAL-VAR[2] / 6 * MESES-SERV-GRATI.
+
+    IF (s-Periodo = 2009 AND s-NroMes >= 05)
+        OR (s-Periodo = 2010 AND s-NroMes <= 12)
+    THEN DO:
+        no-afecto-senati = no-afecto-senati + VAR.
+    END.
+    ELSE DO:
+        ING-ASEGURABLE = ING-ASEGURABLE + VAR.
+    END.
+
+RUN @GRABA(611,'Remuneraciones').
+
+/* 630 MESES SERVICIO GRATIFICACIONES */ 
+ASSIGN VAR = 0.
+VAR = MESES-SERV-GRATI.
+
+RUN @GRABA(630,'Otros').
+
+/* 14 Liq Meses Serv Grati */ 
+ASSIGN VAR = 0.
+/* LIQ MESE SERV GRATI  */
+
+VAR = MESES-SERV-VACAC.
+RUN @GRABA(14,'Otros').
+
+/* 144 Bonificacion Extraordinaria L.29351 */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^611(8)" ).
+VAR = VAL-VAR[1] * 0.09.
+    IF (s-Periodo = 2009 AND s-NroMes >= 05)
+        OR (s-Periodo = 2010 AND s-NroMes <= 12)
+    THEN DO:
+        no-afecto-senati = no-afecto-senati + VAR.
+    END.
+
+RUN @GRABA(144,'Remuneraciones').
+
+/* 500 Total Ingreso Asegurable */ 
+ASSIGN VAR = 0.
+/* TOTAL INGRESOS ASEGURABLE  */
+VAR = ING-ASEGURABLE.
+ING-FONDO-AFP = VAR.
+ING-FONDO-SNP = VAR.
+RUN @GRABA(500,'Otros').
+
+/* 202 SNP */ 
+ASSIGN VAR = 0.
+/* SNP */
+
+IF NOT AVAILABLE PL-AFPS THEN
+    var = ROUND( ing-fondo-snp , 2 ) *
+    ( sist-nac-pensiones / 100 ).
+
+RUN @GRABA(202,'Descuentos').
+
+/* 221 FONDO AFP */ 
+ASSIGN VAR = 0.
+/* FONDO AFP 8 %  */
+
+IF AVAILABLE PL-AFPS THEN 
+    VAR = ING-FONDO-AFP * (FONDO-AFP / 100).
+RUN @GRABA(221,'Descuentos').
+
+/* 222 PRIMA DE SEGURO AFP */ 
+ASSIGN VAR = 0.
+/* PRIMA DE SEGURO AFP */
+
+IF AVAILABLE PL-AFPS THEN
+    IF ING-FONDO-AFP > TOPE-SEGURO-AFP THEN
+        VAR = TOPE-SEGURO-AFP * ( SEGURO-INVALIDEZ-AFP / 100).
+    ELSE
+        VAR = ING-FONDO-AFP * ( SEGURO-INVALIDEZ-AFP / 100).
+
+
+RUN @GRABA(222,'Descuentos').
+
+/* 226 Serv AFP(S/.) */ 
+ASSIGN VAR = 0.
+/* SERV AFP S/. */
+
+IF AVAILABLE PL-AFPS THEN VAR = COMISION-FIJA-AFP.
+
+RUN @GRABA(226,'Descuentos').
+
+/* 225 COMISION (%)  AFP */ 
+ASSIGN VAR = 0.
+/* COMISION % SOBRE RA AFP  */
+
+IF AVAILABLE PL-AFPS THEN
+    VAR = ING-FONDO-AFP * (COMISION-PORCENTUAL-AFP / 100).
+
+RUN @GRABA(225,'Descuentos').
+
+/* 215 IMPUESTO A LA RENTA DE 5TA, CATEGORIA */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "$405(1);$405(3);$405(4);$409(1);$409(3);$409(4);$215(1);$215(3);$215(4);$410(1);$410(3);$410(4)" ).
+/*  IMP RENTA FIJA */
+DEFINE VARIABLE Acumulado       AS DECIMAL NO-UNDO.
+DEFINE VARIABLE Renta-Afecta    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE Quinta-Anual    AS DECIMAL NO-UNDO.
+DEFINE VARIABLE Quinta-Faltante AS DECIMAL NO-UNDO.
+
+acumulado = VAL-VAR[1] + VAL-VAR[2] + VAL-VAR[3] +
+            VAL-VAR[4] + VAL-VAR[5] + VAL-VAR[6].
+
+renta-afecta = acumulado - (7 * uit-promedio).
+
+
+IF renta-afecta > 0 THEN DO:
+   IF renta-afecta <= (54 * uit-promedio) THEN
+      quinta-anual = renta-afecta * 1.5.
+   ELSE
+      quinta-anual = (54 * uit-promedio) * 0.15 +
+             (renta-afecta - (54 * uit-promedio)) * 0.30.
+
+   /* Restamos todo lo pagado */   
+   quinta-faltante = quinta-anual - 
+                     (VAL-VAR[7] + VAL-VAR[8] + VAL-VAR[9] +
+                      VAL-VAR[10] + VAL-VAR[11] + VAL-VAR[12] ).
+
+   IF mes-actual = 12 THEN var = quinta-faltante. 
+   ELSE var = quinta-faltante / (13 - mes-actual).
+
+END.
+
+IF var < 0 THEN var = 0.
+
+RUN @GRABA(215,'Descuentos').
+
+/* 204 CUENTA CORRIENTE */ 
+ASSIGN VAR = 0.
+/* CTA CORRIENTE  */
+
+var = SALDO-CTA-CTE.
+RUN @GRABA(204,'Descuentos').
+
+/* 301 ESSALUD */ 
+ASSIGN VAR = 0.
+/* IPSS */
+
+VAR = ING-ASEGURABLE * REG-PREST-SALUD / 100.
+
+RUN @GRABA(301,'Aportes').
+
+/* 303 FONAVI (Empleador) */ 
+ASSIGN VAR = 0.
+/* FONAVI */
+
+
+var = 0.
+/*VAR = ING-ASEGURABLE * FONAVI / 100.*/
+
+
+RUN @GRABA(303,'Aportes').
+
+/* 305 IMPUESTO EXTRAORDINARIO DE SOLIDARIDAD */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^139(5)" ).
+/* IMP EXT DE SOLIDARIDAD */
+
+var = (BASICO-ESPECIAL * FACTOR-VAC) * FONAVI / 100.
+
+/*var = (ING-ASEGURABLE - VAL-VAR[1] ) * ( fonavi / 100 ).*/
+RUN @GRABA(305,'Aportes').
+
+/* 306 SENATI */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^018(8)" ).
+VAR = 0.
+IF VAL-VAR[1] > 0
+THEN DO:
+    VAR = ( TOTAL-REMUNERACION - no-afecto-senati ) * SENATI / 100.
+    IF VAL-VAR[1] = 2 THEN VAR = VAR * 0.50.
+END.
+RUN @GRABA(306,'Aportes').
+
+/* 403 Total a Pagar */ 
+ASSIGN VAR = 0.
+var = ING-ASEGURABLE - TOTAL-DESCUENTO.
+RUN @GRABA(403,'Otros').
+
+/* 704 Liq Total Neto */ 
+ASSIGN VAR = 0.
+/* LIQ TOTAL NETO */
+
+
+VAR = NETO.
+
+RUN @GRABA(704,'Otros').
+
+/* 703 Liq Total Dctos */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^202(5);^221(5);^222(5);^225(5);^226(5);^215(5);^204(5)" ).
+/* LIQ TOTAL DCTOS  */
+VAR = TOTAL-DESCUENTO.
+/*
+VAR = VAL-VAR[1] + VAL-VAR[2] + VAL-VAR[3] + VAL-VAR[4] + 
+      VAL-VAR[5] + VAL-VAR[6] + VAL-VAR[7].
+*/
+
+RUN @GRABA(703,'Otros').
+
+/* 705 Liq Total Aportes */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^301(5);^303(5)" ).
+/* LIQ TOTAL APORTES */
+VAR = TOTAL-APORTE.
+/*
+VAR = VAL-VAR[1] + VAL-VAR[2].
+*/
+
+RUN @GRABA(705,'Otros').
+
+/* 407 Total Afecto a IPSS */ 
+ASSIGN VAR = 0.
+RUN PLN/P-CALC-M.R(
+   integral.PL-FLG-MES.Codcia,
+   integral.PL-FLG-MES.PERIODO,
+   integral.PL-FLG-MES.NroMes,
+   integral.PL-FLG-MES.codpln,
+   s-codcal,
+   integral.PL-FLG-MES.codper,
+   "^431(8);^611(8)" ).
+/* Depende de la Planila 001 */
+VAR = VAL-VAR[1] + VAL-VAR[2].
+RUN @GRABA(407,'Otros').
+
+PROCEDURE @GRABA.
+/*--------------*/
+
+DEFINE INPUT PARAMETER s-CodMov AS INTEGER   NO-UNDO.
+DEFINE INPUT PARAMETER s-TipBol AS CHARACTER NO-UNDO.
+
+FIND FIRST PL-MOV-MES WHERE
+    PL-MOV-MES.CodCia  = PL-FLG-MES.CodCia AND
+    PL-MOV-MES.Periodo = PL-FLG-MES.Periodo AND
+    PL-MOV-MES.NroMes  = PL-FLG-MES.NroMes AND
+    PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln AND
+    PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer AND
+    PL-MOV-MES.CodCal  = s-CodCal AND
+    PL-MOV-MES.CodMov  = s-CodMov NO-ERROR.
+IF NOT AVAILABLE PL-MOV-MES THEN DO:
+    IF VAR = 0 THEN RETURN.
+    CREATE PL-MOV-MES.
+    ASSIGN
+        PL-MOV-MES.CodCia  = PL-FLG-MES.CodCia
+        PL-MOV-MES.Periodo = PL-FLG-MES.Periodo
+        PL-MOV-MES.NroMes  = PL-FLG-MES.NroMes
+        PL-MOV-MES.CodPln  = PL-FLG-MES.CodPln
+        PL-MOV-MES.CodPer  = PL-FLG-MES.CodPer
+        PL-MOV-MES.CodCal  = s-CodCal
+        PL-MOV-MES.CodMov  = s-CodMov.
+END.
+ASSIGN
+    PL-MOV-MES.ValCal-MES  = ROUND(VAR, 2)
+    PL-MOV-MES.Fch-Ult-Cal = TODAY
+    PL-MOV-MES.Hra-Ult-Cal = STRING(TIME,'HH:MM').
+IF s-TipBol = 'Remuneraciones' THEN
+    ASSIGN
+        NETO = NETO + PL-MOV-MES.ValCal-MES
+        TOTAL-REMUNERACION = TOTAL-REMUNERACION + PL-MOV-MES.ValCal-MES.
+IF s-TipBol = 'Descuentos' THEN
+    ASSIGN
+        NETO = NETO - PL-MOV-MES.ValCal-MES
+        TOTAL-DESCUENTO = TOTAL-DESCUENTO + PL-MOV-MES.ValCal-MES.
+IF s-TipBol = 'Aportes' THEN
+    ASSIGN TOTAL-APORTE = TOTAL-APORTE + PL-MOV-MES.ValCal-MES.
+END PROCEDURE.

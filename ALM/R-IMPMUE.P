@@ -1,0 +1,219 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        :
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+
+
+DEFINE INPUT PARAMETER X-Rowid AS ROWID.
+
+FIND Almcmov WHERE ROWID(Almcmov) = X-Rowid NO-LOCK NO-ERROR.
+IF NOT AVAILABLE Almcmov THEN RETURN ERROR.
+
+DEFINE STREAM Reporte.
+
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+DEFINE SHARED VAR PV-CODCIA AS INTEGER.
+DEFINE SHARED VAR CL-CODCIA AS INTEGER.
+DEFINE SHARED VAR S-NOMCIA AS CHAR.
+DEFINE SHARED VAR S-CODALM AS CHAR.
+DEFINE SHARED VAR S-DESALM AS CHAR.
+DEFINE SHARED VAR S-CODDIV AS CHAR.
+DEFINE SHARED VAR S-USER-ID AS CHAR.
+
+DEFINE VAR S-Item    AS INTEGER INIT 0.
+DEFINE VAR S-TOTPES  AS DECIMAL.
+DEFINE VAR F-DIRTRA  AS CHAR FORMAT "X(50)" INIT "".
+DEFINE VAR F-RUCTRA  AS CHAR FORMAT "X(8)"  INIT "". 
+DEFINE VAR F-EMISO1  AS CHAR FORMAT "X(12)" INIT "".
+DEFINE VAR F-EMISO2  AS CHAR FORMAT "X(12)" INIT "".
+DEFINE VAR F-NOMPRO  AS CHAR FORMAT "X(50)" INIT "".
+DEFINE VAR X-ZONA    AS CHAR.
+DEFINE VAR X-DEPART  LIKE TabDepto.NomDepto.
+DEFINE VAR X-LugPar  LIKE Almacen.DirAlm.
+DEFINE VAR W-REFERENCIA AS CHAR INIT "TRANSFERENCIA".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.62
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+
+FIND FIRST FacCorre WHERE 
+           FacCorre.CodCia = S-CODCIA AND
+           FacCorre.CodDoc = "G/R"    AND
+           FacCorre.CodDiv = S-CODDIV AND
+           FacCorre.NroSer = Almcmov.nroser 
+           NO-LOCK NO-ERROR.
+
+IF LOOKUP(FacCorre.Printer, s-printer-list) = 0 THEN DO:
+   MESSAGE "Impresora " FacCorre.Printer " no esta instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+s-port-name = ENTRY(LOOKUP(FacCorre.Printer, s-printer-list), s-port-list).
+s-port-name = REPLACE(S-PORT-NAME, ":", "").
+
+IF AVAILABLE Almcmov AND Almcmov.FlgEst <> "A" THEN DO :
+     
+  S-ITEM = 0.
+  FIND gn-clie WHERE gn-clie.Codcia = cl-codcia AND 
+       gn-clie.CodCli = Almcmov.Codcli NO-LOCK NO-ERROR.
+  message "entra".     
+  IF gn-clie.CodDept <> "" AND gn-clie.CodProv <> "" AND gn-clie.CodDist <> "" THEN DO:
+     IF gn-clie.CodDept = "15" AND gn-clie.CodProv = "01" THEN DO:
+        FIND TabDistr WHERE TabDistr.CodDepto = "15" AND TabDistr.CodProvi = "01" AND
+             TabDistr.CodDistr = gn-clie.CodDist NO-LOCK NO-ERROR.
+       IF AVAILABLE TabDistr THEN X-ZONA = TabDistr.NomDistr.
+     END.    
+     ELSE DO:     
+          FIND TabProvi WHERE TabProvi.CodDepto = gn-clie.CodDept AND
+               TabProvi.CodProvi = gn-clie.CodProv NO-LOCK NO-ERROR.
+          IF AVAILABLE TabProvi THEN X-ZONA = TabProvi.NomProvi.
+     END.        
+  END.
+  message "sale".
+  FIND TabDepto WHERE TabDepto.CodDepto = gn-clie.CodDept NO-LOCK NO-ERROR.
+  IF AVAILABLE TabDepto THEN X-DEPART = TabDepto.NomDepto.
+  FIND Almacen WHERE Almacen.CodCia = Almcmov.CodCia AND
+       Almacen.CodAlm = Almcmov.CodAlm NO-LOCK NO-ERROR.
+  IF AVAILABLE Almacen THEN X-LugPar = Almacen.DirAlm.
+  
+  /******** Verifica el Tipo de Movimiento *******/
+  
+  W-REFERENCIA = "MUESTRAS".
+  
+  FIND GN-PROV WHERE GN-PROV.Codcia = pv-codcia AND 
+       GN-PROV.CodPro = Almcmov.CodTra NO-LOCK NO-ERROR.
+  IF AVAILABLE GN-PROV THEN DO:
+     F-NomPro = gn-prov.NomPro.   
+     F-DIRTRA = gn-prov.DirPro. 
+     F-RUCTRA = gn-prov.Ruc.
+  END.
+    
+  DEFINE FRAME F-FMT
+         S-Item             AT  1   FORMAT "ZZ9"
+         Almdmov.CodMat     AT  6   FORMAT "X(8)"
+         Almmmatg.DesMat    AT  18  FORMAT "X(50)"
+         Almmmatg.Desmar    AT  70  FORMAT "X(20)"
+         Almdmov.CanDes     AT  92  FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  103 FORMAT "X(4)"          
+    HEADER
+    SKIP(3)
+   "N.I.T. 20100038146" AT 92 FORMAT "X(20)" SKIP(6)
+    gn-clie.nomcli  AT 13  FORMAT "x(40)" 
+    Almcmov.fchdoc AT 105 
+    S-CODDIV AT 132 SKIP
+    gn-clie.DirEnt AT 13  FORMAT "x(60)" X-ZONA FORMAT "X(25)" SKIP
+    gn-clie.ruc     AT 13 
+    almcmov.CodCli AT 40
+    gn-clie.Telfnos[1] AT 55
+    almcmov.NroSer AT 105 FORMAT "999" almcmov.NroDoc  FORMAT "999999" SKIP 
+    X-DEPART AT 105 FORMAT "X(15)"
+    X-LugPar AT 12 VIEW-AS TEXT FORMAT "X(80)" SKIP(2) 
+   WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 160 STREAM-IO DOWN.         
+
+  OUTPUT STREAM Reporte TO VALUE(s-port-name) PAGED PAGE-SIZE 60.
+  PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(66) + {&PRN3}.     
+  FOR EACH AlmDMov  OF Almcmov NO-LOCK :
+      FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+           Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+      S-TOTPES = S-TOTPES + ( Almdmov.Candes * Almmmatg.Pesmat ).
+      S-Item = S-Item + 1.
+      DISPLAY STREAM Reporte 
+                   S-Item 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.DesMat 
+                   Almmmatg.Desmar WITH FRAME F-FMT.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 7 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte f-nompro  AT 15 "X" AT 80 SKIP.
+  PUT STREAM Reporte f-dirtra  AT 15 SKIP.
+  PUT STREAM Reporte f-ructra  AT 15 SKIP.
+  PUT STREAM Reporte f-emiso1  AT 93 SKIP.
+  PUT STREAM Reporte f-emiso2  AT 93 SKIP(1).
+  PUT STREAM Reporte "HORA : " + STRING(TIME,"HH:MM:SS") AT 1 FORMAT "X(20)" 
+  "TOTAL KILOS :" AT 30 S-TOTPES AT 44 FORMAT ">>,>>9.99" 
+  " ** ALMACEN ** " AT 100 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

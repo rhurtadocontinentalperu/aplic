@@ -1,0 +1,167 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r2
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+define parameter buffer  b-dmov-1 for CB-DMOV.
+define input parameter   cb-codcia as integer.
+
+define           buffer  b-dmov-2 for CB-DMOV.
+define var cb-maxnivel as integer.
+define var cb-niveles  as char.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+run adm/cb-nivel.p ( input b-dmov-1.codcia ,
+                    output cb-niveles      ,
+                    output cb-maxnivel     ).
+if cb-maxnivel = ?  then do:
+  Message "Configuraci¢n del plan de CB-CTAS "
+          "incorrecta en CBDCFGA "
+          VIEW-AS ALERT-BOX ERROR.
+  return .        
+end.                    
+
+if not can-find (CB-CTAS where  CB-CTAS.codcia = cb-codcia
+                          and  CB-CTAS.codcta = b-dmov-1.ctaaut)
+
+then do:
+   MESSAGE "Cuenta: " b-dmov-1.ctaaut SKIP
+           "no registrada"
+           VIEW-AS ALERT-BOX ERROR.
+   return error.        
+end.               
+IF LENGTH(b-dmov-1.ctaaut ) <> cb-maxnivel then do:
+   MESSAGE "Cuenta: " b-dmov-1.ctaaut SKIP
+           "debe tener " cb-maxnivel "caracteres de longitud"
+           VIEW-AS ALERT-BOX ERROR.
+   return .
+end.            
+
+if not can-find (CB-CTAS where  CB-CTAS.codcia = cb-codcia
+                          and  CB-CTAS.codcta = b-dmov-1.ctrcta )
+                
+then do:
+   MESSAGE "Cuenta: " b-dmov-1.ctrcta SKIP
+           "no registrada"
+           VIEW-AS ALERT-BOX ERROR.
+   return error.        
+end.               
+IF LENGTH(b-dmov-1.ctrcta ) <> cb-maxnivel then do:
+   MESSAGE "Cuenta: " b-dmov-1.ctrcta SKIP
+           "debe tener " cb-maxnivel "caracteres de longitud"
+           VIEW-AS ALERT-BOX ERROR.
+   return .
+end.            
+
+                CREATE b-dmov-2.
+                ASSIGN 
+                   b-dmov-2.CodCia   = b-dmov-1.CodCia 
+                   b-dmov-2.Periodo  = b-dmov-1.Periodo 
+                   b-dmov-2.NroMes   = b-dmov-1.NroMes 
+                   b-dmov-2.Codope   = b-dmov-1.Codope 
+                   b-dmov-2.Nroast   = b-dmov-1.Nroast
+                   b-dmov-2.TpoItm   = "A"
+                   b-dmov-2.Relacion = RECID(b-dmov-1)
+                   b-dmov-2.CodMon   = b-dmov-1.CodMon
+                   b-dmov-2.TpoCmb   = b-dmov-1.TpoCmb
+                   b-dmov-2.NroItm   = b-dmov-1.NroItm + 1
+                   b-dmov-2.Codcta   = b-dmov-1.CtaAut
+                   b-dmov-2.CodDiv   = b-dmov-1.CodDiv
+                   b-dmov-2.ClfAux   = b-dmov-1.ClfAux
+                   b-dmov-2.CodAux   = b-dmov-1.CodCta
+                   b-dmov-2.NroRuc   = b-dmov-1.NroRuc
+                   b-dmov-2.CodDoc   = b-dmov-1.CodDoc
+                   b-dmov-2.NroDoc   = b-dmov-1.NroDoc
+                   b-dmov-2.GloDoc   = b-dmov-1.GloDoc
+                   b-dmov-2.CodMon   = b-dmov-1.CodMon
+                   b-dmov-2.TpoCmb   = b-dmov-1.TpoCmb
+                   b-dmov-2.TpoMov   = b-dmov-1.TpoMov
+                   b-dmov-2.NroRef   = b-dmov-1.NroRef
+                   b-dmov-2.FchDoc   = b-dmov-1.FchDoc
+                   b-dmov-2.FchVto   = b-dmov-1.FchVto
+                   b-dmov-2.ImpMn1   = b-dmov-1.ImpMn1
+                   b-dmov-2.ImpMn2   = b-dmov-1.ImpMn2
+                   b-dmov-2.Tm       = b-dmov-1.Tm
+                   b-dmov-2.CCO      = b-dmov-1.CCO.
+               RUN CBD/cb-acmd.p(RECID(b-dmov-2), YES ,YES).     
+               
+               CREATE b-dmov-2.
+               ASSIGN 
+                   b-dmov-2.CodCia   = b-dmov-1.CodCia 
+                   b-dmov-2.Periodo  = b-dmov-1.Periodo 
+                   b-dmov-2.NroMes   = b-dmov-1.NroMes 
+                   b-dmov-2.Codope   = b-dmov-1.Codope 
+                   b-dmov-2.Nroast   = b-dmov-1.Nroast
+                   b-dmov-2.TpoItm   = "A"
+                   b-dmov-2.Relacion = RECID(b-dmov-1)
+                   b-dmov-2.CodMon   = b-dmov-1.CodMon
+                   b-dmov-2.TpoCmb   = b-dmov-1.TpoCmb
+                   b-dmov-2.NroItm   = b-dmov-1.NroItm + 2
+                   b-dmov-2.Codcta   = b-dmov-1.ctrcta
+                   b-dmov-2.CodDiv   = b-dmov-1.CodDiv
+                   b-dmov-2.ClfAux   = b-dmov-1.ClfAux
+                   b-dmov-2.CodAux   = b-dmov-1.CodCta
+                   b-dmov-2.NroRuc   = b-dmov-1.NroRuc
+                   b-dmov-2.CodDoc   = b-dmov-1.CodDoc
+                   b-dmov-2.NroDoc   = b-dmov-1.NroDoc
+                   b-dmov-2.GloDoc   = b-dmov-1.GloDoc
+                   b-dmov-2.CodMon   = b-dmov-1.CodMon
+                   b-dmov-2.TpoCmb   = b-dmov-1.TpoCmb
+                   b-dmov-2.TpoMov   = NOT b-dmov-1.TpoMov
+                   b-dmov-2.NroRef   = b-dmov-1.NroRef
+                   b-dmov-2.FchDoc   = b-dmov-1.FchDoc
+                   b-dmov-2.FchVto   = b-dmov-1.FchVto
+                   b-dmov-2.ImpMn1   = b-dmov-1.ImpMn1
+                   b-dmov-2.ImpMn2   = b-dmov-1.ImpMn2
+                   b-dmov-2.Tm       = b-dmov-1.Tm
+                   b-dmov-2.CCO      = b-dmov-1.CCO.
+                   RUN CBD/cb-acmd.p(RECID(b-dmov-2), YES ,YES).
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

@@ -1,0 +1,191 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r11
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : ALMACPRE.P
+    Purpose     :
+    Syntax      : DO ALMACPRE(ROWID(AlmDMov)).
+    Description : Procedimiento de Actualizacion de Precios Promedios.
+                  Segundo: Actualizamos Stock General (Valorizado) 
+    Author(s)   : O.G.L.
+    Created     : 17/09/97
+    Notes       : Recibe como parametro el ROWID del mov. de detalle.
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER R-DMov AS ROWID.
+DEFINE INPUT PARAMETER C-UD   AS CHAR.
+DEFINE VARIABLE I-CODMAT   AS CHAR NO-UNDO.
+DEFINE VARIABLE C-CODALM   AS CHAR NO-UNDO.
+DEFINE VARIABLE F-CANDES   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-IMPCTO   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-STKSUB   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-STKACT   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-VCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-VCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-TCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-TCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PCTOMN   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PCTOME   AS DECIMAL NO-UNDO.
+DEFINE VARIABLE L-INGRESO  AS LOGICAL NO-UNDO.
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.92
+         WIDTH              = 41.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+/* Segundo: Actualizamos Stock General (Valorizado) */
+/* Ubicamos el detalle a Actualizar */
+   FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+   IF NOT AVAILABLE AlmDMov THEN RETURN.
+   ASSIGN I-CODMAT = AlmDMov.CodMaT
+          C-CODALM = AlmDMov.CodAlm
+          F-CANDES = AlmDMov.CanDes
+          F-IMPCTO = AlmDMov.ImpCto.
+   FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+   FIND PREV AlmDMov USE-INDEX Almd02 NO-LOCK NO-ERROR.
+   IF NOT AVAILABLE AlmDMov OR I-CODMAT <> AlmDMov.CodMat THEN
+      ASSIGN F-STKACT = 0  
+             F-VCTOMN = 0
+             F-VCTOME = 0.
+   ELSE  ASSIGN F-STKACT = AlmDMov.StkAct
+                F-VCTOMN = AlmDMov.VCtoMn1
+                F-VCTOME = AlmDMov.VCtoMn2.
+   /* USAMOS  INDICE Almd02 */
+  DO TRANSACTION:
+   IF C-UD = 'D' THEN DO:
+        FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+        FIND NEXT AlmDMov USE-INDEX Almd02 EXCLUSIVE-LOCK NO-ERROR.
+   END.
+   ELSE
+        FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov EXCLUSIVE-LOCK NO-ERROR.
+   
+   ACTUALIZACION:
+   REPEAT WHILE AVAILABLE AlmDMov AND (AlmDMov.CodCia = S-CODCIA AND  
+        AlmDMov.CodMat = I-CODMAT):
+       L-INGRESO = LOOKUP(AlmDMov.TipMov,"I,U") <> 0.
+       ASSIGN 
+            F-CANDES = AlmDMov.CanDes.
+       IF AlmDMov.Factor > 0 THEN 
+            ASSIGN 
+                F-CANDES = AlmDMov.CanDes * AlmDMov.Factor.
+       IF AlmDMov.CodMon = 1 THEN DO:
+            ASSIGN 
+                F-TCTOMN = AlmDMov.ImpCto.
+            IF AlmDMov.TpoCmb > 0 THEN 
+                ASSIGN 
+                    F-TCTOME = ROUND(AlmDMov.ImpCto / AlmDMov.TpoCmb,4).
+            ELSE 
+                ASSIGN 
+                    F-TCTOME = 0.
+          END.
+       ELSE 
+            ASSIGN 
+                F-TCTOMN = ROUND(AlmDMov.ImpCto * AlmDMov.TpoCmb,4)
+                F-TCTOME = AlmDMov.ImpCto.
+       ASSIGN 
+            AlmDMov.ImpMn1 = F-TCTOMN
+            AlmDMov.ImpMn2 = F-TCTOME.
+       /* CALCULAMOS PRECIO DE COSTO */
+       IF F-STKACT > 0 THEN 
+            ASSIGN 
+                F-PCTOMN = ROUND(F-VCTOMN / F-STKACT,4)
+                F-PCTOME = ROUND(F-VCTOME / F-STKACT,4).
+       ELSE 
+            ASSIGN 
+                F-PCTOMN = 0
+                F-PCTOME = 0.
+       IF F-PCTOMN < 0 THEN ASSIGN F-PCTOMN = 0.
+       IF F-PCTOME < 0 THEN ASSIGN F-PCTOME = 0.
+       IF AlmDMov.CodAjt <> "A" THEN DO:
+          ASSIGN 
+            F-TCTOMN = ROUND(F-PCTOMN * F-CANDES,4)
+            F-TCTOME = ROUND(F-PCTOME * F-CANDES,4)
+            AlmDMov.ImpMn1 = F-TCTOMN
+            AlmDMov.ImpMn2 = F-TCTOME.
+       END.
+       IF L-INGRESO THEN 
+            ASSIGN 
+                F-VCTOMN = F-VCTOMN + AlmDMov.ImpMn1
+                F-VCTOME = F-VCTOME + AlmDMov.ImpMn2
+                F-STKACT = F-STKACT + F-CANDES.
+       ELSE 
+            ASSIGN 
+                F-VCTOMN = F-VCTOMN - AlmDMov.ImpMn1
+                F-VCTOME = F-VCTOME - AlmDMov.ImpMn2
+                F-STKACT = F-STKACT - F-CANDES.
+       IF F-VCTOMN < 0 THEN ASSIGN F-VCTOMN = 0.
+       IF F-VCTOME < 0 THEN ASSIGN F-VCTOME = 0.
+       ASSIGN 
+            AlmDMov.VCtoMn1 = F-VCTOMN
+            AlmDMov.VCtoMn2 = F-VCTOME
+            AlmDMov.StkAct  = F-STKACT.
+       FIND NEXT AlmDMov USE-INDEX Almd02 EXCLUSIVE-LOCK NO-ERROR.
+   END.
+  END.
+  /*
+  DO TRANSACTION:
+   /* Actualizamos a los Materiales Generales */
+   FIND Almmmatg WHERE Almmmatg.CodCia = S-CODCIA AND  
+        Almmmatg.CodMat = I-CODMAT EXCLUSIVE-LOCK.
+   IF AVAILABLE Almmmatg THEN DO:
+      ASSIGN 
+        Almmmatg.VCtMn1 = F-VCTOMN 
+        Almmmatg.VCtMn2 = F-VCTOME
+        Almmmatg.CtoPrm[1] = IF F-STKACT = 0 THEN 0 ELSE ROUND(F-VCTOMN / F-STKACT,4)
+        Almmmatg.CtoPrm[2] = IF F-STKACT = 0 THEN 0 ELSE ROUND(F-VCTOME / F-STKACT,4).
+   END.
+   RELEASE Almmmatg.
+  END.
+  */
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

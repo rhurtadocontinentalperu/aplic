@@ -1,0 +1,175 @@
+
+DEFINE VARIABLE  x-GenAut   AS INTEGER.
+DEFINE VARIABLE x-Cta-Auto LIKE  cb-cfga.genaut.
+DEFINE VARIABLE x-Cc1Cta   LIKE  cb-cfga.cc1cta6.
+DEFINE VARIABLE x-a-cc1cta LIKE  cb-cfga.cc1cta6.
+DEFINE VARIABLE x-An1Cta   LIKE  cb-cfga.genaut.
+DEFINE VARIABLE x-llave    AS CHARACTER.
+DEFINE VARIABLE l1   AS LOGICAL.
+DEFINE BUFFER   detalle    FOR cb-dmov.
+DEFINE VARIABLE s-NroMes AS INTEGER INITIAL 1.
+DEFINE VARIABLE s-periodo AS INTEGER INITIAL 1996.
+DEFINE var s-codcia AS INTEGER INITIAL 2.
+DEFINE VARIABLE cb-codcia AS INTEGER.
+DEFINE VARIABLE i AS INTEGER.
+DEFINE VARIABLE X-NROITM  AS INTEGER.
+
+DEFINE FRAME F-Mensaje
+     "Espere un momento" VIEW-AS TEXT
+     "por favor ...." VIEW-AS TEXT
+     WITH VIEW-AS DIALOG-BOX KEEP-TAB-ORDER 
+         SIDE-LABELS NO-UNDERLINE THREE-D SCROLLABLE 
+         BGCOLOR 15 FGCOLOR 0 
+         TITLE "Procesando ...".
+
+
+
+
+FIND Empresas WHERE Empresas.CodCia = s-codcia NO-LOCK.
+IF NOT Empresas.Campo-CodCbd THEN cb-codcia = s-codcia.
+
+
+x-GenAut = 0.
+FIND cb-cfga WHERE cb-cfga.codcia = cb-codcia NO-LOCK.
+
+MESSAGE "Este procedimiento elimina las cuentas autom ticas" SKIP
+        "del mes contable actual y las regenera."             SKIP (2)
+        "Se recomienda que su uso sea exclusivo y luego de"   SKIP 
+        "concluido ejecutar el proceso de regeneraci¢n de saldos."  SKIP (2)
+        "Desea Continuar ? "  
+    VIEW-AS ALERT-BOX BUTTONS YES-NO 
+    TITLE  "Generaci¢n de Cuentas Autom ticas" 
+    UPDATE rpta AS LOGICAL.
+IF  NOT rpta THEN RETURN.    
+VIEW FRAME F-Mensaje.  
+PAUSE 0.           
+SESSION:IMMEDIATE-DISPLAY = YES.
+
+IF cb-cfga.genaut9  <> "" THEN 
+    DO: 
+        x-GenAut   = 1.
+        x-cta-auto = cb-cfga.genaut9.
+        x-a-cc1cta   = cb-cfga.cc1cta9.
+        RUN cons-reg.
+    END.    
+IF cb-cfga.genaut6  <> "" THEN 
+    DO:
+        x-GenAut   = 2.
+        x-cta-auto = cb-cfga.genaut6.
+        x-a-cc1cta   = cb-cfga.cc1cta6.  
+        RUN cons-reg.
+    END.    
+    
+
+
+
+PROCEDURE cons-reg :
+DO i = 1 TO NUM-ENTRIES( x-cta-auto ):
+    x-llave = ENTRY(i,  x-cta-auto).
+    FOR EACH cb-dmov WHERE cb-dmov.codcia  = s-codcia        AND
+                           cb-dmov.periodo = s-periodo           AND
+                           cb-dmov.nromes  = s-NroMes           AND
+                           cb-dmov.codcta  BEGINS (x-llave)  :
+       FOR EACH detalle  WHERE  detalle.relacion = recid(cb-dmov) :  
+            RUN DEL-MOV.
+            DELETE detalle.  
+       END.    
+     END. /*FIN DEL FOR EACH */
+END.
+
+END PROCEDURE.
+
+
+PROCEDURE CON-MOV  :
+FIND cb-cmov WHERE  cb-cmov.codcia   =  detalle.codcia    AND
+                    cb-cmov.periodo  =  detalle.periodo   AND
+                    cb-cmov.nromes   =  detalle.nromes    AND
+                    cb-cmov.codope   =  detalle.codope    AND
+                    cb-cmov.nroast   =  cb-cmov.nroast 
+                    NO-ERROR.
+IF AVAIL cb-cmov THEN
+    IF detalle.tpomov THEN
+       ASSIGN  cb-cmov.hbemn1 = cb-cmov.hbemn1  + detalle.impmn1
+               cb-cmov.hbemn2 = cb-cmov.hbemn2  + detalle.impmn2
+               cb-cmov.hbemn3 = cb-cmov.hbemn3  + detalle.impmn3
+               cb-cmov.totitm = cb-cmov.totitm + 1.
+    ELSE
+       ASSIGN  cb-cmov.dbemn1 = cb-cmov.dbemn1  + detalle.impmn1
+               cb-cmov.dbemn2 = cb-cmov.dbemn2  + detalle.impmn2
+               cb-cmov.dbemn3 = cb-cmov.dbemn3  + detalle.impmn3
+               cb-cmov.totitm = cb-cmov.totitm  + 1.
+          
+END PROCEDURE.
+
+
+
+
+PROCEDURE DEL-MOV  :
+FIND cb-cmov WHERE  cb-cmov.codcia   =  detalle.codcia    AND
+                    cb-cmov.periodo  =  detalle.periodo   AND
+                    cb-cmov.nromes   =  detalle.nromes    AND
+                    cb-cmov.codope   =  detalle.codope    AND
+                    cb-cmov.nroast   =  cb-cmov.nroast 
+                    NO-ERROR.
+IF AVAIL cb-cmov THEN
+    IF detalle.tpomov THEN
+       ASSIGN  cb-cmov.hbemn1 = cb-cmov.hbemn1  - detalle.impmn1
+               cb-cmov.hbemn2 = cb-cmov.hbemn2  - detalle.impmn2
+               cb-cmov.hbemn3 = cb-cmov.hbemn3  - detalle.impmn3
+               cb-cmov.totitm = cb-cmov.totitm - 1.
+    ELSE
+       ASSIGN  cb-cmov.dbemn1 = cb-cmov.dbemn1  - detalle.impmn1
+               cb-cmov.dbemn2 = cb-cmov.dbemn2  - detalle.impmn2
+               cb-cmov.dbemn3 = cb-cmov.dbemn3  - detalle.impmn3
+               cb-cmov.totitm = cb-cmov.totitm - 1.
+          
+END PROCEDURE.
+
+
+
+
+
+
+PROCEDURE GRABA :
+            CREATE DETALLE.
+            ASSIGN DETALLE.CodCia   = cb-dmov.CodCia
+                   DETALLE.Periodo  = cb-dmov.Periodo
+                   DETALLE.NroMes   = cb-dmov.NroMes
+                   DETALLE.CodOpe   = cb-dmov.CodOpe
+                   DETALLE.NroAst   = cb-dmov.NroAst
+                   DETALLE.TpoItm   = "A"
+                   DETALLE.Relacion = RECID(cb-dmov)
+                   DETALLE.CodMon   = cb-dmov.CodMon
+                   DETALLE.TpoCmb   = cb-dmov.TpoCmb
+                   DETALLE.NroItm   = cb-dmov.Nroitm
+                   DETALLE.Codcta   = x-an1cta
+                   DETALLE.CodDiv   = cb-dmov.CodDiv
+                   DETALLE.ClfAux   = "@CT"
+                   DETALLE.CodAux   = cb-dmov.CodCta
+                   DETALLE.NroRuc   = cb-dmov.NroRuc
+                   DETALLE.CodDoc   = cb-dmov.CodDoc
+                   DETALLE.NroDoc   = cb-dmov.NroDoc
+                   DETALLE.GloDoc   = cb-dmov.GloDoc
+                   DETALLE.CodMon   = cb-dmov.CodMon
+                   DETALLE.TpoCmb   = cb-dmov.TpoCmb
+                   DETALLE.NroRef   = cb-dmov.NroRef
+                   DETALLE.FchDoc   = cb-dmov.FchDoc
+                   DETALLE.FchVto   = cb-dmov.FchVto.
+                   IF L1 THEN DETALLE.tpomov = cb-dmov.tpomov.
+                   ELSE       DETALLE.tpomov = NOT cb-dmov.tpomov.
+                   IF cb-dmov.CodCta BEGINS "6"
+                   THEN ASSIGN DETALLE.ClfAux = "04"
+                               DETALLE.CodAux = cb-ctas.TpoGto.
+           CASE DETALLE.CodMon:
+               WHEN 1 THEN DO:
+                   DETALLE.ImpMn1   = cb-dmov.impmn1.
+                       IF Detalle.TpoCmb <> 0
+                       THEN DETALLE.ImpMn2   = DETALLE.impMn1 / DETALLE.TpoCmb.
+                       ELSE DETALLE.ImpMn2   = 0.
+                   END.
+               WHEN 2 THEN ASSIGN DETALLE.ImpMn2   = cb-dmov.impmn2
+                                  DETALLE.ImpMn1   = DETALLE.ImpMn2 * DETALLE.TpoCmb.
+               WHEN 3 THEN DETALLE.ImpMn3   = cb-dmov.impmn3.
+           END CASE.
+END PROCEDURE.
+

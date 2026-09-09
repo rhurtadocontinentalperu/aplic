@@ -1,0 +1,6 @@
+output to printer.
+for each pf-g002 where aplic-id = "cbd" :
+
+    display etiqueta programa with 20 down.
+end.              
+output close.

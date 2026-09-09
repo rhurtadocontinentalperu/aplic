@@ -1,0 +1,520 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-guides.p
+    Purpose     : Impresion de Guias de Despacho en su respectivo Almacen
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   : Carlos Quiroz
+    Created     : 24/01/2000
+    Notes       : 
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEFINE INPUT PARAMETER X-ALMDES LIKE CcbDDocu.AlmDes.
+DEFINE INPUT PARAMETER pTitulo AS CHAR.
+DEFINE INPUT PARAMETER pImpresora AS LOG.
+
+/* pImpresora:
+   YES: Pre-definida en el correlativo
+   NO:  Seleccionar
+*/    
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR CL-codcia  AS INT.
+DEF SHARED VAR s-coddiv  LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter  LIKE ccbcterm.codter.
+DEF SHARED VAR s-user-id AS CHAR.
+DEF SHARED VAR s-codmov  LIKE Almtmovm.Codmov.
+
+DEF VAR X-EnLetras AS CHAR FORMAT "x(60)" NO-UNDO.
+DEF VAR x-impbrt   AS DECIMAL NO-UNDO.
+DEF VAR C-NomCon   AS CHAR FORMAT "X(40)".
+DEF VAR N-ITEM     AS INTEGER INIT 0 NO-UNDO.
+DEF VAR X-Cheque   AS CHAR NO-UNDO.
+DEF VAR x-frmpgo   AS CHARACTER.
+DEF VAR X-OD       AS INTEGER.
+DEF VAR imptotfac like ccbcdocu.imptot.
+
+DEFINE VARIABLE x-dscto AS DECIMAL.
+
+DEF VAR DES-DIV  AS CHARACTER FORMAT "X(25)".
+DEF VAR DES-DIV2 AS CHARACTER FORMAT "X(25)".
+DEF VAR X-VIP    AS CHAR      FORMAT "X(10)".
+
+DEF VAR x-client LIKE ccbcdocu.nomcli.
+DEF VAR x-vent   LIKE ccbcdocu.codven.
+DEF VAR x-direc  LIKE ccbcdocu.dircli.
+DEF VAR x-nroord LIKE CcbCDocu.NroSal.
+DEF VAR x-aval   LIKE gn-clie.aval1[1].
+DEF VAR x-NroSal AS CHAR.
+
+/* Buscamos el documento en cuestión */
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+FIND gn-convt WHERE 
+     gn-convt.Codig = CcbCDocu.FmaPgo AND  
+     gn-ConVt.TipVta BEGINS "1" NO-LOCK NO-ERROR.
+IF AVAILABLE gn-convt THEN
+    x-frmpgo = gn-convt.Nombr.
+ELSE 
+    x-frmpgo = "".
+
+FIND GN-DIVI WHERE 
+     GN-DIVI.CodCia = S-CodCia AND  
+     GN-DIVI.CodDiv = ccbcdocu.coddiv  NO-LOCK NO-ERROR.
+IF AVAILABLE GN-DIVI THEN DES-DIV = GN-DIVI.DesDiv.
+ELSE DES-DIV = "".
+des-div2 = des-div.
+
+FIND gn-clie WHERE 
+     gn-clie.codcia = CL-CODCIA AND  
+     gn-clie.codcli = ccbcdocu.codcli NO-LOCK NO-ERROR.
+
+x-aval = gn-clie.aval1[1].
+
+FIND Almcmov WHERE Almcmov.codcia = Ccbcdocu.codcia
+    AND Almcmov.codref = Ccbcdocu.coddoc
+    AND Almcmov.nroref = Ccbcdocu.nrodoc
+    NO-LOCK NO-ERROR.
+IF AVAILABLE Almcmov THEN x-NroSal = STRING(Almcmov.nrodoc).
+
+/*Copia de Documentos*/
+x-client = CcbCDocu.NomCli.
+x-vent   = CcbCDocu.CodVen.
+x-direc  = CcbCDocu.DirCli.
+x-nroord = CcbCDocu.NroSal.
+
+C-NomCon = "".
+
+X-VIP = IF CcbCDocu.NroCard <> "" THEN "V.I.P" ELSE "".
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(ccbcdocu.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = X-EnLetras + (IF ccbcdocu.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+DEFINE TEMP-TABLE Detalle
+    FIELD codcia AS INT
+    FIELD CodAlm LIKE Almmmate.CodAlm
+    FIELD codmat AS CHAR FORMAT 'x(6)'
+    FIELD desmat AS CHAR FORMAT 'x(43)'
+    FIELD desmar AS CHAR FORMAT 'x(10)'
+    FIELD candes AS DEC  FORMAT '>>,>>9.99'
+    FIELD UndBas LIKE Almmmatg.UndBas
+    FIELD undvta AS CHAR FORMAT 'x(8)'
+    FIELD codzona AS CHAR FORMAT 'x(8)'
+    FIELD codubi AS CHAR FORMAT 'x(5)'
+    FIELD ruta   AS INT  FORMAT '>9'
+    FIELD CodKit AS LOGICAL
+    FIELD Glosa  AS CHARACTER
+    FIELD codmat1 AS CHAR FORMAT 'x(6)'
+    FIELD desmat1 AS CHAR FORMAT 'x(45)'
+    FIELD desmar1 AS CHAR FORMAT 'x(10)'
+    FIELD candes1 AS DEC  FORMAT '>>,>>9.99'
+    FIELD UndBas1 LIKE Almmmatg.UndBas
+    FIELD undvta1 AS CHAR FORMAT 'x(8)'
+    FIELD codubi1 AS CHAR FORMAT 'x(5)'
+    FIELD Glosa1  AS CHARACTER.
+
+
+DEF BUFFER b-Detalle FOR Detalle.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.15
+         WIDTH              = 70.14.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE FRAME F-DetaFac
+    N-Item         FORMAT "ZZ9"          COLUMN-LABEL '   '
+    Detalle.codmat                      COLUMN-LABEL 'CODIGO'
+    Detalle.desmat FORMAT 'x(45)'       COLUMN-LABEL 'D E S C R I P C I O N '
+    Detalle.desmar FORMAT 'x(8)'       COLUMN-LABEL 'MARCA'
+    Detalle.candes FORMAT '>>>>>>9.99'  COLUMN-LABEL 'CANTIDAD'
+    Detalle.undbas FORMAT 'x(4)'        COLUMN-LABEL 'U.M.'
+    Detalle.CodUbi FORMAT 'x(8)'        COLUMN-LABEL 'ZONA'
+    WITH NO-BOX STREAM-IO WIDTH 320 DOWN.
+
+DEFINE FRAME F-HdrFac
+    HEADER 
+    {&PRN7A} + {&PRN6A} + pTitulo + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' 
+    SKIP
+    DES-DIV FORMAT "X(40)"  
+    TODAY FORMAT "99/99/9999" STRING(TIME,"HH:MM:SS") 
+    SKIP 
+    "Numero de"
+    {&PRN7A} + {&PRN6A} + ccbcdocu.coddoc + " :" + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(8)"
+    {&PRN7A} + {&PRN6A} + ccbcdocu.nrodoc + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "XXXXXX-XXXXXXXXXXXX" 
+    SKIP
+    "Nro. de Pedido : " 
+    {&PRN7A} + {&PRN6A} + CcbCDocu.CodPed CcbCDocu.NroPed + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' 
+    SKIP
+    {&PRN7A} + {&PRN6A} + STRING(Ccbcdocu.Libre_c01, 'x(3)') STRING(Ccbcdocu.Libre_c02, 'x(12)') + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT 'x(20)' 
+    SKIP
+    "Orden Despacho : " x-NroSal FORMAT 'x(20)' 
+    SKIP
+    "Cliente   : " CcbCDocu.NomCli FORMAT "x(40)"
+    SKIP     
+    "Vendedor  : " CcbCDocu.CodVen FORMAT "X(40)"
+    SKIP
+    "Direccion : " CcbCDocu.DirCli FORMAT "x(50)" 
+    SKIP
+    "Almacen   : " {&Prn6a} + X-ALMDES + {&Prn6b} FORMAT "X(20)" 
+    SKIP
+    "OBS : " CAPS(CcbCDocu.Glosa) FORMAT "X(50)" 
+    SKIP
+    "Sacador: ____________________" FORMAT "x(30)" 
+    "Chequeador: ____________________" AT 45 FORMAT "x(30)"  
+    SKIP
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 320.
+    
+FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                     AND  FacCorre.CodDoc = "TKT" 
+                     AND  TRIM(FacCorre.CodAlm) = trim(X-ALMDES)
+                     EXCLUSIVE-LOCK NO-ERROR.
+/* RHC 30-12-2003 PARCHE */
+IF NOT AVAILABLE FacCorre
+THEN FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                     AND  FacCorre.CodDoc = "TKT" 
+                     AND  trim(FacCorre.CodAlm) = SUBSTRING(X-ALMDES,1,2)
+                     EXCLUSIVE-LOCK NO-ERROR.
+IF AVAILABLE FacCorre
+THEN DO:
+    IF FacCorre.Correlativo = 1000 THEN FacCorre.Correlativo = 1 .
+    X-OD = FacCorre.Correlativo .
+    FacCorre.Correlativo = FacCorre.Correlativo + 1 .
+END.
+ELSE X-OD = 1.
+RELEASE FacCorre.
+
+/* Cargamos Temporal */
+RUN Carga-Temporal.
+IF pImpresora = YES THEN DO: 
+    CASE Ccbcdocu.CodPed:
+        WHEN "PED" THEN DO:
+            FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                AND FacCorre.CodDoc = "O/D" 
+                AND TRIM(FacCorre.CodAlm) = TRIM(X-ALMDES)
+                NO-LOCK NO-ERROR.
+        END.
+        WHEN "P/M" THEN DO:
+            FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                AND FacCorre.CodDiv = Ccbcdocu.CodDiv
+                AND FacCorre.CodDoc = "O/M" 
+                AND faccorre.flgest = YES
+                AND faccorre.PRINTER > ""
+                /*AND TRIM(FacCorre.CodAlm) = TRIM(X-ALMDES)*/
+                NO-LOCK NO-ERROR.
+        END.
+        OTHERWISE DO:
+            FIND First FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+                AND FacCorre.CodDoc = "O/D" 
+                AND TRIM(FacCorre.CodAlm) = TRIM(X-ALMDES)
+                NO-LOCK NO-ERROR.
+        END.
+    END CASE.
+    IF NOT AVAILABLE FacCorre THEN DO:
+       MESSAGE "Impresora de" Ccbcdocu.CodPed "NO esta configurada" VIEW-AS ALERT-BOX ERROR.
+       RETURN.
+    END.
+    s-printer-name = FacCorre.Printer.
+    RUN lib/_port-name-v2.p (INPUT s-printer-name, OUTPUT s-port-name).
+    /*RUN get-port-name(INPUT-OUTPUT s-printer-name, OUTPUT s-port-name).*/
+    IF s-port-name = '' THEN RETURN.
+    
+    {lib/_printer-to-v2.i 31}
+    /*{lib/_printer-to.i 31}*/
+END.
+ELSE DO:
+    MESSAGE "Se van a Imprimir ORDENES DE DESPACHO" SKIP
+        "Escoja la impresora"
+        VIEW-AS ALERT-BOX WARNING.
+    DEF VAR answer AS LOGICAL NO-UNDO.
+    SYSTEM-DIALOG PRINTER-SETUP UPDATE answer.
+    IF NOT answer THEN RETURN.
+    OUTPUT TO PRINTER PAGE-SIZE 31.
+END.
+
+/* ¿cuantas hojas se van a imprimir? */
+DEF VAR x-Pagina AS INT.
+DEF VAR x-TotalPaginas AS INT.
+ASSIGN
+    x-Pagina = 0
+    x-TotalPaginas = 0.
+FOR EACH Detalle BREAK BY Detalle.codzona:
+    IF FIRST-OF(Detalle.codzona) THEN x-TotalPaginas = x-TotalPaginas + 1.
+END.
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN4}.     
+FOR EACH Detalle BREAK BY Detalle.codcia BY Detalle.CodZona BY Detalle.CodUbi:
+    VIEW FRAME F-HdrFac.
+    n-item = n-item + 1.    
+    DISPLAY 
+        n-item 
+        Detalle.codmat 
+        Detalle.desmat 
+        Detalle.desmar 
+        Detalle.candes 
+        Detalle.undbas 
+        Detalle.CodUbi 
+        WITH FRAME F-DetaFac.
+    IF LAST-OF(Detalle.CodZona) THEN DO:
+        x-Pagina = x-Pagina + 1.
+        DOWN 1 WITH FRAME f-DetaFac.
+        DISPLAY
+            'Pagina: ' + STRING(x-Pagina, '99') + ' de ' + STRING(x-TotalPaginas, '99') @ Detalle.desmat
+            WITH FRAME f-DetaFac.
+        PAGE.
+    END.
+    IF LAST-OF(Detalle.codcia) THEN PAGE.
+END.
+OUTPUT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Temporal) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Temporal Procedure 
+PROCEDURE Carga-Temporal :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE VAR lKit     AS LOGICAL     NO-UNDO.
+
+FOR EACH Ccbddocu OF Ccbcdocu NO-LOCK,
+    FIRST Almmmatg OF Ccbddocu NO-LOCK,
+    FIRST Almmmate NO-LOCK WHERE Almmmate.codcia = Ccbddocu.codcia
+    AND Almmmate.codmat = Ccbddocu.codmat
+    AND Almmmate.codalm = Ccbddocu.almdes:
+    CREATE Detalle.
+    ASSIGN
+        Detalle.codcia = s-codcia
+        Detalle.codalm = Ccbddocu.almdes
+        Detalle.codmat = Almmmatg.codmat
+        Detalle.desmat = Almmmatg.desmat
+        Detalle.desmar = Almmmatg.desmar
+        Detalle.candes = Ccbddocu.candes * Ccbddocu.factor      /* En Unidades Base */
+        Detalle.undvta = Ccbddocu.undvta
+        Detalle.undbas = Almmmatg.undbas
+        Detalle.codubi = Almmmate.codubi.
+    FIND Almtubic OF Almmmate NO-LOCK NO-ERROR.
+    IF AVAILABLE Almtubic THEN Detalle.codzona = Almtubic.codzona.
+    /* RHC 12/01/2012 Luis Nerio solicita se haga la impresión corrida */
+    /* 08/02/2012 También Elizabeth Urbano */
+    CASE Almmmate.codalm:
+        WHEN "04" OR WHEN "05" OR WHEN "31" THEN DO:
+            Detalle.codzona = 'G-0'.
+        END.
+    END CASE.
+END.
+/*Buscando Kits*/
+FOR EACH Detalle:
+    lKit = NO.
+/*     FOR EACH AlmdKits NO-LOCK WHERE AlmDKits.CodCia = s-CodCia                           */
+/*         AND AlmdKits.CodMat = Detalle.CodMat,                                            */
+/*         FIRST Almmmate WHERE Almmmate.CodCia = AlmDKits.CodCia                           */
+/*             AND Almmmate.CodAlm = Detalle.CodAlm                                         */
+/*             AND Almmmate.CodMat = AlmDKits.CodMat2:                                      */
+/*         FIND FIRST b-Detalle WHERE b-Detalle.CodMat = AlmDkits.CodMat2                   */
+/*             AND b-Detalle.CodKit NO-ERROR.                                               */
+/*         IF NOT AVAIL b-Detalle THEN DO:                                                  */
+/*             FIND FIRST almmmatg WHERE almmmatg.codcia = almmmate.codcia                  */
+/*                 AND almmmatg.codmat = AlmDKits.CodMat2 NO-LOCK NO-ERROR.                 */
+/*             CREATE b-Detalle.                                                            */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CodCia = s-CodCia                                              */
+/*                 b-Detalle.CodMat = AlmDKits.CodMat2.                                     */
+/*             IF AVAIL almmmatg THEN DO:                                                   */
+/*                 ASSIGN                                                                   */
+/*                     b-Detalle.DesMat = Almmmatg.DesMat + ' (' + Detalle.CodMat + ')'     */
+/*                     b-Detalle.DesMar = Almmmatg.DesMar                                   */
+/*                     b-Detalle.UndBas = Almmmatg.UndBas.                                  */
+/*             END.                                                                         */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CodAlm = Detalle.CodAlm                                        */
+/*                 b-Detalle.CodUbi = Almmmate.CodUbi                                       */
+/*                 b-Detalle.CanDes = Detalle.CanDes * AlmDKits.Cantidad                    */
+/*                 b-Detalle.Glosa  = STRING(Detalle.CanDes).                               */
+/*         END.                                                                             */
+/*         ELSE DO:                                                                         */
+/*             ASSIGN                                                                       */
+/*                 b-Detalle.CanDes = b-Detalle.CanDes + Detalle.CanDes * AlmDKits.Cantidad */
+/*                 b-Detalle.DesMat = b-Detalle.DesMat + ' (' + Detalle.CodMat + ')'        */
+/*                 b-Detalle.Glosa  = STRING(DEC(b-Detalle.Glosa) + Detalle.CanDes) .       */
+/*         END.                                                                             */
+/*         b-Detalle.Glosa = b-Detalle.Glosa + " Kit(s)".                                   */
+/*         lKit = YES.                                                                      */
+/*      END.                                                                                */
+     IF lKit THEN DELETE Detalle.
+ END.
+
+ DEF VAR x-Ruta AS INT.
+ FOR EACH Detalle BY Detalle.codubi:
+     x-Ruta = x-Ruta + 1.
+     Detalle.Ruta = x-Ruta.
+ END.
+
+
+ /* CARGAMOS LO MISMO PERO POR DESCRIPCION */
+ x-Ruta = 1.
+ FOR EACH Detalle BREAK BY Detalle.codcia BY Detalle.DesMat:
+     FIND b-Detalle WHERE b-Detalle.Ruta = x-Ruta.
+     ASSIGN
+         b-Detalle.codmat1 = Detalle.codmat
+         b-Detalle.desmat1 = Detalle.desmat
+         b-Detalle.desmar1 = Detalle.desmar
+         b-Detalle.undbas1 = Detalle.undbas
+         b-Detalle.codubi1 = Detalle.codubi
+         b-Detalle.candes1 = Detalle.candes.
+    x-Ruta = x-Ruta + 1.
+ END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-get-port-name) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE get-port-name Procedure 
+PROCEDURE get-port-name :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEF INPUT-OUTPUT PARAMETER s-printer-name AS CHAR.
+DEF OUTPUT PARAMETER s-port-name   AS CHAR.
+
+DEF VAR s-printer-list  AS CHAR NO-UNDO.
+DEF VAR s-port-list     AS CHAR NO-UNDO.
+DEF VAR s-printer-count AS INT  NO-UNDO.
+DEFINE VAR i AS INT.
+
+s-port-name = ''.
+
+IF s-printer-name = '' THEN DO:
+    MESSAGE 'No hay una impresora definida' SKIP
+        'Revise la configuración de documentos'
+        VIEW-AS ALERT-BOX ERROR.
+    RETURN.
+END.
+
+/* Definimos impresoras */
+RUN aderb/_prlist ( OUTPUT s-printer-list,
+                    OUTPUT s-port-list,
+                    OUTPUT s-printer-count ).
+
+iLoop:
+DO i = 1 TO s-printer-count:
+    
+    IF INDEX(ENTRY(i, s-printer-list), s-printer-name) > 0
+    THEN DO:
+        
+        s-printer-name = ENTRY(i, s-printer-list).
+
+        /* Caso Impresión en Graphon */
+        IF INDEX(s-printer-list,"@") > 0 THEN DO:
+            s-port-name = ENTRY(i, s-port-list).
+            s-port-name = REPLACE(S-PORT-NAME, ":", "").
+            /*IF NUM-ENTRIES(s-port-name, "-") > 2 THEN LEAVE iloop.*/
+            /*MESSAGE 1 ENTRY(i, s-printer-list) s-printer-name.*/
+        END.
+        /* Caso Windows - NO GRAPHON */
+        ELSE DO:            
+            s-port-name = ENTRY(i, s-port-list).
+            s-port-name = REPLACE(S-PORT-NAME, ":", "").
+            /*MESSAGE s-port-name.*/
+            /*IF LOOKUP(s-port-name, 'LPT1,LPT2,LPT3,LPT4,LPT5,LPT6') = 0 THEN s-port-name = ENTRY(i, s-printer-list).*/
+            /*MESSAGE s-port-name.*/
+            /*MESSAGE 2 ENTRY(i, s-printer-list) s-printer-name.*/
+            /*IF NUM-ENTRIES(s-port-name, "-") > 1 THEN LEAVE iloop.*/
+        END.
+    END.
+END.
+IF s-port-name = '' THEN DO:
+   MESSAGE "Impresora" s-printer-name "NO está instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

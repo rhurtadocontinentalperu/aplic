@@ -1,0 +1,66 @@
+*===================================================
+PROGRESS stack trace as of Wed Aug 18 18:31:46 2021
+=====================================================
+Startup parameters:
+-pf C:\Progress\OpenEdge\startup.pf,-cpinternal ISO8859-1,-cpstream ISO8859-1,-cpcoll Spanish9,-cpcase Basic,-d dmy,-numsep 44,-numdec 46,-Mm 16384,(end .pf),-pf on_in_db_210qa.pf,-lng Spanish,-cpcase Basic,-cpcoll Basic,-rereadnolock,-evtlevel none,-cpinternal iSO8859-1,-cpstream ISO8859-1,-cpprint ibm850,-d dmy,-T c:\sie\tmp,-s 64,-nb 255,-inp 32000,-rand 2,-l 2000000000,-db INTEGRAL,-ld INTEGRAL,-H 192.168.100.209,-N TCP,-S 65010,-TB 31,-TM 32,-tmpbsize 8,-mmax 65534,-Mm 16384,(end .pf),-ininame on_in_co_213qa.ini,-p src/bin/_inicio.p
+
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  100A265A 01:000A165A C:\Progress\OpenEdge\bin\prow32.dll
+
+Registers:
+EAX:00000002
+EBX:0A61D0C0
+ECX:0A662BF0
+EDX:00000041
+ESI:00000000
+EDI:02930000
+CS:EIP:0023:100A265A
+SS:ESP:002B:0018EA24  EBP:00000000
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210246
+
+Call Stack:
+Address   Frame
+
+
+** ABL Stack Trace **
+
+--> adeshar/_gen4gl.p (adeshar/_gen4gl.r) at line 5252
+    choose_check_syntax adeuib/_uibmain.p (adeuib/_uibmain.r) at line 6188
+    USER-INTERFACE-TRIGGER adeuib/_uibmain.p (adeuib/_uibmain.r) at line 16849
+    adeuib/_uibmain.p (adeuib/_uibmain.r) at line 17218
+    _ab.p (C:\Progress\OpenEdge\gui\_ab.r) at line 394
+
+** Persistent procedures/Classes **
+
+Handle  File Name
+001872  adeuib/_tview.r
+001798  adeuib/_semain.r
+001717  adecomm/as-utils.r
+001677  adecomm/_palette.r
+001676  protools/_protool.r
+001124  adecomm/_winmenu.r
+001123  adeshar/_mlmgr.r
+001001  adeuib/_abfuncs.r
+
+//=====================================================
+PROGRESS stack trace as of Wed Aug 18 18:31:47 2021
+//=====================================================
+Exception code: C0000005 ACCESS_VIOLATION
+Fault address:  100A265A 01:000A165A C:\Progress\OpenEdge\bin\prow32.dll
+
+Registers:
+EAX:00000002
+EBX:0A61D0C0
+ECX:0A662BF0
+EDX:00000041
+ESI:00000000
+EDI:02930000
+CS:EIP:0023:100A265A
+SS:ESP:002B:0018EA24  EBP:00000000
+DS:002B  ES:002B  FS:0053  GS:002B
+Flags:00210246
+
+Call Stack:
+Address   Frame
+

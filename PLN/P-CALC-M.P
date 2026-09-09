@@ -1,0 +1,208 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+/* Procedure Description
+"Retorna los valores de los conceptos por persona"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT  PARAMETER s-codcia    AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER s-PERIODO   AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER s-NROMES    AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER s-codpln    AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER s-codcal    AS INTEGER   NO-UNDO.
+DEFINE INPUT  PARAMETER s-codper    AS CHARACTER NO-UNDO.
+DEFINE INPUT  PARAMETER VARIABLE    AS CHARACTER NO-UNDO.
+
+DEFINE {&NEW} SHARED VARIABLE VAL-VAR AS DECIMAL EXTENT  30.
+
+DEFINE VARIABLE NUM-Ele AS INTEGER NO-UNDO.
+    
+    DEFINE VARIABLE s-codmov    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE t-codcia    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-PERIODO   AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-NROMES    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-codpln    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-codcal    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-codmov    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-codmov-1  AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE t-codmov-2  AS INTEGER   NO-UNDO.    
+    DEFINE VARIABLE t-numele    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE a-NROMES    AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE S-VAL       AS DECIMAL   NO-UNDO.    
+    DEFINE VARIABLE t-tpovar   AS CHARACTER  NO-UNDO.
+ASSIGN VAL-VAR = 0.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+DO Num-Ele = 1 TO NUM-ENTRIES( VARIABLE, ";" ) :
+    RUN CALCULO( ENTRY(Num-Ele, VARIABLE, ";")).
+    VAL-VAR[ Num-Ele ] = S-VAL.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CALCULO Procedure 
+PROCEDURE CALCULO :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+    DEFINE INPUT  PARAMETER S-VAR AS CHARACTER NO-UNDO.
+
+    DEFINE VARIABLE i AS INTEGER NO-UNDO.
+
+    ASSIGN s-val       = 0
+           s-codmov    = SUBSTR( s-var, 2, 3) 
+           t-codcia    = s-codcia
+           t-PERIODO   = s-periodo
+           t-NROMES    = s-nromes
+           t-codpln    = s-codpln
+           t-codcal    = s-codcal
+           a-NROMES    = s-nromes 
+           t-tpovar    = SUBSTR( s-var, 1, 1) no-error.
+    
+    IF NOT (s-codmov > "000" AND s-codmov <= "999") THEN RETURN.
+    ASSIGN t-codmov = INTEGER(s-codmov)
+           t-codmov-1 = t-codmov 
+           t-codmov-2 = t-codmov
+           S-VAR      = SUBSTR( S-VAR, 5 ).
+
+
+   IF S-VAR BEGINS ":" AND LENGTH( S-VAR ) > 0
+   THEN DO:
+        s-codmov    = SUBSTR( s-var, 2, 3).
+        IF NOT (s-codmov > "000" AND s-codmov <= "999") THEN RETURN.
+        ASSIGN t-codmov-2 = INTEGER(s-codmov)
+               S-VAR      = SUBSTR( S-VAR, 5 ).
+   END.
+
+   /* parametros x concepto */
+   IF S-VAR BEGINS  "(" AND LENGTH( S-VAR ) > 0
+   THEN DO:
+        S-VAR = SUBSTR(S-VAR, 2).
+        S-VAR = SUBSTR(S-VAR, 1, LENGTH(S-VAR) - 1).
+        DO I = 1 TO NUM-ENTRIES( S-VAR):
+            IF ENTRY( I, S-VAR) <> "?"
+            THEN 
+            CASE I:
+                WHEN 1 THEN ASSIGN t-codcal  = INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+                WHEN 2 THEN DO:
+                    IF ENTRY(I, S-VAR) BEGINS "-"
+                    THEN DO:
+                        ASSIGN t-nromes  = s-nromes + INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+                        IF t-nromes <= 0
+                        THEN DO:
+                            ASSIGN t-PERIODO = s-periodo - 1.
+                            t-nromes  = 12 + t-nromes.   
+                        END.
+                    END.
+                    ELSE ASSIGN t-nromes  = INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+                END.
+                WHEN 3 THEN ASSIGN t-codpln  = INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+                WHEN 4 THEN ASSIGN t-periodo = INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+                WHEN 5 THEN ASSIGN t-codcia  = INTEGER( ENTRY( I, S-VAR) ) NO-ERROR.   
+             END CASE.
+        END.
+    END.
+    
+    IF T-TPOVAR = "^" THEN 
+        FOR EACH integral.PL-MOV-MES 
+                WHERE integral.PL-MOV-MES.codcal  = t-codcal     AND
+                      integral.PL-MOV-MES.CodCia  = t-codcia     AND
+                      integral.PL-MOV-MES.codper  = s-codper     AND
+                      integral.PL-MOV-MES.codpln  = t-codpln     AND
+                      integral.PL-MOV-MES.Periodo = t-periodo    AND
+                      integral.PL-MOV-MES.NroMes  = t-nromes     AND
+                      integral.PL-MOV-MES.CodMov  >= t-codmov-1  AND
+                      integral.PL-MOV-MES.CodMov  <= t-codmov-2  NO-LOCK:
+            S-VAL = S-VAL + integral.PL-MOV-MES.VALCAL-MES.
+        END.
+    
+    IF T-TPOVAR = "$" THEN 
+        DO T-codmov = t-codmov-1 TO t-codmov-2:
+            FOR EACH integral.PL-MOV-MES 
+                WHERE integral.PL-MOV-MES.codcal  = t-codcal     AND
+                      integral.PL-MOV-MES.CodCia  = t-codcia     AND
+                      integral.PL-MOV-MES.CodMov  = t-codmov     AND
+                      integral.PL-MOV-MES.codper  = s-codper     AND
+                      integral.PL-MOV-MES.codpln  = t-codpln     AND
+                      integral.PL-MOV-MES.Periodo = t-periodo    AND
+                      integral.PL-MOV-MES.NroMes  >= 1           AND
+                      integral.PL-MOV-MES.NroMes  <= t-nromes   NO-LOCK:
+                S-VAL = S-VAL + integral.PL-MOV-MES.VALCAL-MES.
+            END.
+        END.
+        
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

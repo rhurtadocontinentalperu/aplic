@@ -1,0 +1,19 @@
+# Archivos compilados de Progress ABL (r-code)
+*.r
+# Depuracion, listados y referencias cruzadas
+*.lis
+*.xref
+*.dbg
+# Logs y temporales de Progress
+*.lg
+*.tmp
+~*
+# Archivos de base de datos local y cerrojos
+*.db
+*.d1
+*.b1
+*.lck
+# Configuracion de IDEs
+.project
+.buildpath
+.settings/

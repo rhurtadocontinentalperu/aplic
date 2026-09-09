@@ -1,0 +1,59 @@
+/*RMT  - 1996/25/12
+  OBJETO : Funci¢n que determina el tipo de cuenta automatica
+  RETORNA:  - "1"  Si genera automaticas clase 9
+                   6X --- 9X --- 79
+            - "2"  Si genera automaticas clase 6
+                   9X --- 6X --- 79
+            - "3"  Otro tipo de automatica
+                   Ejm:  60 -- 20 -- 61      
+ PARAMETROS DE ENTRADA :
+     - cb-codcia  --- codigo de la compania        (entero)
+         x-codcfg  --- codigo de configuracion :  1 (entero)
+         x-codcta  --- cuenta contable            
+                         
+ */
+
+DEF INPUT PARAMETER cb-codcia  AS INTEGER.
+DEF INPUT PARAMETER    x-codcfg AS INTEGER.
+DEF INPUT PARAMETER    x-codcta AS CHAR. 
+
+DEF VAR   i  AS INTEGER.
+/*Validaci¢n de parametros */
+
+IF x-codcta = "" THEN DO:
+   MESSAGE "Cuenta nula"
+   VIEW-AS ALERT-BOX ERROR.
+   RETURN "".
+END.   
+
+FIND cb-ctas WHERE cb-ctas.CODCIA = cb-codcia AND
+                   cb-ctas.CODCTA =   x-codcta
+                   NO-LOCK NO-ERROR.
+IF NOT AVAIL cb-ctas THEN DO:
+   MESSAGE "Cuenta " + X-codcta + " no registrada "
+   VIEW-AS ALERT-BOX ERROR.
+   RETURN "".
+END.
+
+FIND cb-cfga  WHERE   cb-cfga.codcia  =  cb-codcia  AND
+                      cb-cfga.codcfg  =  x-codcfg 
+                      NO-LOCK NO-ERROR. 
+IF NOT AVAIL cb-cfga THEN DO:
+   MESSAGE "No esta configurada la tabla cb-cfga"
+   VIEW-AS ALERT-BOX ERROR.
+   RETURN "".
+END.   
+
+DO i = 1 TO NUM-ENTRIES( cb-cfga.GenAut9 ):
+   IF x-CodCta BEGINS ENTRY( i, cb-cfga.GenAut9 ) 
+        THEN RETURN "1".
+END.
+DO i = 1 TO NUM-ENTRIES( cb-cfga.GenAut6 ):
+        IF x-CodCta BEGINS ENTRY( i, cb-cfga.GenAut6 ) 
+        THEN RETURN "2".
+END.
+
+DO i = 1 TO NUM-ENTRIES( cb-cfga.GenAut ):
+        IF x-codcta BEGINS ENTRY( i, cb-cfga.GenAut )
+        THEN RETURN "3".
+END.

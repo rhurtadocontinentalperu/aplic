@@ -1,0 +1,21 @@
+DEFINE new global shared VARIABLE   S-CODCIA    AS INTEGER init 1.
+DEFINE new global shared VARIABLE   S-nomcia    AS char.
+DEFINE new global shared VARIABLE   S-PERIODO   AS INTEGER init 1997.
+DEFINE new global shared VARIABLE   S-NROMES    AS INTEGER init 4.
+DEFINE new global shared VARIABLE   CB-CODCIA   AS INTEGER init 0.
+DEFINE new global shared VARIABLE   PV-CODCIA   AS INTEGER init 0.
+DEFINE new global shared VARIABLE   CL-CODCIA   AS INTEGER init 0.
+DEFINE new global shared VARIABLE   CB-NIVELES  AS CHAR init "2,3,5".
+DEFINE new global shared VARIABLE   CB-MAXNIVEL AS INTEGER init 5.
+DEFINE new global shared VARIABLE   s-user-id    AS char .
+DEFINE new global shared VARIABLE   s-aplic-id    AS char init "AJT".
+DEFINE new global shared VARIABLE   s-SEGURIDAD AS CHAR.
+
+
+
+
+
+
+
+
+ 

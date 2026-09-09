@@ -1,0 +1,126 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR s-codcia  AS INT.
+DEF SHARED VAR S-USER-ID AS CHAR.
+
+FIND ccbcdocu WHERE ROWID(ccbcdocu) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcdocu THEN RETURN.
+
+DEF VAR I-CODMOV AS INTEGER INIT 26.
+FIND FacDocum WHERE 
+     FacDocum.CodCia = S-CODCIA AND
+     FacDocum.CodDoc = "LIQ" NO-LOCK NO-ERROR.
+
+I-CODMOV = FacDocum.CodMov.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.96
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DO ON ERROR UNDO, RETURN "ADM-ERROR":
+    /* Anulamos orden de despacho en el almacen de consignacion */
+    FIND AlmCMov WHERE 
+         AlmCMov.codcia = CcbCDocu.codcia AND
+         AlmCMov.codalm = CcbCDocu.codcob AND
+         AlmCMov.tipmov = "S"             AND 
+         AlmCMov.codmov = CcbCDocu.codmov AND
+         AlmCMov.nroSer = 0               AND
+         AlmCMov.nrodoc = INTEGER(CcbCDocu.NroSal)
+         EXCLUSIVE-LOCK NO-ERROR.
+    IF AVAILABLE AlmCMov THEN DO:
+       FOR EACH AlmDMov OF AlmCMov EXCLUSIVE-LOCK
+                ON ERROR UNDO, RETURN "ADM-ERROR":
+           RUN alm/almcgstk (ROWID(AlmDMov)).
+           DELETE AlmDMov.
+       END.
+       ASSIGN AlmCMov.flgest = "A".
+    END.
+    RELEASE AlmCMov.
+    
+    /* Anulamos el ingreso por consignacion en el almacen de despacho */
+    FIND FIRST AlmCMov WHERE 
+               AlmCMov.CodCia = CcbCDocu.CodCia AND  
+               AlmCMov.CodAlm = CcbCDocu.Codalm AND  
+               AlmCMov.TipMov = "I"             AND  
+               AlmCMov.CodMov = I-CODMOV        AND  
+               AlmCMov.NroSer = 0               AND  
+               AlmCMov.NroDoc = INTEGER(CcbCDocu.NroSal)
+               EXCLUSIVE-LOCK NO-ERROR.
+    IF AVAIL AlmCMov THEN DO:
+       FOR EACH AlmDMov OF AlmCMov EXCLUSIVE-LOCK 
+             ON ERROR UNDO, RETURN "ADM-ERROR":
+           RUN ALM\ALMDCSTK (ROWID(AlmDMov)).
+           DELETE AlmDMov.
+       END.
+       AlmCMov.FlgEst = "A".
+    END.
+    RELEASE AlmCMov.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

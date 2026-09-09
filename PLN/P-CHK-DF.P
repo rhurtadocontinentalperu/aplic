@@ -1,0 +1,245 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+/* Procedure Description
+"Genera cabezera de programas de calculo
+de planilla de obreros"
+*/
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT  PARAMETER x-codPln AS INTEGER NO-UNDO.
+DEFINE INPUT  PARAMETER x-CodCal AS INTEGER NO-UNDO.
+DEFINE INPUT  PARAMETER x-CodRed AS INTEGER NO-UNDO.
+DEFINE OUTPUT PARAMETER CABECERA AS CHARACTER NO-UNDO.
+
+DEFINE VARIABLE i AS INTEGER NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+ASSIGN CABECERA =
+    "/* "  + CHR(10) +
+    "    VALMIESA SOFTWARE" + CHR(10) +
+    "*/" + CHR(10) +
+    CHR(10) +
+    "DEFINE INPUT PARAMETER ROWID-FLG-SEM AS ROWID." + CHR(10) +
+    CHR(10) +
+    "FIND integral.PL-FLG-SEM WHERE" + CHR(10) +
+    "    ROWID(integral.PL-FLG-SEM) = ROWID-FLG-SEM NO-ERROR." + CHR(10) +
+    "IF NOT AVAILABLE integral.PL-FLG-SEM THEN DO:" + CHR(10) +
+    "    BELL." + CHR(10) +
+    "    MESSAGE 'Registro de personal no existe'" + CHR(10) +
+    "        VIEW-AS ALERT-BOX ERROR." + CHR(10) +
+    "    RETURN." + CHR(10) +
+    "END." + CHR(10) +
+    CHR(10) +
+    "DEFINE VARIABLE s-CodPln AS INTEGER NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE s-CodCal AS INTEGER NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE s-CodRed AS INTEGER NO-UNDO." + CHR(10) +
+    CHR(10) +
+    "ASSIGN" + CHR(10) +
+    "    s-CodPln = " + STRING(x-codPln) + CHR(10) +
+    "    s-CodCal = " + STRING(x-CodCal) + CHR(10) +
+    "    s-CodRed = " + STRING(x-CodRed) + "." + CHR(10) +
+    CHR(10) +
+    "FIND integral.PL-MOV-SEM WHERE" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodCia  = integral.PL-FLG-SEM.CodCia AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.Periodo = integral.PL-FLG-SEM.Periodo AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.NroSem  = integral.PL-FLG-SEM.NroSem AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodPln  = integral.PL-FLG-SEM.CodPln AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodPer  = integral.PL-FLG-SEM.CodPer AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodCal  = s-CodCal AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodMov  = s-CodRed NO-LOCK NO-ERROR." + CHR(10) +
+    "IF AVAILABLE integral.PL-MOV-SEM THEN" + CHR(10) +
+    "    ASSIGN" + CHR(10) +
+    "        integral.PL-FLG-SEM.Exceso-Sem =" + CHR(10) +
+    "        integral.PL-MOV-SEM.valcal-Sem." + CHR(10) +
+    "ELSE" + CHR(10) +
+    "    IF CAN-FIND ( FIRST integral.PL-MOV-SEM WHERE" + CHR(10) +
+    "        integral.PL-MOV-SEM.CodCia  = integral.PL-FLG-SEM.CodCia AND" + CHR(10) +
+    "        integral.PL-MOV-SEM.Periodo = integral.PL-FLG-SEM.Periodo AND" + CHR(10) +
+    "        integral.PL-MOV-SEM.NroSem  = integral.PL-FLG-SEM.NroSem AND" + CHR(10) +
+    "        integral.PL-MOV-SEM.CodPln  = integral.PL-FLG-SEM.CodPln AND" + CHR(10) +
+    "        integral.PL-MOV-SEM.CodPer  = integral.PL-FLG-SEM.CodPer AND" + CHR(10) +
+    "        integral.PL-MOV-SEM.CodCal  = s-CodCal ) THEN" + CHR(10) +
+    "        ASSIGN integral.PL-FLG-SEM.Exceso-Sem = 0." + CHR(10) +     
+    CHR(10) +
+    "FOR EACH integral.PL-MOV-SEM WHERE" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodCia  = integral.PL-FLG-SEM.CodCia AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.Periodo = integral.PL-FLG-SEM.Periodo AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.NroSem  = integral.PL-FLG-SEM.NroSem AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodPln  = integral.PL-FLG-SEM.CodPln AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodPer  = integral.PL-FLG-SEM.CodPer AND" + CHR(10) +
+    "    integral.PL-MOV-SEM.CodCal  = s-CodCal:" + CHR(10) +
+    "    DELETE integral.PL-MOV-SEM." + CHR(10) +
+    "END." + CHR(10) +
+    CHR(10).
+ASSIGN CABECERA = CABECERA +
+    "/* EXTORNAMOS LOS SALDOS DE CUENTA CORRIENTE */" + CHR(10) +
+    "FOR EACH integral.PL-MOV-CTE-SEM WHERE" + CHR(10) +
+    "    integral.PL-MOV-CTE-SEM.CodCia  = integral.PL-FLG-SEM.CodCia AND" + CHR(10) +
+    "    integral.PL-MOV-CTE-SEM.Periodo = integral.PL-FLG-SEM.Periodo AND" + CHR(10) +
+    "    integral.PL-MOV-CTE-SEM.NroSem  = integral.PL-FLG-SEM.NroSem AND" + CHR(10) +
+    "    integral.PL-MOV-CTE-SEM.CodPer  = integral.PL-FLG-SEM.CodPer:" + CHR(10) +
+    "    FIND integral.PL-CFG-CTE-SEM WHERE" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.CodCia  = integral.PL-FLG-SEM.CodCia AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.Periodo = integral.PL-FLG-SEM.Periodo AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.NroSem  = integral.PL-FLG-SEM.NroSem AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.Clf-Cte-Sem = integral.PL-MOV-CTE-SEM.Clf-Cte-Sem AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.Tpo-Cte-Sem = integral.PL-MOV-CTE-SEM.Tpo-Cte-Sem AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.CodPer = integral.PL-MOV-CTE-SEM.CodPer AND" + CHR(10) +
+    "        integral.PL-CFG-CTE-SEM.Nro-Cte-Sem = integral.PL-MOV-CTE-SEM.Nro-Cte-Sem NO-ERROR." + CHR(10) +
+    "    IF AVAILABLE integral.PL-CFG-CTE-SEM THEN" + CHR(10) +
+    "        ASSIGN" + CHR(10) +
+    "            integral.PL-CFG-CTE-SEM.Sdo-Cte-Sem =" + CHR(10) +
+    "               integral.PL-CFG-CTE-SEM.Sdo-Cte-Sem +" + CHR(10) +
+    "               integral.PL-MOV-CTE-SEM.Val-Cte-Sem" + CHR(10) +
+    "            integral.PL-CFG-CTE-SEM.Sdo-Usa-Sem =" + CHR(10) +
+    "               integral.PL-CFG-CTE-SEM.Sdo-Usa-Sem +" + CHR(10) +
+    "               integral.PL-MOV-CTE-SEM.Val-Usa-Sem." + CHR(10) +
+    "    DELETE integral.PL-MOV-CTE-SEM." + CHR(10) +
+    "END." + CHR(10) +
+    CHR(10) +
+    "IF integral.PL-FLG-SEM.SitAct = 'Inactivo' THEN RETURN." + CHR(10) +
+    CHR(10) +
+    CHR(123) + "bin/s-global.i" + CHR(125) + CHR(10) +
+    CHR(123) + "pln/s-global.i" + CHR(125) + CHR(10) +
+    CHR(10) +
+    "DEFINE NEW SHARED VARIABLE VAL-VAR  AS DECIMAL EXTENT 30." + CHR(10) +
+    "DEFINE VARIABLE VAR                 AS DECIMAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE NETO                AS DECIMAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE TOTAL-REMUNERACION  AS DECIMAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE TOTAL-DESCUENTO     AS DECIMAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE TOTAL-APORTE        AS DECIMAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE GRATIFICACION       AS LOGICAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE FIN-DE-MES          AS LOGICAL NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE MES-ACTUAL          AS INTEGER NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE ULTIMA-SEMANA-MES   AS INTEGER NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE NRO-SEMANAS         AS INTEGER NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE FECHA-INICIO-SEMANA AS DATE NO-UNDO." + CHR(10) +
+    "DEFINE VARIABLE FECHA-FIN-SEMANA    AS DATE NO-UNDO." + CHR(10) +
+    CHR(10) +
+    "FIND integral.PL-SEM WHERE" + CHR(10) +
+    "    integral.PL-SEM.CodCia = s-CodCia AND" + CHR(10) +
+    "    integral.PL-SEM.Periodo = s-Periodo AND" + CHR(10) +
+    "    integral.PL-SEM.NroSem = s-NroSem" + CHR(10) +
+    "    NO-LOCK NO-ERROR." + CHR(10) +
+    "" + CHR(10) +
+    "ASSIGN" + CHR(10) +
+    "    MES-ACTUAL          = integral.PL-SEM.NroMes" + CHR(10) +
+    "    GRATIFICACION       = integral.PL-SEM.FlgGtf" + CHR(10) +
+    "    FECHA-INICIO-SEMANA = integral.PL-SEM.FeCIni" + CHR(10) +
+    "    FECHA-FIN-SEMANA    = integral.PL-SEM.FeCFin." + CHR(10) +
+    CHR(10).
+ASSIGN CABECERA = CABECERA +
+    "/* ULTIMA SEMANA DEL MES */" + CHR(10) +
+    "FIND LAST integral.PL-SEM WHERE" + CHR(10) +
+    "    integral.PL-SEM.CodCia = s-CodCia AND" + CHR(10) +
+    "    integral.PL-SEM.Periodo = s-Periodo AND" + CHR(10) +
+    "    integral.PL-SEM.NroMes = MES-ACTUAL" + CHR(10) +
+    "    NO-LOCK NO-ERROR." + CHR(10) +
+    CHR(10) +
+    "/* SE PONE EN VERDADERO SI ESTAMOS EN FIN DE MES */" + CHR(10) +
+    "ASSIGN" + CHR(10) +
+    "    FIN-DE-MES = ( integral.PL-SEM.NROSEM = S-NROSEM )" + CHR(10) +
+    "    ULTIMA-SEMANA-MES = integral.PL-SEM.NROSEM." + CHR(10) +
+    CHR(10) +
+    "/* ULTIMA SEMANA DEL PERIODO */" + CHR(10) +
+    "FIND LAST integral.PL-SEM WHERE" + CHR(10) +
+    "    integral.PL-SEM.CodCia = s-CodCia AND" + CHR(10) +
+    "    integral.PL-SEM.Periodo = s-Periodo" + CHR(10) +
+    "    NO-LOCK NO-ERROR." + CHR(10) +
+    "ASSIGN NRO-SEMANAS = integral.PL-SEM.NroSem." + CHR(10) +
+    CHR(10) +
+    "FIND integral.PL-PERS WHERE integral.PL-PERS.CodPer = integral.PL-FLG-SEM.CodPer NO-LOCK NO-ERROR." + CHR(10) +
+    "FIND integral.PL-AFPS WHERE integral.PL-AFPS.CodAfp = integral.PL-FLG-SEM.CodAfp NO-LOCK NO-ERROR." + CHR(10) +
+    "FIND integral.PL-CLAS WHERE integral.PL-CLAS.Clase = integral.PL-FLG-SEM.Clase NO-LOCK NO-ERROR." + CHR(10) +
+    "FIND LAST integral.PL-VAR-SEM WHERE" + CHR(10) +
+    "    integral.PL-VAR-SEM.Periodo = s-Periodo AND" + CHR(10) +
+    "    integral.PL-VAR-SEM.NroSem <= s-NroSem NO-LOCK." + CHR(10) +
+    "FIND LAST integral.PL-VAR-MES WHERE" + CHR(10) +
+    "    integral.PL-VAR-MES.Periodo = s-Periodo AND" + CHR(10) +
+    "    integral.PL-VAR-MES.NroMes <= MES-ACTUAL NO-LOCK." + CHR(10) +
+    CHR(10).
+    
+FIND FIRST integral.PL-VARG NO-LOCK NO-ERROR.
+IF AVAILABLE integral.PL-VARG THEN DO:
+    DO i = 1 TO 20:
+        IF integral.PL-VARG.NomVar-Mes[i] <> ""
+        THEN CABECERA = CABECERA +
+            "DEFINE VARIABLE " + integral.PL-VARG.NomVar-Mes[i] + " AS DECIMAL NO-UNDO." + CHR(10) +
+            "ASSIGN " + integral.PL-VARG.NomVar-Mes[i] + " = integral.PL-VAR-MES.ValVar-Mes[" + STRING(i) + "]." + CHR(10) +
+            CHR(10).
+        IF integral.PL-VARG.NomVar-Sem[i] <> ""
+        THEN CABECERA = CABECERA +
+            "DEFINE VARIABLE " + integral.PL-VARG.NomVar-Sem[i] + " AS DECIMAL NO-UNDO." + CHR(10) +
+            "ASSIGN " + integral.PL-VARG.NomVar-Sem[i] + " = integral.PL-VAR-SEM.ValVar-Sem[" + string(i) + "]." + CHR(10) +
+            CHR(10).
+    END.
+END.
+ASSIGN CABECERA = CABECERA + "/* FIN DE CABECERA */"  + CHR(10) + CHR(10).
+
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

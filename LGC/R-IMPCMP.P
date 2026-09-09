@@ -1,0 +1,355 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-impcmp.p
+    Purpose     : 
+
+    Syntax      :
+
+    Description : Imprime Orden de Compra
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.               */
+/*------------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEFINE INPUT PARAMETER mens AS CHARACTER.
+
+DEF SHARED VARIABLE S-CODCIA  AS INTEGER.
+DEF SHARED VARIABLE PV-CODCIA AS INTEGER.
+DEF SHARED VAR S-NomCia AS CHAR.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+
+DEF VAR C-ConPgo   AS CHAR FORMAT "X(50)" NO-UNDO.
+DEF VAR X-EnLetras AS CHAR FORMAT "X(100)" NO-UNDO.
+DEF VAR I-NroItm AS INTEGER NO-UNDO.
+DEF VAR C-Moneda AS CHAR INIT "S/." FORMAT "X(3)".
+DEF VAR C-UNIT0   AS DECIMAL INIT 0.
+DEF VAR C-UNIT1   AS DECIMAL INIT 0.
+DEF VAR C-UNIT2   AS DECIMAL INIT 0.
+DEF VAR C-IGV     AS DECIMAL INIT 0.
+DEF        VAR W-DIRALM AS CHAR FORMAT "X(50)".
+DEF        VAR W-TLFALM AS CHAR FORMAT "X(13)".
+DEF VAR N-ITEM     AS INTEGER INIT 0 NO-UNDO.
+DEF VAR X-NRO      AS CHARACTER.
+
+DEFINE STREAM Reporte.
+
+FIND LG-COCmp WHERE ROWID(LG-COCmp) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE LG-COCmp THEN RETURN.
+
+IF LG-COCmp.Codmon = 2 THEN C-Moneda = "US$".
+FIND gn-prov WHERE gn-prov.CodCia = PV-CODCIA
+    AND  gn-prov.CodPro = LG-COCmp.CodPro 
+    NO-LOCK NO-ERROR.
+FIND gn-concp WHERE gn-concp.Codig = LG-COCmp.CndCmp NO-LOCK NO-ERROR.
+IF AVAILABLE gn-concp THEN C-ConPgo = gn-concp.Nombr.
+FIND Almacen WHERE Almacen.CodCia = LG-COCmp.CodCia 
+    AND  Almacen.CodAlm = LG-COCmp.CodAlm 
+    NO-LOCK NO-ERROR.
+
+DEF VAR X-MARGEN AS DECI INIT 0.
+DEF VAR X-UNDMIN AS CHAR INIT "".
+DEF VAR X-equival AS DECI INIT 0.
+DEF VAR X-precon AS DECI INIT 0.
+DEF VAR X-porce AS char INIT "%".
+DEF VAR F-Estado AS CHAR INIT "".
+DEF VAR X-MEN AS CHAR INIT "".
+
+CASE LG-COCMP.FlgSit:
+    WHEN 'P' THEN f-Estado = 'A P R O B A D O'.
+    WHEN 'A' THEN f-Estado = 'A N U L A D O'.
+END CASE.
+
+X-MEN = IF LG-COCmp.CndCmp = "900" THEN C-ConPgo ELSE "".
+
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(LG-COCmp.ImpTot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = "SON : " + X-EnLetras + (IF LG-COCmp.Codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 8.88
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DEF VAR x-Direccion AS CHAR.
+DEF VAR lRucCia AS CHAR.
+
+x-Direccion = Almacen.DirAlm  + " Telf. " + Almacen.TelAlm  + ' ' + Almacen.HorRec.
+X-NRO = STRING(LG-COCmp.NroDoc, "9999999").
+
+IF s-nomcia MATCHES '*CONTINENTAL*' THEN DO:
+    lRucCia  = "20100038146".
+END.
+ELSE lRucCia = "20511358907".
+
+DEFINE FRAME F-HdrCmp
+    N-ITEM   FORMAT "Z9"
+    LG-DOCmp.Codmat    FORMAT "X(6)"
+    Almmmatg.DesMat    FORMAT "X(50)"
+    Almmmatg.DesMar    FORMAT "X(9)"
+    LG-DOCmp.UndCmp    FORMAT "X(3)"
+    LG-DOCmp.CanPedi   FORMAT ">>>>,>>9.99" 
+    LG-DOCmp.PreUni    FORMAT ">>,>>9.999999" 
+    LG-DOCmp.Dsctos[1] FORMAT ">>9.99"
+    LG-DOCmp.Dsctos[2] FORMAT ">>9.99"
+    LG-DOCmp.Dsctos[3] FORMAT ">>9.99"
+    LG-DOCmp.ImpTot     FORMAT ">,>>>,>>9.99"
+    X-margen            FORMAT "->>9.99"
+    x-porce             FORMAT "X(1)"
+    X-undmin            FORMAT "X(8)"
+    HEADER
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "X(45)"  SKIP
+    "(" + S-CODDIV + ")   RUC:" + lRucCia AT 1 FORMAT "X(40)"
+    {&PRN6A} + F-Estado +  {&PRN6B} AT 60 FORMAT "X(30)" SKIP
+    "E-MAIL: compraslima@continentalperu.com" at 1
+    "(" + MENS + ")" AT 87 FORMAT "X(18)"
+    SKIP
+    {&PRN7A} + {&PRN6A} + "ORDEN DE COMPRA NRO." + {&PRN6B} + {&PRN7B} + {&PRN4} AT 10 FORMAT "X(22)" 
+    {&PRN7A} + {&PRN6A} + X-NRO + {&PRN6B} + {&PRN7B} + {&PRN4} FORMAT "XXXXXXXXXXXX"
+    {&PRN7A} + {&PRN6A} + X-MEN + {&PRN6B} + {&PRN7B} + {&PRN4} AT 55 FORMAT "X(20)"
+    SKIP
+    "Proveedor : " gn-prov.CodPro gn-prov.NomPro FORMAT "x(45)"
+    "Fecha Emision :" AT 95 LG-COCmp.Fchdoc FORMAT "99/99/9999"
+    SKIP
+    "RUC : " gn-prov.Ruc  FORMAT "x(11)"
+    "Fecha Entrega :" AT 95 LG-COCmp.FchEnt FORMAT "99/99/9999" 
+    SKIP
+    "Direccion : " gn-prov.DirPro FORMAT "x(40)"
+    "Fecha Maxima Entrega :" AT 88 LG-COCmp.FchVto FORMAT "99/99/9999" 
+    SKIP
+    "Representante : " 
+    "Forma de Pago :" AT 95 C-ConPgo 
+     SKIP
+    "FAX : " gn-prov.FaxPro FORMAT "x(10)"
+    "TELF: " AT 30 gn-prov.Telfnos[1] AT 37 FORMAT "x(10)"
+    "Impuesto :" AT 50 "INCLUIDO I.G.V"  
+    "Moneda        :" AT 95 IF LG-COCmp.Codmon = 1 THEN "Soles" ELSE "Dolares" 
+ 
+     SKIP
+    {&PRN6A} + "Favor entregar en : " + x-Direccion + {&PRN6B} FORMAT 'x(130)' SKIP
+    "------------------------------------------------------------------------------------------------------------------------------------------------------" SKIP
+    "IT CODIGO          DESCRIPCION                               MARCA     UM   CANTIDAD       PRECIO    DSCT-1 DSCT-2 DSCT-3      TOTAL   MARGEN  UND MIN" SKIP
+    "------------------------------------------------------------------------------------------------------------------------------------------------------" SKIP
+/*    "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" SKIP
+ *     "         1         2         3         4         5         6         7         8         9         0         1" SKIP*/
+    WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 160 STREAM-IO DOWN.         
+
+
+OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 31.
+PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+
+FOR EACH LG-DOCmp OF LG-COCmp NO-LOCK,
+    FIRST Almmmatg OF LG-DOCmp NO-LOCK
+                BREAK BY LG-DOCmp.NroDoc
+                      BY LG-DOCmp.ArtPro
+                      BY Almmmatg.CodMat: 
+    C-IGV   = ( 1 + ( LG-DOCmp.IGVmat / 100 )).
+    C-UNIT0 = ROUND(LG-DOCmp.PreUni * ( 1 - ( LG-DOCmp.Dsctos[1] / 100)),4 ). 
+    C-UNIT1 = ROUND(C-UNIT0 * ( 1 - ( LG-DOCmp.Dsctos[2] / 100)),4 ). 
+    C-UNIT2 = ROUND(C-UNIT1 * ( 1 - ( LG-DOCmp.Dsctos[3] / 100)),4 ) * C-IGV.         
+    
+/* calculando la mayor unidad */
+x-margen = 0.
+if almmmatg.undbas ne ""  then do:
+
+
+if almmmatg.undA ne "" then do:
+        find almtconv where almtconv.codunid = almmmatg.undbas and almtconv.codalter = almmmatg.undA no-lock no-error.
+        x-equival = almtconv.equival.
+        x-undmin = almmmatg.undA.
+        X-precon = prevta[2].
+                    
+    if not avail almtconv then
+             message "La UndA y la Undbas del Catalogo de Materiales no estan definidos en la Tabla de equivalencias" skip
+             "Codmat: "almmmatg.codmat " UndA:"almmmatg.undA " UndBas:" almmmatg.undbas skip
+             "Consulte con el Jefe de Logística o Sistemas"
+             view-as alert-box.                     
+    end.
+                    
+else message "La UndA esta vacio en Catalogo de Materiales" skip
+             "Codmat: "almmmatg.codmat skip
+             "Consulte con el Jefe de linea o Sistemas"
+             view-as alert-box.                     
+                    
+if almmmatg.undB ne "" then  do:                   
+    find almtconv where almtconv.codunid = almmmatg.undbas 
+                    and almtconv.codalter = almmmatg.undB 
+                    no-lock no-error.
+    if not avail almtconv then
+             message "La UndB y la Undbas del Catalogo de Materiales no estan definidos en la Tabla de equivalencias" skip
+             "Codmat: "almmmatg.codmat " UndB:"almmmatg.undB " UndBas:" almmmatg.undbas skip
+             "Consulte con el Jefe de Logística o Sistemas"
+             view-as alert-box.                     
+
+
+    if avail almtconv and almtconv.equival > x-equival then do:
+                    x-equival = almtconv.equival.
+                    x-undmin = almmmatg.undB.
+                    X-precon = prevta[3].
+                    end.
+    end.                                    
+
+if almmmatg.undC ne "" then do:                    
+    find almtconv where almtconv.codunid = almmmatg.undbas 
+                    and almtconv.codalter = almmmatg.undC 
+                    no-lock no-error.
+    if not avail almtconv then
+             message "La UndA y la Undbas del Catalogo de Materiales no estan definidos en la Tabla de equivalencias" skip
+             "Codmat: "almmmatg.codmat " UndC: "almmmatg.undC " UndBas:" almmmatg.undbas skip
+             "Consulte con el Jefe de Logística o Sistemas"
+             view-as alert-box.                     
+                    
+
+    if avail almtconv and  almtconv.equival > x-equival then do:
+                    x-equival = almtconv.equival.
+                    x-undmin = almmmatg.undC.
+                    X-precon = prevta[4].                                   
+                   end.
+end.
+END.    
+
+                      
+Else     message "La Undbas no esta definido en el Catalogo de Materiales" skip
+                     "Codmat: "Almmmatg.codmat " UndBas: " almmmatg.undbas skip
+                     "Consulte con el Jefe de Logística o Sistemas"
+                     view-as alert-box.
+
+If x-equival ne 0 and x-undmin ne "" then do:
+    find almtconv where almtconv.codunid = almmmatg.undbas 
+                    and almtconv.codalter = x-undmin 
+                    no-lock no-error.
+  if almmmatg.tpocmb eq 0 then  message "El Articulo tiene tipo de cambio CERO Catalogo de Materiales" skip
+                                "Codmat: "Almmmatg.codmat " UndBas: " almmmatg.undbas skip
+                                "Consulte con el Jefe de Logística o Sistemas"
+                                view-as alert-box.
+
+  else
+    if lg-cocmp.codmon ne almmmatg.monvta then do:
+        if lg-cocmp.codmon = 1 and almmmatg.monvta = 2 then X-precon = X-precon * Almmmatg.tpocmb.
+        if lg-cocmp.codmon = 2 and almmmatg.monvta = 1 then X-precon = X-precon / Almmmatg.tpocmb.
+        end.
+/*        message x-precon x-equival Almmmatg.tpocmb x-undmin  skip
+ *                 LG-DOCmp.ImpTot LG-DOCmp.CanPedi almmmatg.undbas.*/
+        if avail almtconv then x-margen = ( round( ( X-precon / x-equival ) / ( LG-DOCmp.ImpTot / LG-DOCmp.CanPedi ) ,4 ) - 1 ) * 100.
+end.    
+/*
+if almmmatg.undA ne "" then do:
+   x-margen = Almmmatg.MrgUti-A .
+   x-undmin = Almmmatg.UndA.
+End.
+  
+if almmmatg.undB ne "" then do:
+   if x-margen > Almmmatg.MrgUti-B then do:
+     x-margen = Almmmatg.MrgUti-B .
+     x-undmin = Almmmatg.UndB.
+   end.
+End.
+
+if almmmatg.undC ne "" then do:
+   if x-margen > Almmmatg.MrgUti-C then do:
+      x-margen = Almmmatg.MrgUti-C .
+      x-undmin = Almmmatg.UndC.
+  end.
+End.
+*/
+             
+    n-item = n-item + 1.
+    
+    DISPLAY STREAM Reporte 
+       n-item
+       LG-DOCmp.Codmat 
+       Almmmatg.DesMat
+       Almmmatg.DesMar
+       LG-DOCmp.UndCmp
+       LG-DOCmp.CanPedi
+       LG-DOCmp.PreUni 
+       LG-DOCmp.Dsctos[1] /* WHEN LG-DOCmp.Dsctos[1] > 0 */
+       LG-DOCmp.Dsctos[2] /* WHEN LG-DOCmp.Dsctos[2] > 0 */
+       LG-DOCmp.Dsctos[3] /* WHEN LG-DOCmp.Dsctos[3] > 0 */
+       LG-DOCmp.ImpTot
+       X-margen     WHEN LOOKUP(mens,"contabilidad,archivo") > 0
+       x-porce      WHEN LOOKUP(mens,"contabilidad,archivo") > 0
+       X-undmin     WHEN LOOKUP(mens,"contabilidad,archivo") > 0
+       WITH FRAME F-HdrCmp.
+    DOWN STREAM Reporte WITH FRAME F-HdrCmp.
+END.
+
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 7 :
+     PUT STREAM Reporte "" skip.
+  END.
+
+  PUT STREAM Reporte X-EnLetras format "X(95)".
+  PUT STREAM Reporte C-Moneda AT 100 LG-COCmp.ImpTot AT 104 SKIP.
+  PUT STREAM Reporte "Observaciones :" LG-COCmp.Observaciones.
+  PUT STREAM Reporte "                                                  " SKIP.
+  PUT STREAM Reporte "                                                  " SKIP.
+  PUT STREAM Reporte "                -------------------                             -------------------" SKIP.
+  PUT STREAM Reporte "                   GENERADO POR                                      GERENCIA      " SKIP.
+  PUT STREAM Reporte "Incorp. al reg. de agentes de retención de IGV a partir del 01/01/10."  LG-COCMP.Userid-com AT 104 SKIP.
+
+OUTPUT STREAM Reporte CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

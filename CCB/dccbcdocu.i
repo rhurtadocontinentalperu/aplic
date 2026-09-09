@@ -1,0 +1,60 @@
+  FIELD CodAnt LIKE CcbCDocu.CodAnt VALIDATE  FORMAT "X(15)" LABEL "DNI" COLUMN-LABEL "DNI"~
+  FIELD CodCli LIKE CcbCDocu.CodCli VALIDATE ~
+  FIELD CodCta LIKE CcbCDocu.CodCta VALIDATE  LABEL "Concepto"~
+  FIELD CodMon LIKE CcbCDocu.CodMon VALIDATE ~
+  FIELD CodRef LIKE CcbCDocu.CodRef VALIDATE ~
+  FIELD DirCli LIKE CcbCDocu.DirCli VALIDATE  FORMAT "x(100)"~
+  FIELD FchAnu LIKE CcbCDocu.FchAnu VALIDATE ~
+  FIELD FchDoc LIKE CcbCDocu.FchDoc VALIDATE ~
+  FIELD FchVto LIKE CcbCDocu.FchVto VALIDATE ~
+  FIELD FmaPgo LIKE CcbCDocu.FmaPgo VALIDATE ~
+  FIELD Glosa LIKE CcbCDocu.Glosa VALIDATE  FORMAT "x(80)"~
+  FIELD NomCli LIKE CcbCDocu.NomCli VALIDATE  FORMAT "x(100)"~
+  FIELD NroDoc LIKE CcbCDocu.NroDoc VALIDATE  FORMAT "X(15)"~
+  FIELD NroOrd LIKE CcbCDocu.NroOrd VALIDATE  FORMAT "x(15)"~
+  FIELD NroPed LIKE CcbCDocu.NroPed VALIDATE  FORMAT "X(15)"~
+  FIELD NroRef LIKE CcbCDocu.NroRef VALIDATE ~
+  FIELD RucCli LIKE CcbCDocu.RucCli VALIDATE ~
+  FIELD UsuAnu LIKE CcbCDocu.UsuAnu VALIDATE ~
+  FIELD usuario LIKE CcbCDocu.usuario VALIDATE ~
+  FIELD CodCia LIKE CcbCDocu.CodCia VALIDATE ~
+  FIELD CodDiv LIKE CcbCDocu.CodDiv VALIDATE ~
+  FIELD CodDoc LIKE CcbCDocu.CodDoc VALIDATE ~
+  FIELD FlgEst LIKE CcbCDocu.FlgEst VALIDATE ~
+  FIELD PorIgv LIKE CcbCDocu.PorIgv VALIDATE ~
+  FIELD PorDto LIKE CcbCDocu.PorDto VALIDATE ~
+  FIELD TpoCmb LIKE CcbCDocu.TpoCmb VALIDATE ~
+  FIELD Cndcre LIKE CcbCDocu.Cndcre VALIDATE ~
+  FIELD TpoFac LIKE CcbCDocu.TpoFac VALIDATE ~
+  FIELD Tipo LIKE CcbCDocu.Tipo VALIDATE ~
+  FIELD SdoAct LIKE CcbCDocu.SdoAct VALIDATE ~
+  FIELD CodAlm LIKE CcbCDocu.CodAlm VALIDATE ~
+  FIELD CodMov LIKE CcbCDocu.CodMov VALIDATE ~
+  FIELD CodVen LIKE CcbCDocu.CodVen VALIDATE ~
+  FIELD ImpTot LIKE CcbCDocu.ImpTot VALIDATE ~
+  FIELD CCo LIKE CcbCDocu.CCo VALIDATE ~
+  FIELD ImpIgv LIKE CcbCDocu.ImpIgv VALIDATE ~
+  FIELD ImpIsc LIKE CcbCDocu.ImpIsc VALIDATE ~
+  FIELD ImpBrt LIKE CcbCDocu.ImpBrt VALIDATE ~
+  FIELD ImpDto LIKE CcbCDocu.ImpDto VALIDATE ~
+  FIELD ImpDto2 LIKE CcbCDocu.ImpDto2 VALIDATE ~
+  FIELD ImpExo LIKE CcbCDocu.ImpExo VALIDATE ~
+  FIELD ImpVta LIKE CcbCDocu.ImpVta VALIDATE ~
+  FIELD imptot2 LIKE CcbCDocu.imptot2 VALIDATE ~
+  FIELD Libre_d02 LIKE CcbCDocu.Libre_d02 VALIDATE ~
+  FIELD Dcto_Otros_VV LIKE CcbCDocu.Dcto_Otros_VV VALIDATE ~
+  FIELD AcuBon1 LIKE CcbCDocu.AcuBon[1] VALIDATE ~
+  FIELD AcuBon2 LIKE CcbCDocu.AcuBon[2] VALIDATE ~
+  FIELD AcuBon3 LIKE CcbCDocu.AcuBon[3] VALIDATE ~
+  FIELD AcuBon4 LIKE CcbCDocu.AcuBon[4] VALIDATE ~
+  FIELD AcuBon5 LIKE CcbCDocu.AcuBon[5] VALIDATE ~
+  FIELD AcuBon6 LIKE CcbCDocu.AcuBon[6] VALIDATE ~
+  FIELD AcuBon7 LIKE CcbCDocu.AcuBon[7] VALIDATE ~
+  FIELD AcuBon8 LIKE CcbCDocu.AcuBon[8] VALIDATE ~
+  FIELD AcuBon9 LIKE CcbCDocu.AcuBon[9] VALIDATE ~
+  FIELD AcuBon10 LIKE CcbCDocu.AcuBon[10] VALIDATE ~
+  FIELD TotalVenta LIKE CcbCDocu.TotalVenta VALIDATE ~
+  FIELD TotalIGV LIKE CcbCDocu.TotalIGV VALIDATE ~
+  FIELD TotalMontoICBPER LIKE CcbCDocu.TotalMontoICBPER VALIDATE ~
+  FIELD TotalValorVentaNetoOpGravadas LIKE CcbCDocu.TotalValorVentaNetoOpGravadas VALIDATE ~
+  FIELD cEstado AS CHARACTER FORMAT "x(8)"

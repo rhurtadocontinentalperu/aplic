@@ -1,0 +1,1357 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+/* Connected Databases 
+          integral         PROGRESS
+*/
+
+
+/* Temp-Table and Buffer definitions                                    */
+DEFINE TEMP-TABLE tw-report NO-UNDO LIKE w-report.
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        :
+    Purpose     :
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+
+
+DEFINE INPUT PARAMETER X-Rowid AS ROWID.
+
+FIND almcmov WHERE ROWID(almcmov) = X-Rowid NO-LOCK NO-ERROR.
+IF NOT AVAILABLE Almcmov THEN RETURN.
+
+DEFINE STREAM Reporte.
+
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+DEFINE SHARED VAR S-NOMCIA AS CHAR.
+DEFINE        VAR S-CODALM AS CHAR.
+DEFINE        VAR S-DESALM AS CHAR.
+DEFINE SHARED VAR S-USER-ID AS CHAR.
+
+DEFINE VAR S-Procedencia AS CHAR FORMAT "X(55)" INIT "".
+DEFINE VAR S-Moneda      AS CHAR FORMAT "X(32)"  INIT "".
+DEFINE VAR S-Mon         AS CHAR FORMAT "X(4)"  INIT "".
+DEFINE VAR S-Referencia1 AS CHAR FORMAT "X(16)" INIT "".
+DEFINE VAR S-Referencia2 AS CHAR FORMAT "X(16)" INIT "".
+DEFINE VAR S-Referencia3 AS CHAR FORMAT "X(16)" INIT "".
+DEFINE VAR S-Encargado   AS CHAR FORMAT "X(32)" INIT "".
+DEFINE VAR S-RUC         AS CHAR FORMAT "X(32)" INIT "".
+DEFINE VAR S-Movimiento  AS CHAR FORMAT "X(40)" INIT "".
+DEFINE VAR S-TOTAL       AS DECIMAL INIT 0.
+DEFINE VAR S-SUBTO       AS DECIMAL INIT 0.
+DEFINE VAR S-Item        AS INTEGER INIT 0.
+DEFINE VAR W-VTA0        AS DECIMAL INIT 0.
+DEFINE VAR W-VTA1        AS DECIMAL INIT 0.
+DEFINE VAR W-VTA2        AS DECIMAL INIT 0.
+
+ASSIGN
+    s-CodAlm = Almcmov.codalm.
+FIND Almacen WHERE Almacen.CodCia = S-CODCIA AND
+     Almacen.CodAlm = S-CODALM NO-LOCK NO-ERROR.
+ASSIGN
+    s-desalm = Almacen.Descripcion
+    S-Encargado = Almacen.EncAlm.
+
+/* ------------------------------------------------------------------------- */
+/* Definimos REPORT BUILDER */
+DEFINE VAR s-task-no AS INT NO-UNDO.
+
+DEF VAR RB-REPORT-LIBRARY AS CHAR.
+DEF VAR RB-REPORT-NAME AS CHAR INITIAL "ticket comprobante electronico".
+DEF VAR RB-INCLUDE-RECORDS AS CHAR INITIAL "".
+DEF VAR RB-FILTER AS CHAR INITIAL "".
+DEF VAR RB-OTHER-PARAMETERS AS CHAR INITIAL "".     
+DEF VAR RB-DB-CONNECTION AS CHAR INITIAL "".
+DEF VAR RB-MEMO-FILE AS CHAR INITIAL "".
+DEF VAR RB-PRINT-DESTINATION AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-NAME AS CHAR INITIAL "".
+DEF VAR RB-PRINTER-PORT AS CHAR INITIAL "".
+DEF VAR RB-OUTPUT-FILE AS CHAR INITIAL "".
+DEF VAR RB-NUMBER-COPIES AS INTEGER INITIAL 1.
+DEF VAR RB-BEGIN-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-END-PAGE AS INTEGER INITIAL 0.
+DEF VAR RB-TEST-PATTERN AS LOGICAL INITIAL NO.
+DEF VAR RB-WINDOW-TITLE AS CHARACTER INITIAL "".
+DEF VAR RB-DISPLAY-ERRORS AS LOGICAL INITIAL YES.
+DEF VAR RB-DISPLAY-STATUS AS LOGICAL INITIAL YES.
+DEF VAR RB-NO-WAIT AS LOGICAL INITIAL NO.
+
+/* capturamos ruta inicial */
+DEF VAR S-REPORT-LIBRARY AS CHAR.
+GET-KEY-VALUE SECTION "Startup" KEY "BASE" VALUE s-report-library.
+
+RB-REPORT-LIBRARY = s-report-library + "vta2/rbvta2.prl".
+
+DEFINE BUFFER b-w-report FOR w-report.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+   Temp-Tables and Buffers:
+      TABLE: tw-report T "?" NO-UNDO INTEGRAL w-report
+   END-TABLES.
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 8.65
+         WIDTH              = 50.29.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* Impresion Directa */
+
+/*MLR* 29/10/07 */
+DEFINE VARIABLE answer AS LOGICAL NO-UNDO.
+SYSTEM-DIALOG PRINTER-SETUP UPDATE answer.
+IF answer THEN RUN Imprime_FR.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-cargar-info) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE cargar-info Procedure 
+PROCEDURE cargar-info :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    DEFINE VAR l-ubica AS LOG.
+
+    l-ubica = YES.
+    /*Cargando en el temporal del sistema*/
+    REPEAT WHILE L-Ubica:
+       s-task-no = RANDOM(900000,999999).
+       FIND FIRST b-w-report WHERE b-w-report.task-no = s-task-no NO-LOCK NO-ERROR.
+       IF NOT AVAILABLE b-w-report THEN L-Ubica = NO.
+    END.
+    IF l-ubica = YES THEN DO:
+        /*  */
+        RETURN "ADM-ERROR".
+    END.
+
+    EMPTY TEMP-TABLE tw-report.      
+      
+  FOR EACH almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND 
+                                Almdmov.CodAlm = Almcmov.CodAlm AND
+                                Almdmov.TipMov = Almcmov.TipMov AND 
+                                Almdmov.CodMov = Almcmov.CodMov AND
+                                Almdmov.NroDoc = Almcmov.NroDoc NO-LOCK:
+      FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+           Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+      FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+           Almmmate.CodAlm = S-CODALM AND
+           Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+
+      CREATE tw-report.
+      ASSIGN tw-report.task-no = s-task-no
+          tw-report.campo-c[1] = Almdmov.CodMat
+        tw-report.campo-f[1] = Almdmov.CanDes
+        tw-report.campo-c[2] = Almdmov.CodUnd 
+        tw-report.campo-c[3] = Almmmatg.ArtPro 
+        tw-report.campo-c[4] = Almmmatg.DesMat 
+        tw-report.campo-c[5] = Almmmate.CodUbi
+        tw-report.campo-c[6] = Almmmatg.Desmar 
+        tw-report.campo-c[7] = Almmmatg.CatConta[1].
+                     
+  END.
+  /*
+  DEFINE FRAME F-FMT
+         Almmmatg.ArtPro    FORMAT "X(12)"
+         Almdmov.CodMat     AT  14 FORMAT "X(6)"
+         Almdmov.CanDes     AT  22 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  35 FORMAT "X(4)"          
+         Almmmatg.DesMat    AT  41 FORMAT "X(50)"
+         Almmmatg.Desmar    AT  91 FORMAT 'x(20)'
+         Almmmatg.CatConta[1] AT 115 FORMAT 'x(3)'
+         Almmmate.CodUbi    AT  124
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52 "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */         
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         " COD.PROV.   CODIGO    CANTIDAD    UND.                  DESCRIPCION                          M A R C A           CC      UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13        14*/ 
+        /*12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
+        /*123456789012 123456  >>>,>>9.99   1234  1234567890123456789012345678901234567890123456789012345678901234567890    123      123 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 31.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmate.CodUbi
+                   Almmmatg.Desmar 
+                   Almmmatg.CatConta[1]
+                   WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01. 
+     END.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------            -----------------            -----------------            ----------------- " AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                      Recibido                      Vo. Bo.                   ADMINISTRADOR  " AT 10 SKIP.
+  PUT STREAM Reporte  Almcmov.usuario AT 18 "JEFE ALMACEN         "  AT 75 SKIP.
+  PUT STREAM Reporte " ** ALMACEN ** " AT 121 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+  */
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-1) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-1 Procedure 
+PROCEDURE Formato-1 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEFINE FRAME F-FMT
+         Almmmatg.ArtPro    FORMAT "X(12)"
+         Almdmov.CodMat     AT  14 FORMAT "X(6)"
+         Almdmov.CanDes     AT  22 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  35 FORMAT "X(4)"          
+         Almmmatg.DesMat    AT  41 FORMAT "X(50)"
+         Almmmatg.Desmar    AT  91 FORMAT 'x(20)'
+         Almmmatg.CatConta[1] AT 115 FORMAT 'x(3)'
+         Almmmate.CodUbi    AT  124
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52 "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */         
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         " COD.PROV.   CODIGO    CANTIDAD    UND.                  DESCRIPCION                          M A R C A           CC      UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13        14*/ 
+        /*12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
+        /*123456789012 123456  >>>,>>9.99   1234  1234567890123456789012345678901234567890123456789012345678901234567890    123      123 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 31.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmate.CodUbi
+                   Almmmatg.Desmar 
+                   Almmmatg.CatConta[1]
+                   WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01. 
+     END.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------            -----------------            -----------------            ----------------- " AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                      Recibido                      Vo. Bo.                   ADMINISTRADOR  " AT 10 SKIP.
+  PUT STREAM Reporte  Almcmov.usuario AT 18 "JEFE ALMACEN         "  AT 75 SKIP.
+  PUT STREAM Reporte " ** ALMACEN ** " AT 121 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-1_inconcluso) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-1_inconcluso Procedure 
+PROCEDURE Formato-1_inconcluso :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+    DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE cMsgError AS CHAR.
+    
+    DEFINE VAR cNombreDelReporte AS CHAR.
+    DEFINE VAR iCopias AS INT.
+    DEFINE VAR iCopia AS INT.
+    
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+    GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+    
+    ASSIGN cDelimeter = CHR(32).
+    IF NOT (cDatabaseName = ? OR cHostName = ? OR cNetworkProto = ? OR cPortNumber = ?) THEN DO:
+        DEFINE VAR x-rb-user AS CHAR.
+        DEFINE VAR x-rb-pass AS CHAR.
+    
+        RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+        IF x-rb-user = "**NOUSER**" THEN DO:
+            cMsgError = "No se pudieron ubicar las credenciales para" + CHR(10) +
+                    "la conexion del REPORTBUILDER" + CHR(10) +
+                    "--------------------------------------------" + CHR(10) +
+                    "Comunicarse con el area de sistemas - desarrollo".
+
+            MESSAGE cMsgError VIEW-AS ALERT-BOX INFORMATION.
+            RETURN "ADM-ERROR".
+        END.
+    
+       ASSIGN
+           cNewConnString =
+           "-db" + cDelimeter + cDatabaseName + cDelimeter +
+           "-H" + cDelimeter + cHostName + cDelimeter +
+           "-N" + cDelimeter + cNetworkProto + cDelimeter +
+           "-S" + cDelimeter + cPortNumber + cDelimeter +
+           "-U " + x-rb-user  + cDelimeter + cDelimeter +
+           "-P " + x-rb-pass + cDelimeter + cDelimeter.
+    
+       IF cOtherParams > '' THEN cNewConnString = cNewConnString + cOtherParams + cDelimeter.
+       RB-DB-CONNECTION = cNewConnString.
+    END.
+
+
+    ASSIGN RB-OTHER-PARAMETERS = "nrodoc= " + string(Almcmov.NroDoc,"9999999") + 
+                                "~ncodalm= " + S-CODALM + 
+                                "~nmovimiento= " + S-Movimiento +
+                                "~nprocedencia= " + S-PROCEDENCIA +
+                                "~nruc= " + S-RUC + 
+                                "~nfchDoc= " + string(Almcmov.FchDoc,"99/99/9999") + 
+                                "~nreferencia3= " + S-Referencia3 +
+                                "~nreferencia3data= " + Almcmov.NroRf3 +
+                                "~nhora= " + Almcmov.HorRcp +
+                                "~nreferencia1= " + S-Referencia1 +
+                                "~nreferencia1data= " + Almcmov.NroRf1 +
+                                "~nmoneda= " + s-moneda +
+                                "~nobservaciones= " + Almcmov.Observ +
+                                "~nresponsable= " + S-Encargado +
+                                "~nusuario= " + Almcmov.usuario.
+
+    RB-REPORT-LIBRARY = s-report-library + "vta2/rbvta2.prl".
+    RB-REPORT-NAME = "".
+
+    /* Borar el temporal */
+    DEF BUFFER B-w-report FOR w-report.
+    DEFINE VAR lRowId AS ROWID.
+
+    FOR EACH w-report WHERE w-report.task-no = s-task-no NO-LOCK:
+        lRowId = ROWID(w-report).  
+        FIND FIRST b-w-report WHERE ROWID(b-w-report) = lRowid EXCLUSIVE NO-ERROR.   
+        IF AVAILABLE b-w-report THEN DO:
+            DELETE b-w-report.            
+        END.    
+    END.
+    RELEASE B-w-report.
+
+
+    RETURN 'OK'.
+
+
+END PROCEDURE.
+
+/*
+
+DEFINE VARIABLE cDatabaseName    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cHostName        AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNetworkProto    AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cPortNumber      AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cOtherParams     AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cNewConnString   AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cDelimeter       AS CHARACTER NO-UNDO.
+
+DEFINE VAR cNombreDelReporte AS CHAR.
+DEFINE VAR iCopias AS INT.
+DEFINE VAR iCopia AS INT.
+
+GET-KEY-VALUE SECTION "RBParametros" KEY "cDatabaseName" VALUE cDatabaseName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cHostName" VALUE cHostName.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cNetworkProto" VALUE cNetworkProto.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cPortNumber" VALUE cPortNumber.
+GET-KEY-VALUE SECTION "RBParametros" KEY "cOtherParams" VALUE cOtherParams.
+
+ASSIGN cDelimeter = CHR(32).
+IF NOT (cDatabaseName = ? OR cHostName = ? OR cNetworkProto = ? OR cPortNumber = ?) THEN DO:
+    DEFINE VAR x-rb-user AS CHAR.
+    DEFINE VAR x-rb-pass AS CHAR.
+
+    RUN lib/RB_credenciales(OUTPUT x-rb-user, OUTPUT x-rb-pass).
+    IF x-rb-user = "**NOUSER**" THEN DO:
+        pError = "No se pudieron ubicar las credenciales para" + CHR(10) +
+                "la conexion del REPORTBUILDER" + CHR(10) +
+                "--------------------------------------------" + CHR(10) +
+                "Comunicarse con el area de sistemas - desarrollo".
+        RETURN "ADM-ERROR".
+    END.
+
+    /*cHostName = "192.168.100.208".*/
+
+   ASSIGN
+       cNewConnString =
+       "-db" + cDelimeter + cDatabaseName + cDelimeter +
+       "-H" + cDelimeter + cHostName + cDelimeter +
+       "-N" + cDelimeter + cNetworkProto + cDelimeter +
+       "-S" + cDelimeter + cPortNumber + cDelimeter +
+       "-U " + x-rb-user  + cDelimeter + cDelimeter +
+       "-P " + x-rb-pass + cDelimeter + cDelimeter.
+
+   IF cOtherParams > '' THEN cNewConnString = cNewConnString + cOtherParams + cDelimeter.
+   RB-DB-CONNECTION = cNewConnString.
+END.
+/*MESSAGE cNewConnString.*/
+
+cNombreDelReporte = "gre_A4".
+IF cRespuestaSunat = "ENVIADO A SUNAT" THEN DO:
+    cNombreDelReporte = "gre_A4_PGRE".
+END.
+ASSIGN
+    RB-REPORT-LIBRARY = s-report-library + "gre/gre_rpt.prl"
+    RB-REPORT-NAME = cNombreDelReporte  /*"gre_A4"*/
+    RB-INCLUDE-RECORDS = "O"
+    RB-FILTER = " w-report.task-no = " + STRING(s-task-no) /*+  
+                  " AND w-report.llave-c = '" + "T" + STRING(x-gre_header.serieGuia,"999") + "-" + STRING(x-gre_header.numeroGuia,"99999999") + "'"*/
+    RB-BEGIN-PAGE = s-pagina-inicial
+    RB-END-PAGE = s-pagina-final
+    RB-PRINTER-NAME = s-port-name       /*s-printer-name*/
+    RB-OUTPUT-FILE = s-print-file
+    RB-NUMBER-COPIES = s-nro-copias.
+                               .
+IF USERID("DICTDB") = "ADMIN" OR USERID("DICTDB") = "MASTER" THEN DO:
+    /*s-salida-impresion = 1.*/
+END.
+
+CASE s-salida-impresion:
+  WHEN 1 THEN RB-PRINT-DESTINATION = "D".     /* Pantalla */
+  WHEN 2 THEN RB-PRINT-DESTINATION = "".      /* Impresora */
+  WHEN 3 THEN RB-PRINT-DESTINATION = "A".     /* Archivo */
+END CASE.
+
+IF s-salida-impresion <> 2 THEN DO:
+    cCopias = "DIGITAL".
+END.
+
+iCopias = NUM-ENTRIES(cCopias,",").
+IF USERID("DICTDB") = "ADMIN" OR USERID("DICTDB") = "MASTER" THEN DO:
+    RB-PRINT-DESTINATION = "D".
+END.
+
+IF RB-PRINT-DESTINATION = "D" THEN iCopias = 1.
+
+REPEAT iCopia = 1 TO iCopias:
+    cCopia = ENTRY(iCopia,cCopias,",").
+    /*cObservaciones = "".*/
+    ASSIGN RB-OTHER-PARAMETERS = "cDataQR = " + cPathGraficoQR +
+                                    "~ncTextoResolucionSunat= " + cTextoResolucionSunat +
+                                    "~ncOrden= " + cOrden + 
+                                    "~ncOrdenLabel= " + cOrdenLabel +
+                                    "~ncOrdenRef= " + cOrdenRef +
+                                    "~ncOrdenRefLabel= " + cOrdenRefLabel +
+                                    "~ncDireccionEntrega= " + cDireccionEntrega +
+                                    "~ncAgenciaTransporte= " + cAgenciaTransporte +
+                                    "~ncContacto= " + cContacto +
+                                    "~ncHora= " + cHora +
+                                    "~ncObservacionDeEnvio=" + cObservacionDeEnvio + 
+                                    "~ncObservaciones= " + cObservaciones +
+                                    "~ncSerieNumeroGRE= " + cSerieNumeroGRE +
+                                    "~ncCopia= " + cCopia +
+                                    "~ncMensajeAdicional= " + cMensajeAdicional + 
+                                    "~ncUsuarioImpresion= " + cUsuarioImpresion + 
+                                    "~ncAlmacenDestino= " + cAlmacenDestino +
+                                    "~ncCrossDocking= " + cCrossDocking.
+
+    RUN aderb/_prntrb2 (RB-REPORT-LIBRARY,
+                      RB-REPORT-NAME,
+                      RB-DB-CONNECTION,
+                      RB-INCLUDE-RECORDS,
+                      RB-FILTER,
+                      RB-MEMO-FILE,
+                      RB-PRINT-DESTINATION,
+                      RB-PRINTER-NAME,
+                      RB-PRINTER-PORT,
+                      RB-OUTPUT-FILE,
+                      RB-NUMBER-COPIES,
+                      RB-BEGIN-PAGE,
+                      RB-END-PAGE,
+                      RB-TEST-PATTERN,
+                      RB-WINDOW-TITLE,
+                      RB-DISPLAY-ERRORS,
+                      RB-DISPLAY-STATUS,
+                      RB-NO-WAIT,
+                      RB-OTHER-PARAMETERS,  
+                      "").
+END.
+
+/* */
+CREATE gre_header_impresiones.
+    ASSIGN gre_header_impresiones.ncorrelativo = x-gre_header.ncorrelatio
+            gre_header_impresiones.usuario = USERID("dictdb")
+            gre_header_impresiones.numid_log = pRCID
+            gre_header_impresiones.copias = cCopia.
+
+RELEASE gre_header_impresiones.
+
+/* Borar el temporal */
+DEF BUFFER B-w-report FOR w-report.
+DEFINE VAR lRowId AS ROWID.
+
+FOR EACH w-report WHERE w-report.task-no = s-task-no NO-LOCK:
+    lRowId = ROWID(w-report).  
+    FIND FIRST b-w-report WHERE ROWID(b-w-report) = lRowid EXCLUSIVE NO-ERROR.   
+    IF AVAILABLE b-w-report THEN DO:
+        DELETE b-w-report.            
+    END.    
+END.
+RELEASE B-w-report.
+
+
+RETURN 'OK'.
+  
+*/
+
+/*
+        Almmmatg.ArtPro    FORMAT "X(12)"
+         Almdmov.CodMat     AT  14 FORMAT "X(6)"
+         Almdmov.CanDes     AT  22 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  35 FORMAT "X(4)"          
+         Almmmatg.DesMat    AT  41 FORMAT "X(50)"
+         Almmmatg.Desmar    AT  91 FORMAT 'x(20)'
+         Almmmatg.CatConta[1] AT 115 FORMAT 'x(3)'
+         Almmmate.CodUbi    AT  124
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52 "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */         
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         " COD.PROV.   CODIGO    CANTIDAD    UND.                  DESCRIPCION                          M A R C A           CC      UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+
+
+
+    ASSIGN RB-OTHER-PARAMETERS = "cDataQR = " + cPathGraficoQR +
+                                    "~ncTextoResolucionSunat= " + cTextoResolucionSunat +
+                                    "~ncOrden= " + cOrden + 
+                                    "~ncOrdenLabel= " + cOrdenLabel +
+                                    "~ncOrdenRef= " + cOrdenRef +
+                                    "~ncOrdenRefLabel= " + cOrdenRefLabel +
+                                    "~ncDireccionEntrega= " + cDireccionEntrega +
+                                    "~ncAgenciaTransporte= " + cAgenciaTransporte +
+                                    "~ncContacto= " + cContacto +
+                                    "~ncHora= " + cHora +
+                                    "~ncObservacionDeEnvio=" + cObservacionDeEnvio + 
+                                    "~ncObservaciones= " + cObservaciones +
+                                    "~ncSerieNumeroGRE= " + cSerieNumeroGRE +
+                                    "~ncCopia= " + cCopia +
+                                    "~ncMensajeAdicional= " + cMensajeAdicional + 
+                                    "~ncUsuarioImpresion= " + cUsuarioImpresion + 
+                                    "~ncAlmacenDestino= " + cAlmacenDestino +
+                                    "~ncCrossDocking= " + cCrossDocking.
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-2) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-2 Procedure 
+PROCEDURE Formato-2 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+  DEFINE FRAME F-FMT
+         Almmmatg.Artpro FORMAT "X(10)"         
+         Almdmov.CodMat     AT  11 FORMAT "X(6)"
+         Almdmov.CanDes     AT  18 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  29 FORMAT "X(4)" 
+         Almmmatg.DesMat    AT  34 FORMAT "X(35)"
+         Almmmatg.Desmar    AT  71 FORMAT "X(10)"
+         Almmmatg.CatConta[1] AT 82 FORMAT "X(3)"
+         Almdmov.Prelis     AT  86 FORMAT ">,>>>.9999"
+         Almdmov.Dsctos[1]  AT  98 FORMAT ">>.99"
+         Almdmov.Dsctos[2]  AT 104 FORMAT ">>.99"
+         Almdmov.Dsctos[3]  AT 110 FORMAT ">>.99"  
+         Almdmov.Igvmat     AT 117 FORMAT ">>.99" 
+/*       Almdmov.ImpCto     AT 120 FORMAT ">,>>>,>>9.99"*/
+         S-SUBTO            AT 123 FORMAT ">,>>>,>>9.99"
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-------------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "Cod.Pro. CODIGO  CANTIDAD  UND.            DESCRIPCION                  MARCA    CC VALOR VENTA DSCT1 DSCT2 DSCT3  I.G.V.   TOTAL NETO" SKIP
+         "--------------------------------------------------------------------------------------------------------------------------------------" SKIP        
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13 */
+        /*1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890 */
+        /*1234567890123456  1234           123                                  1234567890 123 >,>>>.9999  >>.99 >>.99 >>.99  >>.99 >,>>>,>>9.99 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:  
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+            Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+            Almdmov.NroDoc = Almcmov.NroDoc:
+            FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                 Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+            W-VTA0 = almdmov.prelis * (1 - (Almdmov.dsctos[1] / 100)).
+            W-VTA1 = w-vta0  * (1 - (Almdmov.dsctos[2] / 100)).
+            W-VTA2 = w-vta1  * (1 - (Almdmov.dsctos[3] / 100)).
+            IF Almmmatg.AftIgv THEN    
+                S-SUBTO = ROUND(( W-VTA2 + ( W-VTA2 * (Almdmov.IgvMat / 100 ))) * ALMDMOV.CANDES,2).
+            ELSE 
+                S-SUBTO = ROUND( W-VTA2  * ALMDMOV.CANDES,2).
+            S-TOTAL = S-TOTAL + S-SUBTO.
+            DISPLAY STREAM Reporte 
+                    Almdmov.CodMat 
+                    Almdmov.CanDes 
+                    Almdmov.CodUnd 
+                    Almmmatg.ArtPro 
+                    Almmmatg.DesMat 
+                    Almmmatg.Desmar
+                    Almmmatg.CaTConta[1]
+                    Almdmov.Prelis  
+                    Almdmov.Dsctos[1]
+                    Almdmov.Dsctos[2]
+                    Almdmov.Dsctos[3]
+                    Almdmov.Igvmat
+                    S-SUBTO WITH FRAME F-FMT.
+            DOWN STREAM Reporte WITH FRAME F-FMT.
+            FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+     PUT STREAM Reporte "------------" AT 123 skip.
+     PUT STREAM Reporte S-MON AT 118 S-TOTAL FORMAT ">,>>>,>>9.99" AT 123 SKIP.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 4 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------       -----------------       -----------------      -----------------"  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                 Vo. Bo.                  Vo. Bo.               Vo. Bo.     "  AT 10 SKIP.
+  PUT STREAM Reporte Almcmov.usuario AT 18 "JEFE ALMACEN             CONTABILIDAD            GERENCIA     "  AT 40 SKIP.
+  PUT STREAM Reporte " ** TESORERIA ** " AT 119 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-3) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-3 Procedure 
+PROCEDURE Formato-3 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+  DEFINE FRAME F-FMT
+         Almmmatg.Artpro FORMAT "X(10)"         
+         Almdmov.CodMat     AT  11 FORMAT "X(6)"
+         Almdmov.CanDes     AT  18 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  29 FORMAT "X(4)" 
+         Almmmatg.DesMat    AT  34 FORMAT "X(35)"
+         Almmmatg.Desmar    AT  71 FORMAT "X(10)"
+         Almdmov.Prelis     AT  83 FORMAT ">,>>>.9999"
+         Almdmov.Dsctos[1]  AT  95 FORMAT ">>.99"
+         Almdmov.Dsctos[2]  AT 101 FORMAT ">>.99"
+         Almdmov.Dsctos[3]  AT 107 FORMAT ">>.99"  
+         Almdmov.Igvmat     AT 114 FORMAT ">>.99" 
+/*       Almdmov.ImpCto     AT 120 FORMAT ">,>>>,>>9.99"*/
+         S-SUBTO            AT 120 FORMAT ">,>>>,>>9.99"
+         HEADER
+         S-NOMCIA FORMAT "X(45)" 
+         "SALIDA  No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )"  AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "Cod.Pro. CODIGO  CANTIDAD  UND.            DESCRIPCION                  MARCA    VALOR VENTA DSCT1 DSCT2 DSCT3  I.G.V.   TOTAL NETO" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP        
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:  
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+/*              S-TOTAL = S-TOTAL + Almdmov.ImpCto.*/                
+                W-VTA0 = almdmov.prelis * (1 - (Almdmov.dsctos[1] / 100)).
+                W-VTA1 = w-vta0  * (1 - (Almdmov.dsctos[2] / 100)).
+                W-VTA2 = w-vta1  * (1 - (Almdmov.dsctos[3] / 100)).
+                S-SUBTO = ROUND(( W-VTA2 + ( W-VTA2 * (Almdmov.IgvMat / 100 ))) * ALMDMOV.CANDES,2).
+                S-TOTAL = S-TOTAL + S-SUBTO.
+
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmatg.Desmar
+                   Almdmov.Prelis  
+                   Almdmov.Dsctos[1]
+                   Almdmov.Dsctos[2]
+                   Almdmov.Dsctos[3]
+                   Almdmov.Igvmat
+/*                 Almdmov.ImpCto */
+                   S-SUBTO WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+     PUT STREAM Reporte "------------" AT 120 skip.
+     PUT STREAM Reporte S-MON AT 115 S-TOTAL FORMAT ">,>>>,>>9.99" AT 120 SKIP.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 4 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------       -----------------       -----------------      -----------------"  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                 Vo. Bo.                  Vo. Bo.               Vo. Bo.     "  AT 10 SKIP.
+  PUT STREAM Reporte Almcmov.usuario AT 18 "JEFE ALMACEN             CONTABILIDAD            GERENCIA     "  AT 40 SKIP.
+  PUT STREAM Reporte " ** TESORERIA ** " AT 119 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-4) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-4 Procedure 
+PROCEDURE Formato-4 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEFINE FRAME F-FMT
+         S-Item             AT  1   FORMAT "ZZ9"
+         Almdmov.CodMat     AT  6   FORMAT "X(6)"
+         Almmmatg.DesMat    AT  14  FORMAT "X(50)"
+         Almmmatg.Desmar    AT  65  FORMAT "X(15)"
+         Almdmov.CodUnd     AT  82  FORMAT "X(4)"          
+         Almmmatg.CanEmp    AT  88  FORMAT ">>,>>9.99"
+         Almdmov.CanDes     AT  99  FORMAT ">>>,>>9.99" 
+         "__________"       AT  111  
+         Almmmate.CodUbi    AT  125 FORMAT "X(6)"
+         HEADER
+         S-NOMCIA FORMAT "X(45)" SKIP
+         "( " + S-DESALM + " )" FORMAT "X(50)" 
+         S-Movimiento  AT 52  /*"Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9"*/ SKIP
+         "( PRE - DESPACHO )" AT 58 SKIP
+         "Nro Documento : " AT 105 Almcmov.Nroser AT 121 "-" AT 124 Almcmov.NroDoc AT 125 FORMAT "9999999" SKIP         
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" 
+         "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 
+         "Almacen Salida  : " AT 79 S-CODALM AT 99       
+         "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "ITEM CODIGO                DESCRIPCION                             M A R C A     UND.    EMPAQUE    CANTIDAD  DESPACHADO  UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+/*           99  999999 12345678901234567890123456789012345678901234567890 123456789012345  81                                       
+               6      13                                                  65 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           S-Item = S-Item + 1.     
+           DISPLAY STREAM Reporte 
+                   S-Item 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmatg.CanEmp
+                   Almmmate.CodUbi
+                   Almmmatg.Desmar WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 4 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------            -----------------             -----------------       "  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                    Despachador                     Vo. Bo.            "  AT 10 SKIP.
+  PUT STREAM Reporte  Almcmov.usuario AT 18 "JEFE ALMACEN         "  AT 75 SKIP.
+  PUT STREAM Reporte " ** ALMACEN ** " AT 121 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-C) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-C Procedure 
+PROCEDURE Formato-C :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEF VAR x-ImpMn1 AS DEC NO-UNDO.
+  
+  S-TOTAL = 0.
+  DEFINE VAR F-MONEDA AS CHAR FORMAT "X(4)".
+  
+  DEFINE FRAME F-FMT
+         Almmmatg.Artpro FORMAT "X(09)"
+         Almdmov.CodMat     FORMAT "X(6)"
+         Almdmov.CanDes     FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     FORMAT "X(4)" 
+         Almmmatg.DesMat    FORMAT "X(47)"
+         Almmmatg.Desmar    FORMAT "X(20)"
+         Almmmatg.CatConta[1] FORMAT 'X(3)'
+         F-MONEDA           FORMAT "X(4)" 
+         Almdmov.Prelis     FORMAT ">>,>>>.9999"
+         /*Almdmov.ImpMn1     FORMAT ">,>>>,>>9.99"*/
+         x-ImpMn1           FORMAT ">,>>>,>>9.99"
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(Reporte) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99 "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99 "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79  "Tpo.Cam : " AT 113 Almdmov.TpoCmb AT 123 FORMAT ">>9.9999" SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "---------------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "Cod.Pro.  CODIGO  CANTIDAD  UND.              DESCRIPCION                        M A R C A            CC  MON  VALOR VENTA  IMPORTE S/." SKIP
+         "---------------------------------------------------------------------------------------------------------------------------------------" SKIP
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13*/
+        /*1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
+        /*123456789 123456 >>>,>>9.99 1234 12345678901234567890123456789012345678901234567 12345678901234567890 123 123 >>,>>>.9999 >,>>>,>>9.99 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.
+
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+                           Almdmov.CodAlm = Almcmov.CodAlm AND
+                           Almdmov.TipMov = Almcmov.TipMov AND
+                           Almdmov.CodMov = Almcmov.CodMov AND
+                           Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+
+  IF AVAILABLE Almdmov THEN DO:  
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.  
+     REPEAT WHILE  AVAILABLE  AlmDMov AND 
+                   Almdmov.CodAlm = Almcmov.CodAlm AND
+                   Almdmov.TipMov = Almcmov.TipMov AND 
+                   Almdmov.CodMov = Almcmov.CodMov AND
+                   Almdmov.NroDoc = Almcmov.NroDoc:
+
+           FIND FIRST Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                      Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+            
+           IF Almdmov.codmon = 1
+           THEN x-ImpMn1 = Almdmov.ImpCto.
+           ELSE x-ImpMn1 = Almdmov.ImpCto * Almdmov.TpoCmb.
+           
+           S-TOTAL = S-TOTAL + x-ImpMn1.        /*Almdmov.ImpMn1.*/
+            
+           IF ALMDMOV.CODMON = 1 THEN F-MONEDA = "S/.".
+           ELSE F-MONEDA = "US$.".                 
+           DISPLAY stream Reporte
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmatg.Desmar
+                   Almmmatg.CatConta[1]
+                   F-MONEDA
+                   Almdmov.Prelis
+                   /*Almdmov.ImpMn1*/
+                   x-ImpMn1
+                   WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+     PUT STREAM Reporte "------------" AT 120 skip.
+     PUT STREAM Reporte S-TOTAL FORMAT ">,>>>,>>9.99" AT 120 SKIP.     
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------       -----------------       -----------------      -----------------"  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                 Vo. Bo.                  Vo. Bo.               Vo. Bo.     "  AT 10 SKIP.
+  PUT STREAM Reporte Almcmov.usuario AT 18 "JEFE ALMACEN             CONTABILIDAD            GERENCIA     "  AT 40 SKIP.
+  PUT STREAM Reporte " ** CONTABILIDAD ** " AT 119 SKIP.
+
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-C2) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-C2 Procedure 
+PROCEDURE Formato-C2 :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEF VAR x-ImpMn1 AS DEC NO-UNDO.
+  
+  S-TOTAL = 0.
+  DEFINE VAR F-MONEDA AS CHAR FORMAT "X(4)".
+  
+  DEFINE FRAME F-FMT
+         Almmmatg.Artpro FORMAT "X(09)"
+         Almdmov.CodMat     FORMAT "X(6)"
+         Almdmov.CanDes     FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     FORMAT "X(4)" 
+         Almmmatg.DesMat    FORMAT "X(47)"
+         Almmmatg.Desmar    FORMAT "X(20)"
+         Almmmatg.CatConta[1] FORMAT 'X(3)'
+         F-MONEDA           FORMAT "X(4)" 
+         Almdmov.Prelis     FORMAT ">>,>>>.9999"
+         /*Almdmov.ImpMn1     FORMAT ">,>>>,>>9.99"*/
+         x-ImpMn1           FORMAT ">,>>>,>>9.99"
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "SALIDA No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52  "Pag. " AT 108 PAGE-NUMBER(Reporte) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Salida : " AT 79 S-CODALM AT 99 "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79  "Tpo.Cam : " AT 113 Almdmov.TpoCmb AT 123 FORMAT ">>9.9999" SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "---------------------------------------------------------------------------------------------------------------------------------------" SKIP
+         "Cod.Pro.  CODIGO  CANTIDAD  UND.              DESCRIPCION                        M A R C A            CC  MON  VALOR VENTA  IMPORTE S/." SKIP
+         "---------------------------------------------------------------------------------------------------------------------------------------" SKIP
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13*/
+        /*1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
+        /*123456789 123456 >>>,>>9.99 1234 12345678901234567890123456789012345678901234567 12345678901234567890 123 123 >>,>>>.9999 >,>>>,>>9.99 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.
+
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 30.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+                           Almdmov.CodAlm = Almcmov.CodAlm AND
+                           Almdmov.TipMov = Almcmov.TipMov AND
+                           Almdmov.CodMov = Almcmov.CodMov AND
+                           Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+
+  IF AVAILABLE Almdmov THEN DO:  
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.  
+     REPEAT WHILE  AVAILABLE  AlmDMov AND 
+                   Almdmov.CodAlm = Almcmov.CodAlm AND
+                   Almdmov.TipMov = Almcmov.TipMov AND 
+                   Almdmov.CodMov = Almcmov.CodMov AND
+                   Almdmov.NroDoc = Almcmov.NroDoc:
+
+           FIND FIRST Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                      Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+            
+           IF Almdmov.codmon = 1
+           THEN x-ImpMn1 = Almdmov.ImpCto.
+           ELSE x-ImpMn1 = Almdmov.ImpCto * Almdmov.TpoCmb.
+           
+           S-TOTAL = S-TOTAL + x-ImpMn1.        /*Almdmov.ImpMn1.*/
+            
+           IF ALMDMOV.CODMON = 1 THEN F-MONEDA = "S/.".
+           ELSE F-MONEDA = "US$.".                 
+           DISPLAY stream Reporte
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmatg.Desmar
+                   Almmmatg.CatConta[1]
+                   F-MONEDA
+                   Almdmov.Prelis
+                   /*Almdmov.ImpMn1*/
+                   x-ImpMn1
+                   WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01.
+     END.
+     PUT STREAM Reporte "------------" AT 120 skip.
+     PUT STREAM Reporte S-TOTAL FORMAT ">,>>>,>>9.99" AT 120 SKIP.     
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------       -----------------       -----------------      -----------------"  AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                 Vo. Bo.                  Vo. Bo.               Vo. Bo.     "  AT 10 SKIP.
+  PUT STREAM Reporte Almcmov.usuario AT 18 "JEFE ALMACEN             CONTABILIDAD            GERENCIA     "  AT 40 SKIP.
+  PUT STREAM Reporte " ** CONTABILIDAD ** " AT 119 SKIP.
+
+  OUTPUT STREAM Reporte CLOSE.
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Formato-P) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Formato-P Procedure 
+PROCEDURE Formato-P :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  DEFINE FRAME F-FMT
+         Almmmatg.ArtPro    FORMAT "X(12)"
+         Almdmov.CodMat     AT  14 FORMAT "X(6)"
+         Almdmov.CanDes     AT  22 FORMAT ">>>,>>9.99" 
+         Almdmov.CodUnd     AT  35 FORMAT "X(4)"          
+         Almmmatg.DesMat    AT  41 FORMAT "X(50)"
+         Almmmatg.Desmar    AT  91 FORMAT 'x(20)'
+         Almmmatg.CatConta[1] AT 115 FORMAT 'x(3)'
+         Almmmate.CodUbi    AT  124
+         HEADER
+         {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN7B} + {&PRN6B} FORMAT "X(45)" SKIP
+         "INGRESO No. : " AT 96 Almcmov.NroDoc AT 114 FORMAT "9999999" SKIP
+         "( " + S-CODALM + " )" AT 5 FORMAT "X(20)" 
+         S-Movimiento  AT 52 "Pag. " AT 108 PAGE-NUMBER(REPORTE) FORMAT ">>9" SKIP(1)
+         S-PROCEDENCIA AT 1 FORMAT "X(70)" S-RUC AT 79 "Fecha : " AT 113 Almcmov.FchDoc AT 121 SKIP
+         /*S-Referencia2 AT 1 ": " Almcmov.NroRf2  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP */         
+         S-Referencia3 AT 1 ": " Almcmov.NroRf3  AT 20 "Almacen Ingreso : " AT 79 S-CODALM AT 99       "Hora  : " AT 113 Almcmov.HorRcp AT 121 SKIP 
+         S-Referencia1 AT 1 ": " Almcmov.NroRf1  AT 20 S-MONEDA AT 79 SKIP
+         "Observaciones    : " AT 1 Almcmov.Observ  AT 20 "Responsable     : " AT 79 S-Encargado AT 99 SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+         " COD.PROV.   CODIGO    CANTIDAD    UND.                  DESCRIPCION                          M A R C A           CC      UBICACION" SKIP
+         "-----------------------------------------------------------------------------------------------------------------------------------" SKIP
+        /*         1         2         3         4         5         6         7         8         9        10        11        12        13        14*/ 
+        /*12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
+        /*123456789012 123456  >>>,>>9.99   1234  1234567890123456789012345678901234567890123456789012345678901234567890    123      123 */
+         WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 145 STREAM-IO DOWN.         
+         
+  OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 31.
+  FIND FIRST Almdmov WHERE Almdmov.CodCia = Almcmov.CodCia AND
+             Almdmov.CodAlm = Almcmov.CodAlm AND
+             Almdmov.TipMov = Almcmov.TipMov AND
+             Almdmov.CodMov = Almcmov.CodMov AND
+             Almdmov.NroDoc = Almcmov.NroDoc USE-INDEX Almd01 NO-LOCK NO-ERROR.
+  IF AVAILABLE Almdmov THEN DO:
+     PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+     REPEAT WHILE  AVAILABLE  AlmDMov      AND Almdmov.CodAlm = Almcmov.CodAlm AND
+           Almdmov.TipMov = Almcmov.TipMov AND Almdmov.CodMov = Almcmov.CodMov AND
+           Almdmov.NroDoc = Almcmov.NroDoc:
+           FIND Almmmatg WHERE Almmmatg.CodCia = Almdmov.CodCia AND
+                Almmmatg.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           FIND Almmmate WHERE Almmmate.Codcia = Almdmov.CodCia AND
+                Almmmate.CodAlm = S-CODALM AND
+                Almmmate.CodMat = Almdmov.CodMat NO-LOCK NO-ERROR.
+           DISPLAY STREAM Reporte 
+                   Almdmov.CodMat 
+                   Almdmov.CanDes 
+                   Almdmov.CodUnd 
+                   Almmmatg.ArtPro 
+                   Almmmatg.DesMat 
+                   Almmmate.CodUbi
+                   Almmmatg.Desmar 
+                   Almmmatg.CatConta[1]
+                   WITH FRAME F-FMT.
+           DOWN STREAM Reporte WITH FRAME F-FMT.
+           FIND NEXT Almdmov USE-INDEX Almd01. 
+     END.
+  END.
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 6 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "    -----------------            -----------------            -----------------            ----------------- " AT 10 SKIP.
+  PUT STREAM Reporte "        Operador                      Recibido                      Vo. Bo.                   ADMINISTRADOR  " AT 10 SKIP.
+  PUT STREAM Reporte  Almcmov.usuario AT 18 "JEFE ALMACEN         "  AT 75 SKIP.
+  PUT STREAM Reporte " ** PROVEEDOR ** " AT 121 SKIP.
+  OUTPUT STREAM Reporte CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Imprime_FR) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Imprime_FR Procedure 
+PROCEDURE Imprime_FR :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  FIND almcmov WHERE ROWID(almcmov) = X-Rowid NO-LOCK.
+ 
+  IF almcmov.Codmon = 1 THEN DO:
+     S-Moneda = "Compra en       :   SOLES".
+     S-Mon    = "S/.".
+  END.
+  ELSE DO:
+     S-Moneda = "Compra en       :   DOLARES".
+     S-Mon    = "US$.".
+  END.
+     
+       
+  FIND FIRST Almtmovm WHERE  Almtmovm.CodCia = Almcmov.CodCia AND
+             Almtmovm.Tipmov = Almcmov.TipMov AND 
+             Almtmovm.Codmov = Almcmov.CodMov NO-LOCK NO-ERROR.
+  IF AVAILABLE Almtmovm THEN DO:
+     S-Movimiento = Almcmov.TipMov + STRING(Almcmov.CodMov,"99") + "-" + CAPS(Almtmovm.Desmov).
+     IF Almtmovm.PidCli THEN DO:
+        FIND gn-clie WHERE gn-clie.CodCia = 0 AND 
+             gn-clie.CodCli = Almcmov.CodCli NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE gn-clie THEN 
+           FIND gn-clie WHERE gn-clie.CodCia = Almcmov.CodCia AND 
+                gn-clie.CodCli = Almcmov.CodCli NO-LOCK NO-ERROR.
+        IF AVAILABLE gn-clie THEN DO: 
+            S-Procedencia = "Cliente          : " + gn-clie.NomCli.
+            S-RUC = "R.U.C.          :   " + gn-clie.Ruc.
+        END.
+        IF S-RUC = "" THEN S-RUC = "R.U.C.          :   " + Almcmov.CodCli.
+                                        
+     END.
+     IF Almtmovm.PidPro THEN DO:
+        FIND gn-prov WHERE gn-prov.CodCia = 0 AND 
+             gn-prov.CodPro = Almcmov.CodPro NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE gn-prov THEN 
+          FIND gn-prov WHERE gn-prov.CodCia = Almcmov.CodCia AND 
+               gn-prov.CodPro = Almcmov.CodPro NO-LOCK NO-ERROR.
+        IF AVAILABLE gn-prov THEN DO: 
+            S-Procedencia = "Proveedor        : " + gn-prov.NomPro.
+            S-RUC = "R.U.C.          :   " + gn-prov.Ruc.
+        END.
+        IF S-RUC = "" THEN S-RUC = "R.U.C.          :   " + Almcmov.CodPro.
+
+     END.
+     IF Almtmovm.Movtrf THEN DO:
+        S-Moneda = "".
+        FIND Almacen WHERE Almacen.CodCia = S-CODCIA AND
+             Almacen.CodAlm = Almcmov.AlmDes NO-LOCK NO-ERROR.
+        IF AVAILABLE Almacen THEN DO:
+           IF Almcmov.TipMov = "I" THEN
+              S-Procedencia = "Procedencia      : " + Almcmov.AlmDes + " - " + Almacen.Descripcion.
+           ELSE 
+              S-Procedencia = "Destino          : " + Almcmov.AlmDes + " - " + Almacen.Descripcion.   
+           END.            
+     END.   
+     IF Almtmovm.PidRef1 THEN ASSIGN S-Referencia1 = Almtmovm.GloRf1.
+     IF Almtmovm.PidRef2 THEN ASSIGN S-Referencia2 = Almtmovm.GloRf2.
+     IF Almtmovm.PidRef3 THEN ASSIGN S-Referencia3 = Almtmovm.GloRf3.
+  END.
+
+  IF Almcmov.TipMov = "I" THEN DO:
+/*     IF Almtmovm.PidPCo and ( S-USER-ID = "ADMIN" OR S-USER-ID = "CONTA11"  ) THEN DO:*/
+     IF Almtmovm.PidPCo THEN DO:
+         /* Ic - 17Jun2026
+        RUN Formato-2.     /**** Formato Tesorerìa***/
+        RUN Formato-C.
+        RUN Formato-P.     /**** Formato Proveedor ***/
+        */
+     END.
+     RUN Formato-1.
+
+  END.
+  IF Almcmov.TipMov = "S" THEN DO:
+      CASE Almcmov.CodMov:
+          WHEN 20 OR WHEN 25 OR WHEN 23 OR WHEN 16 THEN RUN Formato-3.
+          WHEN 13 THEN DO:
+              RUN Formato-C2.
+              RUN Formato-4.
+          END.
+          OTHERWISE RUN Formato-4.
+      END CASE.
+
+/*      IF Almcmov.CodMov = 20 OR Almcmov.CodMov = 25 OR Almcmov.CodMov = 23 OR Almcmov.CodMov = 16 THEN RUN Formato-3 . */
+/*      ELSE RUN Formato-4.                                                                                              */
+  END.   
+  
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

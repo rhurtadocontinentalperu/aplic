@@ -1,0 +1,319 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-fact01.p
+    Purpose     : Impresion de Fact/Boletas 
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia AS INT.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+DEF SHARED VAR cl-codcia AS INT.
+
+DEF VAR I-NroItm AS INTEGER.
+DEF VAR X-TOTAL AS DECIMAL.
+DEF VAR X-SUMA  AS CHAR.
+Def var x-fchdoc as date.
+Def var x-fchvto as date.
+Def var x-imptot as decimal.
+
+FIND FIRST ccbcmvto WHERE ROWID(ccbcmvto) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcmvto THEN RETURN.
+FIND gn-clie WHERE gn-clie.codcia = cl-codcia AND
+     gn-clie.codcli = ccbcmvto.codcli NO-LOCK.
+
+/* Definimos impresoras */
+DEFINE VAR s-printer-list AS CHAR.
+DEFINE VAR s-port-list AS CHAR.
+DEFINE VAR s-port-name AS CHAR format "x(20)".
+DEFINE VAR s-printer-count AS INTEGER.
+
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE FRAME F-HdrCJE
+    HEADER
+    SKIP(5)
+    "RELACION DE LETRAS EMITIDAS POR CLIENTE" at 40 
+    "Fecha  : " at 90 today  skip(4)
+    "Canje Nro. :" ccbcmvto.nrodoc space(39)  "Importe :" ccbcmvto.imptot skip
+    "Cliente : " gn-clie.nomcli FORMAT "x(40)" SPACE(10)  " Direccion : "  gn-clie.dircli FORMAT "x(40)" SKIP
+    "     Ruc: " gn-clie.Ruc FORMAT 'x(11)' SKIP(1)
+    "--------------------------------------------------------------------------------------------------------" skip
+    "   Codigo    Numero        Fecha de Emision      Fecha de Vencimiento            Importe                                 "
+    "--------------------------------------------------------------------------------------------------------" skip
+/*  012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890  */
+/*            1         2         3         4         5         6         7         8         9         10        11 */    
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160. 
+/*    "   Nro de Letra      Fecha de Emision   Fecha de Vencimiento    Importe de Letra       " AT 8 SKIP(1) */
+  
+   
+DEFINE FRAME F-DetaCJE
+    I-NroItm FORMAT ">>9" AT 1 
+    ccbdmvto.codref AT 6 
+    ccbdmvto.nroref AT 14 FORMAT 'x(12)'
+    ccbdmvto.fchemi AT 30
+    ccbdmvto.fchvto AT 56
+    ccbdmvto.imptot FORMAT "(>,>>>,>>9.99)"  AT 80 SKIP
+    WITH WIDTH 160 NO-BOX NO-LABELS NO-UNDERLINE STREAM-IO DOWN. 
+
+DEF TEMP-TABLE Detalle LIKE Ccbdmvto
+    FIELD NroItm AS INT.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 5.88
+         WIDTH              = 44.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+DEF VAR cRpta AS LOG NO-UNDO.
+
+SYSTEM-DIALOG PRINTER-SETUP UPDATE cRpta.
+IF cRpta = NO THEN RETURN.
+OUTPUT TO PRINTER PAGED PAGE-SIZE 62.
+
+PUT CONTROL CHR(27) "@".
+PUT CONTROL CHR(27) "C" CHR(66).
+PUT CONTROL CHR(27) CHR(120) 0.
+PUT CONTROL CHR(15).
+
+X-SUMA = "TOTAL " + (IF Ccbcmvto.codmon = 1 THEN 'S/.' ELSE 'US$').
+I-NroItm = 0.
+RUN Carga-Temporal.
+
+FOR EACH Detalle BREAK BY Detalle.TpoRef BY Detalle.NroItm:
+    VIEW FRAME F-HdrCje.
+    ASSIGN
+        I-NroItm = I-NroItm + 1
+        X-TOTAL = X-TOTAL + Detalle.imptot.
+    DISPLAY  
+        I-NroItm 
+        Detalle.CodRef @ ccbdmvto.CodRef 
+        Detalle.NroRef @ ccbdmvto.nroref 
+        Detalle.FchEmi @ ccbdmvto.fchemi
+        Detalle.FchVto @ ccbdmvto.fchvto 
+        Detalle.ImpTot @ ccbdmvto.imptot 
+        WITH FRAME F-DetaCJE.
+    ACCUMULATE Detalle.imptot ( SUB-TOTAL BY Detalle.TpoRef ).
+    IF LAST-OF(Detalle.TpoRef) THEN DO:
+        DOWN 1.
+        UNDERLINE ccbdmvto.imptot WITH FRAME F-DetaCJE.
+        DOWN 1.
+        DISPLAY 
+            X-SUMA @ ccbdmvto.fchvto 
+            ACCUM SUB-TOTAL BY Detalle.TpoRef Detalle.imptot @ ccbdmvto.imptot 
+            WITH FRAME F-DetaCJE.
+        DOWN 1.
+        UNDERLINE ccbdmvto.imptot WITH FRAME F-DetaCJE.
+        DOWN 1.
+        I-NroItm = 0. 
+    END.
+END.
+PAGE.
+OUTPUT CLOSE.
+
+/*
+FOR EACH Detalle BREAK BY Detalle.NroDoc BY Detalle.TpoRef DESCENDING BY Detalle.CodRef:
+    VIEW FRAME F-HdrCje.
+    ASSIGN
+        I-NroItm = I-NroItm + 1
+        X-TOTAL = X-TOTAL + Detalle.imptot.
+    DISPLAY  
+        I-NroItm 
+        Detalle.CodRef @ ccbdmvto.CodRef 
+        Detalle.NroRef @ ccbdmvto.nroref 
+        Detalle.FchEmi @ ccbdmvto.fchemi
+        Detalle.FchVto @ ccbdmvto.fchvto 
+        Detalle.ImpTot @ ccbdmvto.imptot 
+        WITH FRAME F-DetaCJE.
+    ACCUMULATE Detalle.imptot ( SUB-TOTAL BY Detalle.TpoRef ).
+    IF LAST-OF(Detalle.TpoRef) THEN DO:
+        DOWN 1.
+        UNDERLINE ccbdmvto.imptot WITH FRAME F-DetaCJE.
+        DOWN 1.
+        DISPLAY 
+            X-SUMA @ ccbdmvto.fchvto 
+            ACCUM SUB-TOTAL BY Detalle.TpoRef Detalle.imptot @ ccbdmvto.imptot 
+            WITH FRAME F-DetaCJE.
+        DOWN 1.
+        UNDERLINE ccbdmvto.imptot WITH FRAME F-DetaCJE.
+        DOWN 1.
+        I-NroItm = 0. 
+    END.
+END.
+*/
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Temporal) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Temporal Procedure 
+PROCEDURE Carga-Temporal :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+DEF VAR x-NroItm AS INT NO-UNDO.
+DEF VAR x-Factor AS INT NO-UNDO.              
+EMPTY TEMP-TABLE Detalle.    
+
+/* ************************************************************************** */
+/* 1ro. Los comprobantes canjeados */
+/* ************************************************************************** */
+x-NroItm = 0.
+FOR EACH CCBDMVTO NO-LOCK WHERE CCBDMVTO.codcia = ccbcmvto.codcia 
+    AND CCBDMVTO.CODCLI = ccbcmvto.codcli 
+    AND CcbDMvto.CodDoc = CcbcMvto.CodDoc 
+    AND CCBDMVTO.nrodoc = ccbcmvto.nrodoc 
+    AND Ccbdmvto.tporef <> "L":
+    x-NroItm = x-NroItm + 1.
+    CREATE Detalle.
+    BUFFER-COPY Ccbdmvto TO Detalle 
+        ASSIGN 
+        Detalle.NroItm = x-NroItm
+        Detalle.TpoRef = "O".
+    FIND Ccbcdocu WHERE Ccbcdocu.codcia = Ccbdmvto.codcia 
+        AND Ccbcdocu.coddoc = Ccbdmvto.codref 
+        AND Ccbcdocu.nrodoc = Ccbdmvto.nroref NO-LOCK NO-ERROR.
+    IF AVAILABLE CCBCDOCU THEN 
+        ASSIGN
+        Detalle.FchEmi = CcbCDocu.FchDoc
+        Detalle.FchVto = CcbCDocu.FchVto.
+    FIND FacDocum WHERE FacDocum.CodCia = Ccbcdocu.CodCia
+        AND FacDocum.CodDoc = Ccbcdocu.CodDoc
+        NO-LOCK.
+    IF FacDocum.TpoDoc = YES THEN x-Factor = 1.
+    ELSE x-Factor = -1.
+    Detalle.ImpTot = Detalle.ImpTot * x-Factor.
+    /* Corregimos el importe del comprobante y agregamos las aplicaciones antes del canje */
+/*     IF AVAILABLE Ccbcdocu AND Ccbcdocu.ImpTot <> Detalle.ImpTot THEN DO:        */
+/*         ASSIGN                                                                  */
+/*             Detalle.ImpTot = Ccbcdocu.ImpTot.                                   */
+/*         FOR EACH Ccbdcaja NO-LOCK WHERE Ccbdcaja.codcia = s-codcia              */
+/*             AND Ccbdcaja.codref = Ccbcdocu.coddoc                               */
+/*             AND Ccbdcaja.nroref = Ccbcdocu.nrodoc,                              */
+/*             FIRST Ccbccaja OF Ccbdcaja WHERE Ccbccaja.FchDoc <= CcbCMvto.FchDoc */
+/*             AND Ccbccaja.FlgEst <> "A":                                         */
+/*             /* Si es ingreso a caja veamos si tiene una aplicación de N/C */    */
+/*             IF CAN-FIND(FIRST Ccbdmov WHERE Ccbdmov.codcia = Ccbdcaja.codcia    */
+/*                         AND Ccbdmov.coddoc = "N/C"                              */
+/*                         AND Ccbdmov.codref = Ccbdcaja.coddoc                    */
+/*                         AND Ccbdmov.nroref = Ccbdcaja.nrodoc NO-LOCK) THEN DO:  */
+/*                 FOR EACH Ccbdmov NO-LOCK WHERE Ccbdmov.codcia = Ccbdcaja.codcia */
+/*                         AND Ccbdmov.coddoc = "N/C"                              */
+/*                         AND Ccbdmov.codref = Ccbdcaja.coddoc                    */
+/*                         AND Ccbdmov.nroref = Ccbdcaja.nrodoc:                   */
+/*                     x-NroItm = x-NroItm + 1.                                    */
+/*                     CREATE Detalle.                                             */
+/*                     ASSIGN                                                      */
+/*                         Detalle.NroItm = x-NroItm                               */
+/*                         Detalle.TpoRef = "O"                                    */
+/*                         Detalle.CodRef = Ccbdmov.coddoc                         */
+/*                         Detalle.NroRef = Ccbdmov.nrodoc                         */
+/*                         Detalle.ImpTot = Ccbdmov.imptot * (-1 * x-Factor)       */
+/*                         Detalle.FchEmi = Ccbccaja.fchdoc.                       */
+/*                 END.                                                            */
+/*             END.                                                                */
+/*             ELSE DO:                                                            */
+/*                 x-NroItm = x-NroItm + 1.                                        */
+/*                 CREATE Detalle.                                                 */
+/*                 ASSIGN                                                          */
+/*                     Detalle.NroItm = x-NroItm                                   */
+/*                     Detalle.TpoRef = "O"                                        */
+/*                     Detalle.CodRef = Ccbdcaja.coddoc                            */
+/*                     Detalle.NroRef = Ccbdcaja.nrodoc                            */
+/*                     Detalle.ImpTot = Ccbdcaja.imptot * (-1 * x-Factor)          */
+/*                     Detalle.FchEmi = Ccbccaja.fchdoc.                           */
+/*             END.                                                                */
+/*         END.                                                                    */
+/*     END.                                                                        */
+END.
+/* ************************************************************************** */
+/* 2do. Las letras */
+/* ************************************************************************** */
+FOR EACH Ccbcdocu NO-LOCK WHERE Ccbcdocu.codcia = Ccbcmvto.codcia
+    AND Ccbcdocu.coddoc = "LET"
+    AND Ccbcdocu.coddiv = Ccbcmvto.coddiv
+    AND Ccbcdocu.codref = Ccbcmvto.coddoc
+    AND Ccbcdocu.nroref = Ccbcmvto.nrodoc:
+    x-NroItm = x-NroItm + 1.
+    CREATE Detalle.
+    ASSIGN
+        Detalle.NroItm = x-NroItm
+        Detalle.CodCia = Ccbcdocu.codcia
+        Detalle.CodCli = Ccbcdocu.codcli
+        Detalle.CodDiv = Ccbcdocu.coddiv
+        Detalle.CodRef = Ccbcdocu.coddoc
+        Detalle.NroRef = Ccbcdocu.nrodoc
+        Detalle.FchEmi = Ccbcdocu.fchdoc
+        Detalle.FchVto = Ccbcdocu.fchvto
+        Detalle.ImpDoc = Ccbcdocu.imptot
+        Detalle.ImpTot = Ccbcdocu.imptot
+        Detalle.TpoRef = "L".
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

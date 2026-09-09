@@ -1,0 +1,219 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-fact01.p
+    Purpose     : Impresion de Fact/Boletas 
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+DEF SHARED VAR s-codcia AS INT.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+
+Def var x-fchdoc as date.
+Def var x-fchvto as date.
+Def var x-imptot as decimal.
+DEF VAR X-EnLetras AS CHAR FORMAT "x(60)" NO-UNDO.
+DEF VAR detalle as char format "x(30)".
+DEF VAR X-MONEDA as char format "x(4)".
+DEF VAR C-NomCli LIKE gn-clie.nomcli NO-UNDO.
+DEF VAR C-DirCli LIKE gn-clie.dircli NO-UNDO.
+DEF VAR C-RucCli LIKE gn-clie.Ruc    NO-UNDO.
+DEF VAR C-TlfCli LIKE gn-clie.Telfnos[1] NO-UNDO.
+
+DEF VAR C-NomAva LIKE gn-clie.nomcli NO-UNDO.
+DEF VAR C-DirAva LIKE gn-clie.dircli NO-UNDO.
+DEF VAR C-RucAva LIKE gn-clie.Ruc    NO-UNDO.
+DEF VAR C-TlfAva LIKE gn-clie.Telfnos[1] NO-UNDO.
+DEF VAR X-FECHAE  AS CHAR.
+DEF VAR X-FECHAV  AS CHAR.
+
+DEF VAR C-DESDIR as char format "x(20)".
+
+FIND FIRST ccbcmvto WHERE ROWID(ccbcmvto) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE ccbcmvto THEN RETURN.
+
+FIND gn-clie WHERE gn-clie.codcia = 0 AND
+     gn-clie.codcli = ccbcmvto.codcli NO-LOCK.
+
+FIND FIRST CCBDMVTO WHERE CCBDMVTO.codcia = ccbcmvto.codcia and
+                          CCBDMVTO.nrodoc = ccbcmvto.nrodoc NO-LOCK NO-ERROR.
+
+/* Definimos impresoras */
+DEFINE VAR s-printer-list AS CHAR.
+DEFINE VAR s-port-list AS CHAR.
+DEFINE VAR s-port-name AS CHAR format "x(20)".
+DEFINE VAR s-printer-count AS INTEGER.
+
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+
+FIND FacCorre WHERE 
+     FacCorre.CodCia = S-CODCIA AND 
+     FacCorre.CodDiv = S-CODDIV AND
+     FacCorre.CodDoc = ccbcmvto.coddoc AND
+     FacCorre.NroSer = INTEGER(SUBSTRING(ccbcmvto.nrodoc, 1, 3)) NO-LOCK. 
+
+IF LOOKUP(FacCorre.Printer, s-printer-list) = 0 THEN DO:
+   MESSAGE "Impresora " FacCorre.Printer " no esta instalada" VIEW-AS ALERT-BOX ERROR.
+   RETURN.
+END.
+
+s-port-name = ENTRY(LOOKUP(FacCorre.Printer, s-printer-list), s-port-list).
+s-port-name = REPLACE(S-PORT-NAME, ":", "").
+
+/************************  PUNTEROS EN POSICION  *******************************/
+/************************  DEFINICION DE FRAMES  *******************************/
+DEFINE FRAME F-HdrCJE
+    
+    ccbdmvto.nroref AT 30 FORMAT "XXX-XXXXXX"
+    ccbdmvto.codcli AT 45 FORMAT "X(6)"
+    "LIMA"          AT 70
+    /*ccbdmvto.fchemi FORMAT 9999/99/99 AT 90
+    ccbdmvto.fchvto FORMAT 9999/99/99 AT 110*/
+    X-FECHAE        FORMAT "X(10)" AT 88
+    X-FECHAV        FORMAT "X(10)" AT 108
+    x-moneda AT 120
+    ccbdmvto.imptot FORMAT ">,>>>,>>9.99"  AT 124 SKIP(2)
+    x-enletras     AT 39 SKIP
+    "JR. ANDAHUAYLAS 766 LIMA-PERU" AT 100  SKIP
+    C-NomCli       AT 39 SKIP(1)
+    C-RucCli       AT 39
+    C-TlfCli       AT 65 SKIP
+    C-DirCli       AT 39 SKIP (2)     
+    C-NomAva       AT 39 SKIP(1) 
+    C-RucAva       AT 39
+    C-TlfAva       AT 65 SKIP
+    C-DirAva       AT 39 
+    WITH NO-BOX NO-LABELS NO-UNDERLINE STREAM-IO WIDTH 160.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 1.69
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+SESSION:DATE-FORMAT = "ymd".
+OUTPUT TO VALUE(s-port-name) PAGE-SIZE 38.
+PUT CONTROL CHR(27) "@".
+PUT CONTROL CHR(27) "C" CHR(24).
+PUT CONTROL CHR(27) CHR(107) 1.
+PUT CONTROL CHR(27) CHR(80) CHR(15).
+  
+  FOR EACH CCBDMVTO NO-LOCK WHERE 
+              CCBDMVTO.codcia = ccbcmvto.codcia AND
+              CCBDMVTO.CodCli = ccbcmvto.codcli AND
+              CcbDMvto.CodDoc = CcbcMvto.CodDoc AND
+              CCBDMVTO.nrodoc = ccbcmvto.nrodoc AND
+              CCBDMVTO.codRef = "LET"               
+              BREAK BY ccbdmvto.nroref :
+
+      RUN bin/_numero(ccbdmvto.imptot, 2, 1, OUTPUT X-EnLetras).
+      X-EnLetras = X-EnLetras + (IF ccbcmvto.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+      X-FECHAE = STRING(YEAR(CCBDMVTO.FCHEMI),"9999") + "/" + STRING(MONTH(CCBDMVTO.FCHEMI),"99") + "/" + STRING(DAY(CCBDMVTO.FCHEMI),"99").
+      X-FECHAV = STRING(YEAR(CCBDMVTO.FCHVTO),"9999") + "/" + STRING(MONTH(CCBDMVTO.FCHVTO),"99") + "/" + STRING(DAY(CCBDMVTO.FCHVTO),"99").
+      IF ccbcmvto.codmon = 1 THEN  X-MONEDA = "S/.".
+      ELSE X-MONEDA = "US$".
+      ASSIGN C-NomCli = ""
+             C-DirCli = ""
+             C-DESDIR = "".
+      FIND gn-clie WHERE 
+           gn-clie.CodCia = 0 AND 
+           gn-clie.CodCli = CCBDMVTO.CodCli NO-LOCK NO-ERROR.
+    
+      FIND TABDISTR WHERE 
+           CODDEPTO = gn-clie.CodDept  AND
+           CODPROVI = gn-clie.codprov  AND
+           CODDISTR = gn-clie.coddist  NO-LOCK NO-ERROR.
+       ASSIGN C-DESDIR = TABDISTR.NOMDISTR.
+    
+      IF AVAILABLE gn-clie THEN
+         ASSIGN 
+                C-NomCli = gn-clie.NomCli 
+                C-DirCli = gn-clie.DirCli 
+                C-RucCli = gn-clie.Ruc 
+                C-TlfCli = gn-clie.Telfnos[1]
+                C-NomAva = gn-clie.Aval1[1] 
+                C-DirAva = gn-clie.Aval1[2] 
+                C-RucAva = gn-clie.Aval1[3] 
+                C-TlfAva = gn-clie.Aval1[4].
+      DISPLAY   ccbdmvto.NroRef 
+                ccbdmvto.codcli
+                /*ccbdmvto.fchemi 
+                ccbdmvto.fchvto  */
+                X-FECHAE
+                X-FECHAV 
+                X-MONEDA 
+                ccbdmvto.imptot 
+                X-EnLetras 
+                C-NomCli 
+                C-RucCli
+                C-TlfCli
+                C-DirCli
+                C-NomAva 
+                C-RucAva
+                C-TlfAva
+                C-DirAva                 
+                WITH FRAME F-HdrCJE.
+      IF LAST-OF(ccbdmvto.nroref) THEN  PAGE.
+  END.  
+OUTPUT CLOSE.
+SESSION:DATE-FORMAT = "dmy".
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

@@ -1,0 +1,335 @@
+DEFINE SHARED VARIABLE s-codcia AS INTEGER INITIAL 0.
+DEFINE SHARED VARIABLE S-aplic-id LIKE userMod.Modulo.
+DEFINE SHARED VARIABLE s-user-id LIKE _User._Userid.
+
+&IF "{&WINDOW-SYSTEM}" = "MS-WINDOWS" &THEN
+    &GLOBAL-DEFINE skip1                SKIP(.2)
+    &GLOBAL-DEFINE size-rect1           SIZE 52 BY 2
+    &GLOBAL-DEFINE size-rect2           SIZE 60 BY 2
+    &GLOBAL-DEFINE coorde-rect-1        COL 2 ROW 14.5
+    &GLOBAL-DEFINE coorde-rect-2        COL 2 ROW-OF list-cias + 1.5
+    &GLOBAL-DEFINE coorde-b-aceptar1    COL-OF rect-1 + 5 ROW-OF rect-1 + .5
+    &GLOBAL-DEFINE coorde-b-aceptar2    COL-OF rect-2 + 7 ROW-OF rect-2 + .5
+&ELSEIF "{&WINDOW-SYSTEM}" = "OSF/MOTIF" &THEN
+    &GLOBAL-DEFINE skip1                SKIP(.2)
+    &GLOBAL-DEFINE size-rect1           SIZE 45 BY 1.4
+    &GLOBAL-DEFINE size-rect2           SIZE 55 BY 1.4
+    &GLOBAL-DEFINE coorde-rect-1        COL 2 ROW-OF list-cias + 1.5
+    &GLOBAL-DEFINE coorde-rect-2        COL 2 ROW-OF list-cias + 1.5
+    &GLOBAL-DEFINE coorde-b-aceptar1    COL-OF rect-1 + 5 ROW-OF rect-1 + .2
+    &GLOBAL-DEFINE coorde-b-aceptar2    COL-OF rect-2 + 5 ROW-OF rect-2 + .2
+&ELSEIF "{&WINDOW-SYSTEM}" = "TTY" &THEN
+    &GLOBAL-DEFINE skip1                SKIP(1)
+    &GLOBAL-DEFINE size-rect1           SIZE 46 BY 3
+    &GLOBAL-DEFINE size-rect2           SIZE 55 BY 3
+    &GLOBAL-DEFINE coorde-rect-1        COL 1 ROW-OF list-cias + 1.5
+    &GLOBAL-DEFINE coorde-rect-2        COL 2 ROW-OF list-cias + 1.5
+    &GLOBAL-DEFINE coorde-b-aceptar1    COL-OF rect-1 + 5 ROW-OF rect-1 + 1
+    &GLOBAL-DEFINE coorde-b-aceptar2    COL-OF rect-2 + 6 ROW-OF rect-2 + 1
+&ENDIF
+
+/************ Definici¢n de WIDGETS ************/
+
+DEFINE BUTTON b-crear          LABEL "C&rear"      SIZE 13 BY 1.
+DEFINE BUTTON b-modificar   LABEL "&Modificar"  SIZE 13 BY 1.
+DEFINE BUTTON b-eliminar     LABEL "&Eliminar"   SIZE 13 BY 1.
+DEFINE BUTTON b-aceptar      LABEL "&Aceptar"    SIZE 12 BY 1 AUTO-GO.
+DEFINE BUTTON b-cancelar    LABEL "&Cancelar"   SIZE 12 BY 1 AUTO-ENDKEY.
+
+DEFINE VARIABLE sel-usuario     AS CHARACTER VIEW-AS SELECTION-LIST SINGLE
+    SCROLLBAR-VERTICAL SIZE 15 BY 4.5 BGCOLOR 15 FGCOLOR 1.
+DEFINE VARIABLE list-usuario    AS CHARACTER LABEL "Compa¤¡as".
+ 
+DEFINE VARIABLE t-usuario       AS CHARACTER FORMAT "X(12)" LABEL "Usuario".
+DEFINE VARIABLE t-comentario    AS CHARACTER FORMAT "X(30)" LABEL "Comentario".
+DEFINE VARIABLE t-password      AS CHARACTER FORMAT "X(30)" LABEL "Clave".
+
+DEFINE RECTANGLE rect-1 EDGE-PIXELS 4 GRAPHIC-EDGE {&size-rect1} BGCOLOR 8 FGCOLOR 15.
+DEFINE RECTANGLE rect-2 EDGE-PIXELS 4 GRAPHIC-EDGE {&size-rect2} BGCOLOR 8 FGCOLOR 15.
+DEFINE RECTANGLE rect-a EDGE-PIXELS 4 GRAPHIC-EDGE SIZE 52 BY 13 BGCOLOR 8 FGCOLOR 15.
+DEFINE RECTANGLE rect-b EDGE-PIXELS 4 GRAPHIC-EDGE SIZE 60 BY 7 BGCOLOR 8 FGCOLOR 15.
+
+DEFINE VARIABLE x-usuario        LIKE _User._Userid      LABEL "Usuario".
+DEFINE VARIABLE x-User-Name     LIKE _User._User-Name   LABEL "Comentario".
+
+DEFINE VARIABLE i               AS INTEGER.
+DEFINE VARIABLE y-admin         LIKE UserMod.Admin FORMAT "Si/No"
+    LABEL "Administrador".
+DEFINE VARIABLE y-grupo           AS CHARACTER FORMAT "X(20)" 
+    LABEL "Grupo".
+DEFINE VARIABLE x-Password      AS CHARACTER FORMAT "x(12)"
+    LABEL "Password".
+DEFINE VARIABLE list-cias       AS CHARACTER FORMAT "x(12)"
+    LABEL "Lista de  Cia.".
+
+/************ Definici¢n de FRAMES ************/
+
+DEFINE FRAME f-config-usuario
+    rect-a                  AT COL 2 ROW 1.5
+    "Usuarios"         AT COL-OF rect-a  + 5   ROW-OF rect-a + 1
+    sel-usuario         AT COL-OF rect-a + 18 ROW-OF rect-a + 1 NO-LABEL      SKIP(1)
+    t-usuario             AT COL-OF rect-a + 15 ROW-OF rect-a + 6.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    t-comentario       AT COL-OF rect-a + 15 ROW-OF rect-a + 7.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    t-password         AT COL-OF rect-a + 15 ROW-OF rect-a + 8.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    y-Admin              AT COL-OF rect-a + 15 ROW-OF rect-a + 9.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    y-Grupo              AT COL-OF rect-a + 15 ROW-OF rect-a + 10.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    list-cias              AT COL-OF rect-a + 15 ROW-OF rect-a + 11.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP
+    b-crear                AT COL-OF rect-a + 36 ROW-OF rect-a + 1.5
+        HELP "A¤ade usuarios" SKIP(.5)
+    b-modificar             AT COL-OF rect-a + 36 ROW-OF rect-a + 3
+        HELP "Modifica campos del usuario" SKIP(.5)
+    b-eliminar              AT COL-OF rect-a + 36 ROW-OF rect-a + 4.5
+        HELP "Elimina usuarios" SKIP(.5)
+    rect-1                  AT {&coorde-rect-1}     SKIP(.2)
+    b-aceptar               AT {&coorde-b-aceptar1} SPACE(15)
+    b-cancelar              
+       HELP "Regresa a la opci¢n anterior"  
+        WITH VIEW-AS DIALOG-BOX SIDE-LABELS WIDTH 55.5
+            TITLE "CONFIGURACION DE USUARIOS" BGCOLOR 8 FGCOLOR 0 .
+
+FRAME F-config-usuario:THREE-D = yes.
+
+DEFINE FRAME f-detalle
+    rect-b                  AT COL 2 ROW 1.5
+    x-usuario               AT COL-OF rect-b + 15 ROW-OF rect-b + 0.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    x-User-Name             AT COL-OF rect-b + 15 ROW-OF rect-b + 1.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    x-Password      BLANK   AT COL-OF rect-b + 15 ROW-OF rect-b + 2.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    y-Admin                 AT COL-OF rect-b + 15 ROW-OF rect-b + 3.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    y-Grupo                 AT COL-OF rect-b + 15 ROW-OF rect-b + 4.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    list-cias               AT COL-OF rect-b + 15 ROW-OF rect-b + 5.5 COLON-ALIGNED BGCOLOR 15 FGCOLOR 0 SKIP(.2)
+    rect-2                  AT COL 2 ROW 8.5     SPACE(1)    SKIP(.2)
+    b-aceptar               AT {&coorde-b-aceptar2} SPACE(20)
+    b-cancelar
+        HELP "Regresa a la opci¢n anterior"
+        WITH VIEW-AS DIALOG-BOX SIDE-LABELS
+        TITLE "USUARIOS".
+
+FRAME F-detalle:THREE-D = yes.
+
+/************ Definici¢n de TRIGERS ************/
+/*
+ON ENTRY OF sel-usuario IN FRAME f-config-usuario
+    DO:
+        IF SELF:SCREEN-VALUE = ? AND NUM-ENTRIES(List-Usuario) > 0
+        THEN DO:  
+            SELF:SCREEN-VALUE = ENTRY( 1, List-usuario).
+            APPLY "VALUE-CHANGED" TO sel-usuario IN FRAME f-config-usuario.
+        END.
+    END.
+*/
+
+ON VALUE-CHANGED OF sel-usuario IN FRAME f-config-usuario
+    DO:
+        y-Admin      = no.
+        y-Grupo      = "".
+        DISPLAY SELF:SCREEN-VALUE @ t-usuario 
+                "" @ t-comentario
+                "" @ t-password
+            WITH FRAME f-config-usuario.
+        FIND FIRST UserMod WHERE UserMod.Modulo = S-aplic-id
+            AND UserMod.Usuario = sel-usuario:SCREEN-VALUE NO-ERROR.
+        IF AVAILABLE UserMod
+        THEN ASSIGN y-Admin = UserMod.Admin  
+                    y-Grupo = UserMod.Grupo.
+        list-cias = "".
+        FOR EACH UserMod WHERE Usuario = sel-usuario:SCREEN-VALUE
+                           AND UserMod.Modulo = S-aplic-id:
+            list-cias = list-cias + "," + STRING(UserMod.CodCia).
+            list-cias = TRIM(list-cias,",").
+            IF UserMod.CodCia = s-codcia
+            THEN ASSIGN y-Admin = UserMod.Admin  
+                        y-Grupo = UserMod.Grupo.
+        END.
+        DISPLAY y-Admin 
+                y-Grupo 
+                WITH FRAME f-config-usuario.
+        FIND _User WHERE _Userid = sel-usuario:SCREEN-VALUE NO-ERROR.
+        IF AVAILABLE _User THEN DO:
+            DISPLAY _User._User-Name @ t-comentario
+                    list-cias
+                    WITH FRAME f-config-usuario.
+            IF _User._Password = ENCODE("") THEN
+                DISPLAY "Password no asignado" @ t-password 
+                    WITH FRAME f-config-usuario.
+            ELSE DISPLAY "Password asignado" @ t-password
+                     WITH FRAME f-config-usuario.
+        END.
+    END.
+
+ON CHOOSE OF b-crear IN FRAME f-config-usuario OR INSERT OF sel-usuario
+                                                  IN FRAME f-config-usuario
+    DO:                      
+            ASSIGN  x-usuario = " "
+                          x-Password = ""
+                          y-Admin = NO
+                          y-Grupo = ""
+                          list-cias = "".
+            UPDATE x-usuario
+                   x-User-Name
+                   x-Password
+                   y-Admin
+                   y-Grupo 
+                   list-cias
+                   b-aceptar
+                   b-cancelar
+                   WITH FRAME f-detalle.
+                   
+            FIND _User WHERE _User._Userid = x-usuario NO-ERROR.
+            IF NOT AVAILABLE _User THEN DO:
+            
+                IF X-Password = "" 
+                THEN  DO:
+                    BELL.
+                    MESSAGE "Se Asignara como Password el Nombre de Usuario" VIEW-AS ALERT-BOX.
+                    X-Password = x-usuario.
+                END.
+                
+                CREATE _User.
+                ASSIGN  _User._Userid       = x-usuario
+                              _User._User-name    = x-User-Name
+                             _User._Password     = ENCODE(CAPS(x-Password)).
+            END.
+            RUN crea-usermod.
+            RUN llena-lista.
+            HIDE FRAME f-detalle.
+            APPLY "VALUE-CHANGED" TO sel-usuario IN FRAME f-config-usuario.
+    END.
+
+ON CHOOSE OF b-modificar IN FRAME f-config-usuario OR ENTER, MOUSE-SELECT-DBLCLICK
+                                                      OF sel-usuario
+                                                      IN FRAME f-config-usuario
+    DO:
+        IF RECID(_User) = ? THEN DO:
+            BELL.
+            MESSAGE "Usuario no seleccionado o no existe" VIEW-AS ALERT-BOX ERROR.
+            RETURN NO-APPLY.
+        END.
+        DO TRANSACTION:
+            ASSIGN x-usuario = sel-usuario:SCREEN-VALUE 
+                    IN FRAME f-config-usuario.
+            FIND _User WHERE _User._UserId = x-usuario NO-ERROR.
+            IF NOT AVAILABLE _User
+            THEN DO:  
+                CREATE _User.
+                ASSIGN _User._Userid      = x-usuario
+                       _User._User-name   = ""
+                       _User._Password     = ENCODE("").    
+            END.
+            DISPLAY x-usuario 
+                    WITH FRAME f-detalle.
+            x-User-Name = _User._User-Name.
+            UPDATE x-User-Name
+                   y-Admin 
+                   y-Grupo
+                   list-cias
+                   b-aceptar
+                   b-cancelar WITH FRAME f-detalle.
+            ASSIGN _User._User-Name = x-User-Name.
+            RUN crea-usermod.
+            HIDE FRAME f-detalle.
+            APPLY "VALUE-CHANGED" TO sel-usuario IN FRAME f-config-usuario.
+        END.
+    END.
+
+ON CHOOSE OF b-eliminar IN FRAME f-config-usuario OR DEL OF sel-usuario
+                                                     IN FRAME f-config-usuario
+    DO:
+        IF RECID(_User) = ? THEN DO:
+            BELL.
+            MESSAGE "Usuario no seleccionado o no existe" VIEW-AS ALERT-BOX ERROR.
+            RETURN NO-APPLY.
+        END.
+        MESSAGE "Est  seguro de eliminar el Usuario" VIEW-AS ALERT-BOX
+            QUESTION BUTTONS YES-NO TITLE "CONFIRMAR"
+            UPDATE confir AS LOGICAL.
+        IF confir THEN DO TRANSACTION:
+            x-usuario = sel-usuario:SCREEN-VALUE.
+            FOR EACH UserMod WHERE UserMod.Usuario = x-usuario
+                               AND UserMod.Modulo  = S-aplic-id:
+                DELETE UserMod.
+            END.
+            IF NOT CAN-FIND(FIRST UserMod
+                     WHERE UserMod.Usuario = x-usuario)
+            THEN DO:
+                FIND _User WHERE _User._Userid = x-usuario NO-ERROR.
+               IF AVAILABLE _User
+               THEN DELETE _User.
+            END.   
+            RUN llena-lista.
+         END.
+    END.
+
+ON ANY-PRINTABLE OF list-cias IN FRAME f-detalle
+    DO:
+        IF INDEX( "1234567890,", CHR( LASTKEY ) ) = 0
+        THEN DO:
+            BELL.
+            RETURN NO-APPLY.
+        END.    
+    END.
+
+/************ LOGICA PRINCIPAL ************/
+RUN Llena-lista.
+DISPLAY sel-usuario WITH FRAME f-config-usuario.
+sel-usuario:SCREEN-VALUE = ENTRY( 1, List-usuario).
+ENABLE sel-usuario b-crear b-modificar b-eliminar b-aceptar b-cancelar
+     WITH FRAME f-config-usuario.
+WAIT-FOR CHOOSE OF b-cancelar, b-aceptar OR CLOSE OF CURRENT-WINDOW
+    OR END-ERROR OF FRAME f-config-usuario.
+RETURN.
+
+/************ Definici¢n de PROCEDIMIENTOS ************/
+
+PROCEDURE llena-lista.
+    list-usuario = "".
+    FOR EACH UserMod WHERE UserMod.Modulo = S-aplic-id
+    AND ( UserMod.CodCia = s-codcia OR UserMod.CodCia = 0 ):
+        list-usuario = list-usuario + "," + UserMod.Usuario.
+    END.
+    sel-usuario:LIST-ITEMS   IN FRAME f-config-usuario
+              = TRIM(list-usuario,",").
+END PROCEDURE.
+
+PROCEDURE crea-usermod.
+     IF list-cias = ""  THEN List-cias = "0".
+     IF LOOKUP( "0", List-cias ) <> 0
+     THEN DO:
+         FOR EACH UserMod WHERE UserMod.Modulo = S-aplic-id
+             AND UserMod.Usuario = _User._Userid:
+             DELETE UserMod.
+         END.    
+         CREATE UserMod.
+         UserMod.CodCia      = 0.
+         UserMod.Usuario     = x-usuario.
+         UserMod.Modulo      = S-aplic-id.
+         UserMod.Admin        = y-Admin.
+         UserMod.Grupo        = y-Grupo.
+     END.
+     ELSE DO:
+         REPEAT i = 1 TO NUM-ENTRIES( list-cias ):
+             FIND UserMod WHERE UserMod.CodCia = INTEGER(ENTRY(i, list-cias))
+                 AND UserMod.Modulo = S-aplic-id
+                 AND UserMod.Usuario = x-usuario NO-ERROR.
+             IF NOT AVAILABLE UserMod 
+             THEN DO:
+                     CREATE UserMod.
+                     UserMod.CodCia      = INTEGER(ENTRY(i, list-cias)).
+                     UserMod.Usuario     = x-usuario.
+                     UserMod.Modulo      = S-aplic-id.
+                     UserMod.Admin        = y-Admin.
+                     UserMod.Grupo        = y-Grupo.
+             END.
+             IF UserMod.CodCia = s-codcia
+             THEN ASSIGN UserMod.Admin       = y-Admin
+                         UserMod.Grupo                   = y-Grupo. 
+         END.
+         FOR EACH UserMod WHERE UserMod.Modulo = S-aplic-id
+             AND UserMod.Usuario = x-usuario:
+             IF LOOKUP(STRING(UserMod.CodCia), List-cias) = 0
+             THEN DELETE UserMod.
+         END.
+     END.
+END PROCEDURE.
+
+
+ 

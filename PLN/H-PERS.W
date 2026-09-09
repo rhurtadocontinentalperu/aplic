@@ -1,0 +1,698 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12 GUI ADM1
+&ANALYZE-RESUME
+/* Connected Databases 
+          integral         PROGRESS
+*/
+&Scoped-define WINDOW-NAME CURRENT-WINDOW
+&Scoped-define FRAME-NAME H-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS H-Dialog 
+/*------------------------------------------------------------------------
+
+  File: 
+
+  Description: from cntnrdlg.w - ADM SmartDialog Template
+
+  Input Parameters:
+      <none>
+
+  Output Parameters:
+      <none>
+
+  Author: 
+
+  Created: 
+------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* Create an unnamed pool to store all the widgets created 
+     by this procedure. This is a good default which assures
+     that this procedure's triggers and internal procedures 
+     will execute in this procedure's storage, and that proper
+     cleanup will occur on deletion of the procedure. */
+
+CREATE WIDGET-POOL.
+
+/* ***************************  Definitions  ************************** */
+
+/* Parameters Definitions ---                                           */
+DEFINE &IF "{&NEW}" = "" &THEN OUTPUT PARAMETER &ELSE VARIABLE &ENDIF ROWID-RETURN AS ROWID.
+
+/* Local Variable Definitions ---                                       */
+DEFINE VARIABLE ROWID-BROWSE-1 AS ROWID NO-UNDO.
+DEFINE VARIABLE WAIT-STATE     AS LOGICAL NO-UNDO.
+
+WAIT-STATE = SESSION:SET-WAIT-STATE("").
+
+/* Preprocesadores de configuraci¢n */
+&GLOBAL-DEFINE CONDICION
+
+&GLOBAL-DEFINE CODIGO integral.PL-PERS.CodPer
+
+&GLOBAL-DEFINE NOMBRE1 integral.PL-PERS.PatPer
+&GLOBAL-DEFINE NOMBRE2 integral.PL-PERS.MatPer
+&GLOBAL-DEFINE NOMBRE3 integral.PL-PERS.NomPer
+
+&GLOBAL-DEFINE SORTEO-CODIGO 
+
+&GLOBAL-DEFINE SORTEO-NOMBRE BY integral.PL-PERS.patper BY integral.PL-PERS.MatPer BY integral.PL-PERS.NomPer
+
+&GLOBAL-DEFINE WORK-INDEX NO
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE SmartDialog
+&Scoped-define DB-AWARE no
+
+&Scoped-define ADM-CONTAINER DIALOG-BOX
+
+/* Name of designated FRAME-NAME and/or first browse and/or first query */
+&Scoped-define FRAME-NAME H-Dialog
+&Scoped-define BROWSE-NAME BROWSE-1
+
+/* Internal Tables (found by Frame, Query & Browse Queries)             */
+&Scoped-define INTERNAL-TABLES integral.PL-PERS
+
+/* Definitions for BROWSE BROWSE-1                                      */
+&Scoped-define FIELDS-IN-QUERY-BROWSE-1 integral.PL-PERS.codper ~
+integral.PL-PERS.patper integral.PL-PERS.matper integral.PL-PERS.nomper 
+&Scoped-define ENABLED-FIELDS-IN-QUERY-BROWSE-1 
+&Scoped-define QUERY-STRING-BROWSE-1 FOR EACH integral.PL-PERS NO-LOCK INDEXED-REPOSITION
+&Scoped-define OPEN-QUERY-BROWSE-1 OPEN QUERY BROWSE-1 FOR EACH integral.PL-PERS NO-LOCK INDEXED-REPOSITION.
+&Scoped-define TABLES-IN-QUERY-BROWSE-1 integral.PL-PERS
+&Scoped-define FIRST-TABLE-IN-QUERY-BROWSE-1 integral.PL-PERS
+
+
+/* Definitions for DIALOG-BOX H-Dialog                                  */
+&Scoped-define OPEN-BROWSERS-IN-QUERY-H-Dialog ~
+    ~{&OPEN-QUERY-BROWSE-1}
+
+/* Standard List Definitions                                            */
+&Scoped-Define ENABLED-OBJECTS RECT-6 RECT-4 FILL-IN-CODIGO COMBO-BOX-1 ~
+COMBO-BOX-2 FILL-IN-NOMBRE BROWSE-1 Btn_OK Btn_Cancel Btn_Help 
+&Scoped-Define DISPLAYED-OBJECTS FILL-IN-CODIGO COMBO-BOX-1 COMBO-BOX-2 ~
+FILL-IN-NOMBRE 
+
+/* Custom List Definitions                                              */
+/* List-1,List-2,List-3,List-4,List-5,List-6                            */
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* ***********************  Control Definitions  ********************** */
+
+/* Define a dialog box                                                  */
+
+/* Definitions of the field level widgets                               */
+DEFINE BUTTON Btn_Cancel AUTO-END-KEY 
+     IMAGE-UP FILE "img/b-cancel":U
+     LABEL "&Cancelar" 
+     SIZE 11.57 BY 1.69
+     BGCOLOR 8 .
+
+DEFINE BUTTON Btn_Help 
+     IMAGE-UP FILE "img/b-ayuda":U
+     LABEL "&Ayuda" 
+     SIZE 11.57 BY 1.69
+     BGCOLOR 8 .
+
+DEFINE BUTTON Btn_OK AUTO-GO 
+     IMAGE-UP FILE "img/b-ok":U
+     LABEL "&Aceptar" 
+     SIZE 11.57 BY 1.69
+     BGCOLOR 8 .
+
+DEFINE VARIABLE COMBO-BOX-1 AS CHARACTER FORMAT "X(256)":U INITIAL "C¢digos" 
+     LABEL "Mostrar ordenado por" 
+     VIEW-AS COMBO-BOX INNER-LINES 3
+     LIST-ITEMS "Código","Nombre" 
+     DROP-DOWN-LIST
+     SIZE 10.57 BY .81
+     FGCOLOR 4  NO-UNDO.
+
+DEFINE VARIABLE COMBO-BOX-2 AS CHARACTER FORMAT "X(256)":U INITIAL "Nombres que inicie con" 
+     VIEW-AS COMBO-BOX INNER-LINES 3
+     LIST-ITEMS "Nombres que inicie con","Nombres que contenga" 
+     DROP-DOWN-LIST
+     SIZE 20.43 BY 1
+     BGCOLOR 15 FGCOLOR 4  NO-UNDO.
+
+DEFINE VARIABLE FILL-IN-CODIGO AS CHARACTER FORMAT "X(6)":U 
+     LABEL "Buscar el código" 
+     VIEW-AS FILL-IN 
+     SIZE 7 BY .81 NO-UNDO.
+
+DEFINE VARIABLE FILL-IN-NOMBRE AS CHARACTER FORMAT "X(256)":U 
+     VIEW-AS FILL-IN 
+     SIZE 44.29 BY .81 NO-UNDO.
+
+DEFINE RECTANGLE RECT-4
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE 96.29 BY 3.12.
+
+DEFINE RECTANGLE RECT-6
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE 96.29 BY 2.5.
+
+/* Query definitions                                                    */
+&ANALYZE-SUSPEND
+DEFINE QUERY BROWSE-1 FOR 
+      integral.PL-PERS SCROLLING.
+&ANALYZE-RESUME
+
+/* Browse definitions                                                   */
+DEFINE BROWSE BROWSE-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _DISPLAY-FIELDS BROWSE-1 H-Dialog _STRUCTURED
+  QUERY BROWSE-1 NO-LOCK DISPLAY
+      integral.PL-PERS.codper FORMAT "X(6)":U WIDTH 5.57
+      integral.PL-PERS.patper FORMAT "X(40)":U
+      integral.PL-PERS.matper FORMAT "X(40)":U
+      integral.PL-PERS.nomper FORMAT "X(40)":U
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+    WITH NO-ROW-MARKERS SEPARATORS SIZE 96.29 BY 9.9
+         BGCOLOR 15 FGCOLOR 4 FONT 4.
+
+
+/* ************************  Frame Definitions  *********************** */
+
+DEFINE FRAME H-Dialog
+     FILL-IN-CODIGO AT ROW 1.38 COL 21.72 COLON-ALIGNED
+     COMBO-BOX-1 AT ROW 2.23 COL 8.43
+     COMBO-BOX-2 AT ROW 3.15 COL 2.86 NO-LABEL
+     FILL-IN-NOMBRE AT ROW 3.19 COL 23.72 NO-LABEL
+     BROWSE-1 AT ROW 4.46 COL 2
+     Btn_OK AT ROW 14.85 COL 50
+     Btn_Cancel AT ROW 14.85 COL 66.72
+     Btn_Help AT ROW 14.85 COL 83.72
+     RECT-6 AT ROW 14.46 COL 2
+     RECT-4 AT ROW 1.19 COL 2
+     SPACE(0.13) SKIP(12.68)
+    WITH VIEW-AS DIALOG-BOX KEEP-TAB-ORDER 
+         SIDE-LABELS NO-UNDERLINE THREE-D  SCROLLABLE 
+         FONT 4
+         TITLE "Personal".
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: SmartDialog
+   Allow: Basic,Browse,DB-Fields,Query,Smart
+   Other Settings: COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB H-Dialog 
+/* ************************* Included-Libraries *********************** */
+
+{src/adm/method/containr.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+
+/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
+
+&ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
+/* SETTINGS FOR DIALOG-BOX H-Dialog
+   FRAME-NAME                                                           */
+/* BROWSE-TAB BROWSE-1 FILL-IN-NOMBRE H-Dialog */
+ASSIGN 
+       FRAME H-Dialog:SCROLLABLE       = FALSE
+       FRAME H-Dialog:HIDDEN           = TRUE.
+
+ASSIGN 
+       BROWSE-1:NUM-LOCKED-COLUMNS IN FRAME H-Dialog     = 1.
+
+/* SETTINGS FOR COMBO-BOX COMBO-BOX-1 IN FRAME H-Dialog
+   ALIGN-L                                                              */
+/* SETTINGS FOR COMBO-BOX COMBO-BOX-2 IN FRAME H-Dialog
+   ALIGN-L                                                              */
+/* SETTINGS FOR FILL-IN FILL-IN-NOMBRE IN FRAME H-Dialog
+   ALIGN-L                                                              */
+/* _RUN-TIME-ATTRIBUTES-END */
+&ANALYZE-RESUME
+
+
+/* Setting information for Queries and Browse Widgets fields            */
+
+&ANALYZE-SUSPEND _QUERY-BLOCK BROWSE BROWSE-1
+/* Query rebuild information for BROWSE BROWSE-1
+     _TblList          = "integral.PL-PERS"
+     _Options          = "NO-LOCK INDEXED-REPOSITION"
+     _FldNameList[1]   > integral.PL-PERS.codper
+"codper" ? ? "character" ? ? ? ? ? ? no ? no no "5.57" yes no no "U" "" "" "" "" "" "" 0 no 0 no no
+     _FldNameList[2]   = integral.PL-PERS.patper
+     _FldNameList[3]   = integral.PL-PERS.matper
+     _FldNameList[4]   = integral.PL-PERS.nomper
+     _Query            is OPENED
+*/  /* BROWSE BROWSE-1 */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _QUERY-BLOCK DIALOG-BOX H-Dialog
+/* Query rebuild information for DIALOG-BOX H-Dialog
+     _Options          = "SHARE-LOCK"
+     _Query            is NOT OPENED
+*/  /* DIALOG-BOX H-Dialog */
+&ANALYZE-RESUME
+
+ 
+
+
+
+/* ************************  Control Triggers  ************************ */
+
+&Scoped-define SELF-NAME H-Dialog
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL H-Dialog H-Dialog
+ON GO OF FRAME H-Dialog /* Personal */
+DO:
+  
+  &IF "{&TABLES-IN-QUERY-{&BROWSE-NAME}}" <> ""
+  &THEN
+  ROWID-RETURN = ROWID( {&FIRST-TABLE-IN-QUERY-{&BROWSE-NAME}} ).
+  &ENDIF
+  
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL H-Dialog H-Dialog
+ON WINDOW-CLOSE OF FRAME H-Dialog /* Personal */
+DO:  
+  /* Add Trigger to equate WINDOW-CLOSE to END-ERROR. */
+  APPLY "END-ERROR":U TO SELF.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define BROWSE-NAME BROWSE-1
+&Scoped-define SELF-NAME BROWSE-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL BROWSE-1 H-Dialog
+ON MOUSE-SELECT-DBLCLICK OF BROWSE-1 IN FRAME H-Dialog
+OR RETURN OF BROWSE-1
+DO:
+  APPLY "CHOOSE":U TO Btn_OK.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_Help
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_Help H-Dialog
+ON CHOOSE OF Btn_Help IN FRAME H-Dialog /* Ayuda */
+OR HELP OF FRAME {&FRAME-NAME}
+DO: /* Call Help Function (or a simple message). */
+    MESSAGE "Ayuda para el Archivo: {&FILE-NAME}" 
+        VIEW-AS ALERT-BOX INFORMATION.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME COMBO-BOX-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL COMBO-BOX-1 H-Dialog
+ON VALUE-CHANGED OF COMBO-BOX-1 IN FRAME H-Dialog /* Mostrar ordenado por */
+DO:
+  IF INPUT COMBO-BOX-1 <> COMBO-BOX-1
+  THEN RUN OPEN-QUERY.
+  ASSIGN COMBO-BOX-1.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME COMBO-BOX-2
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL COMBO-BOX-2 H-Dialog
+ON VALUE-CHANGED OF COMBO-BOX-2 IN FRAME H-Dialog
+DO:
+  IF INPUT COMBO-BOX-2 <> COMBO-BOX-2
+  THEN IF FILL-IN-NOMBRE:SCREEN-VALUE <> "" THEN RUN OPEN-QUERY.
+  ASSIGN COMBO-BOX-2.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME FILL-IN-CODIGO
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL FILL-IN-CODIGO H-Dialog
+ON LEAVE OF FILL-IN-CODIGO IN FRAME H-Dialog /* Buscar el código */
+DO:
+  IF SELF:SCREEN-VALUE = "" THEN RETURN.  
+  &IF "{&TABLES-IN-QUERY-{&BROWSE-NAME}}" <> "" AND "{&CODIGO}" <> ""
+  &THEN
+      IF SELF:SCREEN-VALUE <> ""
+      THEN DO:
+        FIND FIRST {&TABLES-IN-QUERY-{&BROWSE-NAME}} WHERE
+              ( {&CODIGO} = INPUT FILL-IN-CODIGO )
+             &IF "{&CONDICION}" <> ""
+             &THEN AND {&CONDICION}
+             &ENDIF
+              NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE {&TABLES-IN-QUERY-{&BROWSE-NAME}} 
+        THEN DO:
+            MESSAGE "REGISTRO NO ENCONTRADO" VIEW-AS ALERT-BOX ERROR.
+            SELF:SCREEN-VALUE = "".
+            RETURN.
+        END.
+      END.
+      ROWID-BROWSE-1 = ROWID( {&TABLES-IN-QUERY-{&BROWSE-NAME}} ).
+      REPOSITION {&BROWSE-NAME} TO ROWID ROWID-BROWSE-1 NO-ERROR.
+      IF ERROR-STATUS:ERROR
+      THEN DO:
+        MESSAGE "Registro no se encuentra en la actual selecci¢n" SKIP
+                "       ¨ Deshacer la actual selecci¢n ?        " 
+                VIEW-AS ALERT-BOX QUESTION 
+                BUTTONS YES-NO TITLE "Interrogante"
+                UPDATE answ AS LOGICAL.
+        IF answ
+        THEN DO:
+            FILL-IN-NOMBRE:SCREEN-VALUE = "".
+            RUN OPEN-QUERY.
+            REPOSITION {&BROWSE-NAME} TO ROWID ROWID-BROWSE-1 NO-ERROR.
+        END.        
+      END.
+      SELF:SCREEN-VALUE = "".
+  &ENDIF  
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME FILL-IN-NOMBRE
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL FILL-IN-NOMBRE H-Dialog
+ON LEAVE OF FILL-IN-NOMBRE IN FRAME H-Dialog
+DO:
+  IF INPUT FILL-IN-NOMBRE <> FILL-IN-NOMBRE
+  THEN RUN OPEN-QUERY.
+  ASSIGN FILL-IN-NOMBRE.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&UNDEFINE SELF-NAME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK H-Dialog 
+
+
+/* ***************************  Main Block  *************************** */
+
+&IF "{&OPEN-BROWSERS-IN-QUERY-{&FRAME-NAME}}" <> ""
+&THEN &UNDEFINE OPEN-BROWSERS-IN-QUERY-{&FRAME-NAME}
+&ENDIF
+
+{src/adm/template/dialogmn.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-row-available H-Dialog  _ADM-ROW-AVAILABLE
+PROCEDURE adm-row-available :
+/*------------------------------------------------------------------------------
+  Purpose:     Dispatched to this procedure when the Record-
+               Source has a new row available.  This procedure
+               tries to get the new row (or foriegn keys) from
+               the Record-Source and process it.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+  /* Define variables needed by this internal procedure.             */
+  {src/adm/template/row-head.i}
+
+  /* Process the newly available records (i.e. display fields,
+     open queries, and/or pass records on to any RECORD-TARGETS).    */
+  {src/adm/template/row-end.i}
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI H-Dialog  _DEFAULT-DISABLE
+PROCEDURE disable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     DISABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we clean-up the user-interface by deleting
+               dynamic widgets we have created and/or hide 
+               frames.  This procedure is usually called when
+               we are ready to "clean-up" after running.
+------------------------------------------------------------------------------*/
+  /* Hide all frames. */
+  HIDE FRAME H-Dialog.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI H-Dialog  _DEFAULT-ENABLE
+PROCEDURE enable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     ENABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we display/view/enable the widgets in the
+               user-interface.  In addition, OPEN all queries
+               associated with each FRAME and BROWSE.
+               These statements here are based on the "Other 
+               Settings" section of the widget Property Sheets.
+------------------------------------------------------------------------------*/
+  DISPLAY FILL-IN-CODIGO COMBO-BOX-1 COMBO-BOX-2 FILL-IN-NOMBRE 
+      WITH FRAME H-Dialog.
+  ENABLE RECT-6 RECT-4 FILL-IN-CODIGO COMBO-BOX-1 COMBO-BOX-2 FILL-IN-NOMBRE 
+         BROWSE-1 Btn_OK Btn_Cancel Btn_Help 
+      WITH FRAME H-Dialog.
+  VIEW FRAME H-Dialog.
+  {&OPEN-BROWSERS-IN-QUERY-H-Dialog}
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-initialize H-Dialog 
+PROCEDURE local-initialize :
+/*------------------------------------------------------------------------------
+  Purpose:     Override standard ADM method
+  Notes:       
+------------------------------------------------------------------------------*/
+
+  /* Code placed here will execute PRIOR to standard behavior. */
+
+  /* Dispatch standard ADM method.                             */
+  RUN dispatch IN THIS-PROCEDURE ( INPUT 'initialize':U ) .
+
+  /* Code placed here will execute AFTER standard behavior.    */
+  DO WITH FRAME {&FRAME-NAME}:
+     COMBO-BOX-1:SCREEN-VALUE = COMBO-BOX-1:ENTRY(1).
+  END.
+  RUN OPEN-QUERY.
+  
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE OPEN-QUERY H-Dialog 
+PROCEDURE OPEN-QUERY :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DO WITH FRAME {&FRAME-NAME}:    
+    CASE COMBO-BOX-1:SCREEN-VALUE:
+        WHEN COMBO-BOX-1:ENTRY(1) THEN RUN OPEN-QUERY-CODIGO.
+        WHEN COMBO-BOX-1:ENTRY(2) THEN RUN OPEN-QUERY-NOMBRE.
+    END CASE.
+END.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE OPEN-QUERY-CODIGO H-Dialog 
+PROCEDURE OPEN-QUERY-CODIGO :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DO WITH FRAME {&FRAME-NAME}:
+    &IF "{&TABLES-IN-QUERY-{&BROWSE-NAME}}" <> "" &THEN
+        &IF "{&NOMBRE1}" <> "" &THEN
+            IF FILL-IN-NOMBRE:SCREEN-VALUE = "" THEN
+        &ENDIF
+        OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}}
+        &IF "{&CONDICION}" <> "" &THEN
+            WHERE ( {&CONDICION } ) 
+        &ENDIF        ~
+        NO-LOCK
+        {&SORTEO-CODIGO} INDEXED-REPOSITION.
+        &IF "{&NOMBRE1}" <> "" &THEN
+        ELSE
+            IF COMBO-BOX-2:SCREEN-VALUE = COMBO-BOX-2:ENTRY(1) THEN
+                OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}} ~
+                 WHERE 
+                 &IF "{&CONDICION}" <> ""
+                 &THEN ( {&CONDICION } ) AND
+                 &ENDIF (
+                     {&NOMBRE1} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                     {&NOMBRE2} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                     {&NOMBRE3} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE )
+                 NO-LOCK
+                 {&SORTEO-CODIGO} INDEXED-REPOSITION.
+              ELSE
+                OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}} ~
+                 WHERE 
+                 &IF "{&CONDICION}" <> ""
+                 &THEN ( {&CONDICION } ) AND
+                 &ENDIF
+                 &IF "{&WORK-INDEX}" = "SI"
+                 &THEN
+                    (
+                    {&NOMBRE1} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                    {&NOMBRE2} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                    {&NOMBRE3} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE
+                    )
+                 &ELSE
+                    (
+                    INDEX( {&NOMBRE1}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0 OR
+                    INDEX( {&NOMBRE2}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0 OR
+                    INDEX( {&NOMBRE3}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0
+                    )
+                 &ENDIF
+                 NO-LOCK
+                 {&SORTEO-CODIGO} INDEXED-REPOSITION.
+        &ENDIF
+    &ENDIF
+END.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE OPEN-QUERY-NOMBRE H-Dialog 
+PROCEDURE OPEN-QUERY-NOMBRE :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DO WITH FRAME {&FRAME-NAME}:
+    &IF "{&TABLES-IN-QUERY-{&BROWSE-NAME}}" <> "" &THEN
+        &IF "{&NOMBRE1}" <> "" &THEN
+            IF FILL-IN-NOMBRE:SCREEN-VALUE = "" THEN
+        &ENDIF
+        OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}}
+        &IF "{&CONDICION}" <> "" &THEN
+            WHERE ( {&CONDICION } )
+        &ENDIF        ~
+        NO-LOCK
+        {&SORTEO-NOMBRE} INDEXED-REPOSITION.
+        &IF "{&NOMBRE1}" <> "" &THEN
+            ELSE
+            IF COMBO-BOX-2:SCREEN-VALUE = COMBO-BOX-2:ENTRY(1)
+            THEN
+                OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}} ~
+                 WHERE
+                 &IF "{&CONDICION}" <> ""
+                 &THEN ( {&CONDICION } ) AND
+                 &ENDIF
+                     (
+                     {&NOMBRE1} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                     {&NOMBRE2} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                     {&NOMBRE3} BEGINS FILL-IN-NOMBRE:SCREEN-VALUE
+                     )
+                 NO-LOCK
+                 {&SORTEO-NOMBRE} INDEXED-REPOSITION.
+              ELSE
+                OPEN QUERY {&BROWSE-NAME} FOR EACH {&TABLES-IN-QUERY-{&BROWSE-NAME}} ~
+                 WHERE
+                 &IF "{&CONDICION}" <> ""
+                 &THEN ( {&CONDICION } ) AND
+                 &ENDIF
+                 &IF "{&WORK-INDEX}" = "SI"
+                 &THEN
+                    (
+                    {&NOMBRE1} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                    {&NOMBRE2} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE OR
+                    {&NOMBRE3} CONTAINS FILL-IN-NOMBRE:SCREEN-VALUE
+                    )
+                 &ELSE
+                    (
+                    INDEX( {&NOMBRE1}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0 OR
+                    INDEX( {&NOMBRE2}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0 OR
+                    INDEX( {&NOMBRE3}, FILL-IN-NOMBRE:SCREEN-VALUE ) <> 0
+                    )
+                 &ENDIF
+                 NO-LOCK
+                 {&SORTEO-NOMBRE} INDEXED-REPOSITION.
+        &ENDIF
+    &ENDIF
+END.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE send-records H-Dialog  _ADM-SEND-RECORDS
+PROCEDURE send-records :
+/*------------------------------------------------------------------------------
+  Purpose:     Send record ROWID's for all tables used by
+               this file.
+  Parameters:  see template/snd-head.i
+------------------------------------------------------------------------------*/
+
+  /* Define variables needed by this internal procedure.               */
+  {src/adm/template/snd-head.i}
+
+  /* For each requested table, put it's ROWID in the output list.      */
+  {src/adm/template/snd-list.i "integral.PL-PERS"}
+
+  /* Deal with any unexpected table requests before closing.           */
+  {src/adm/template/snd-end.i}
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE state-changed H-Dialog 
+PROCEDURE state-changed :
+/* -----------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+-------------------------------------------------------------*/
+  DEFINE INPUT PARAMETER p-issuer-hdl AS HANDLE NO-UNDO.
+  DEFINE INPUT PARAMETER p-state AS CHARACTER NO-UNDO.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+

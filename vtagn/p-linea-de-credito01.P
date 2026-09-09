@@ -1,0 +1,184 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : 
+    Purpose     :
+    Syntax      :
+    Description :
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT  PARAMETER pCodCli AS CHAR.
+/*DEFINE INPUT  PARAMETER pMensaje AS LOG.        /* Muestra o no el mensaje de error */*/
+DEFINE OUTPUT PARAMETER pResultado AS DEC.     /* OK o ADM-ERROR */
+
+DEFINE SHARED VARIABLE S-CODCIA  AS INTEGER.
+DEFINE SHARED VARIABLE CL-CODCIA  AS INTEGER.
+DEFINE SHARED VARIABLE S-CODDIV  AS CHAR.
+
+DEFINE VARIABLE F-TOTAL AS DECIMAL.
+DEFINE VARIABLE cMonLCred AS INTEGER NO-UNDO.
+DEFINE VARIABLE pSaldo  AS DECIMAL.
+DEFINE VARIABLE dImpLCred AS DEC.
+
+ASSIGN
+    pSaldo = 0
+    dImpLCred = 0
+    pResultado = 0.
+
+
+/* FILTRO POR CONDICION DE VENTA */
+/* IF LOOKUP(pFmaPgo, '000,001,002,900') > 0 THEN DO: */
+/*     pResultado = 'OK'.                             */
+/*     RETURN.                                        */
+/* END.                                               */
+
+/*
+FIND gn-convt WHERE gn-convt.codig = pFmaPgo NO-LOCK NO-ERROR.
+IF NOT AVAILABLE gn-convt THEN RETURN.
+IF gn-convt.tipvta = "1" THEN DO:       /* CONTADO */
+    pResultado = 0.
+    RETURN.
+END.
+*/
+/* LINEA DE CREDITO */
+FIND GN-CLIE WHERE GN-CLIE.CODCIA = CL-CODCIA AND
+    GN-CLIE.CODCLI = pCodCli NO-LOCK NO-ERROR.
+IF NOT AVAILABLE GN-CLIE THEN RETURN.
+IF Gn-Clie.MonLC = 0 THEN DO:       /* ACTUALIZAMOS LA MONEDA */
+    FIND CURRENT Gn-clie EXCLUSIVE-LOCK NO-ERROR.
+    IF NOT AVAILABLE Gn-clie THEN RETURN.
+    Gn-clie.MonLC = 2.      /* DOLARES */
+    FIND CURRENT Gn-clie NO-LOCK NO-ERROR.
+END.
+FIND FacCfgGn WHERE FacCfgGn.CodCia = S-CODCIA NO-LOCK NO-ERROR.
+
+/* MLR 02/Jun/2008 Verifica Linea de Crédito Campaña */
+cMonLCred = Gn-Clie.MonLC.
+FOR EACH Gn-ClieL WHERE Gn-ClieL.CodCia = gn-clie.codcia AND
+    Gn-ClieL.CodCli = gn-clie.codcli AND
+    TODAY >= Gn-ClieL.FchIni AND
+    TODAY <= Gn-ClieL.FchFin NO-LOCK
+    BY gn-cliel.fchini BY gn-cliel.fchfin:
+    cMonLCred = gn-cliel.monlc.
+    dImpLCred = Gn-ClieL.ImpLC.
+END.
+/* Verifica Línea de Crédito Normal */
+IF dImpLCred = 0 THEN DO:
+    IF Gn-clie.fchvlc <> ? AND Gn-clie.fchvlc < TODAY THEN DO:
+        MESSAGE
+            "La línea de crédito del cliente venció el" gn-clie.fchvlc
+            VIEW-AS ALERT-BOX ERROR.
+        RETURN.
+    END.
+    cMonLCred = gn-clie.monlc.
+    dImpLCred = Gn-Clie.ImpLC.
+END.
+
+FIND FIRST FacCfgGn WHERE FacCfgGn.CodCia = S-CODCIA NO-LOCK NO-ERROR.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.54
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* Suma Todos los Documentos Pendientes */
+FOR EACH CcbCDocu NO-LOCK WHERE CcbCDocu.CodCia = S-CODCIA 
+    AND CcbCDocu.CodCli = pCodCli 
+    AND LOOKUP(Ccbcdocu.coddoc, 'FAC,BOL,LET,N/D,N/C') > 0 
+    AND CcbCDocu.FlgEst = "P":
+    /* DOCUMENTOS QUE NO DEBEN APARECER EN LA LINEA DE CREDITO */
+    IF LOOKUP(Ccbcdocu.coddoc, 'A/R,BD') > 0 THEN NEXT.
+    /* ******************************************************* */
+    /* RHC 23.11.08 LETRAS ADELANTADAS */
+    IF Ccbcdocu.coddoc = 'LET' AND Ccbcdocu.codref = 'CLA' THEN NEXT.
+
+    F-TOTAL = CcbCDocu.SdoAct.
+    IF cMonLCred = 1 THEN DO:
+        IF CcbCDocu.CodMon = 2 THEN F-TOTAL = F-TOTAL * FacCfgGn.Tpocmb[1].
+    END.
+    ELSE DO:
+        IF CcbCDocu.CodMon = 1 THEN F-TOTAL = F-TOTAL / FacCfgGn.Tpocmb[1].
+    END.
+
+    FIND FacDocum WHERE FacDocum.CodCia = S-CODCIA 
+        AND FacDocum.CodDoc = CcbCDocu.CodDoc 
+        NO-LOCK NO-ERROR.
+    IF AVAILABLE FacDocum AND FacDocum.TpoDoc
+    THEN pSaldo = pSaldo + F-TOTAL.
+    ELSE pSaldo = pSaldo - F-TOTAL.
+END.
+
+/* Suma Pedidos Credito Pendientes Generar Guias */
+FOR EACH VtaCDocu USE-INDEX LLAVE02 NO-LOCK WHERE VtaCDocu.CodCia = S-CODCIA 
+    AND VtaCDocu.CodPed = "PED" 
+    AND VtaCDocu.CodCli = pCodCli 
+    AND LOOKUP(VtaCDocu.FlgEst, "X,P") > 0 
+    AND LOOKUP(TRIM(VtaCDocu.fmapgo), '001,002') = 0:   /* NO contraentrega ni anticipado */
+    F-TOTAL = VtaCDocu.ImpTot.
+    IF cMonLCred = 1 THEN DO:
+       IF VtaCDocu.CodMon = 2 THEN F-TOTAL = F-TOTAL * FacCfgGn.Tpocmb[1].
+    END.
+    ELSE DO:
+       IF VtaCDocu.CodMon = 1 THEN F-TOTAL = F-TOTAL / FacCfgGn.Tpocmb[1].
+    END.
+    pSaldo = pSaldo + F-TOTAL.
+END.
+
+IF (dImpLCred - (pSaldo)) >= 0 THEN pResultado = (dImpLCred - (pSaldo)).
+ELSE pResultado = 0.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

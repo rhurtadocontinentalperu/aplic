@@ -1,0 +1,7 @@
+for each integral.gn-prov:
+    create integral.x61coapr.
+    
+    ASSIGN integral.x61coapr.X61NRORUC = gn-prov.RUC
+           integral.x61coapr.X61CINTER = gn-prov.CodPro
+           integral.x61coapr.X61NOMBRE = gn-prov.NomPro.
+end.           

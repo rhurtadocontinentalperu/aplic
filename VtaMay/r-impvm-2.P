@@ -1,0 +1,276 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-ImpPed.p
+    Purpose     : Impresion de Pedidos y Cotizaciones
+
+    Syntax      :
+
+    Description :
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEF SHARED VAR s-codcia AS INT.
+DEF SHARED VAR CL-codcia AS INT.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+DEF SHARED VAR s-codter LIKE ccbcterm.codter.
+DEF SHARED VAR s-NomCia AS CHAR.
+DEF        VAR C-NomVen AS CHAR FORMAT "X(30)".
+DEF        VAR C-NomCon AS CHAR FORMAT "X(30)".
+DEF        VAR C-DirCli AS CHAR.
+DEF        VAR C-RucCli AS CHAR.
+DEF        VAR I-NroItm AS INTEGER.
+DEF        VAR F-ImpBrt AS DECIMAL.
+DEF        VAR F-PreUni AS DECIMAL.
+DEFINE VARIABLE x-dscto AS DECIMAL.
+
+DEF VAR X-EnLetras AS CHAR FORMAT "x(100)" NO-UNDO.
+
+FIND FacCPedm WHERE ROWID(FacCPedm) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE FacCPedm THEN RETURN.
+
+C-NomVen = FacCPedm.CodVen.
+C-NomCon = FacCPedm.FmaPgo.
+
+FIND gn-clie WHERE gn-clie.codcia = CL-CODCIA 
+              AND  gn-clie.codcli = FacCPedm.codcli 
+             NO-LOCK.
+IF AVAILABLE gn-clie THEN
+   ASSIGN C-DirCli = gn-clie.DirCli
+          C-RucCli = gn-clie.Ruc.
+
+FIND gn-ven WHERE gn-ven.CodCia = FacCPedm.CodCia 
+             AND  gn-ven.CodVen = FacCPedm.CodVen 
+            NO-LOCK NO-ERROR.
+IF AVAILABLE gn-ven THEN C-NomVen = C-NomVen + " - " + gn-ven.NomVen.
+
+FIND gn-ConVt WHERE gn-ConVt.Codig = FacCPedm.FmaPgo NO-LOCK NO-ERROR.
+IF AVAILABLE gn-ConVt THEN C-NomCon = C-NomCon + " - " + gn-ConVt.Nombr.
+
+
+/************************  PUNTEROS EN POSICION  *******************************/
+RUN bin/_numero(FacCPedm.imptot, 2, 1, OUTPUT X-EnLetras).
+X-EnLetras = "SON : " + X-EnLetras + (IF FacCPedm.codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+DEFINE FRAME F-FtrPed
+    HEADER
+    X-EnLetras AT 10 SKIP
+    "Sirvase revisar la mercaderia, una vez entregada no se aceptan devoluciones." 
+    "  DTO.GLOBAL : " AT 112 FacCPedm.ImpDto FORMAT '->>>,>>9.99' SKIP
+    "NETO A PAGAR : " TO 112 FacCPedm.imptot FORMAT ">>,>>>,>>9.99" SKIP(3)
+    "-------------------     -------------------    -------------------" AT 50 SKIP
+    "    Operador(a)         VoBo Jefe de Ventas       VoBo Cta.Cte.   " AT 50 SKIP(2)
+    WITH PAGE-BOTTOM NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+
+DEF TEMP-TABLE DETA LIKE FacDPedm
+    FIELD Clave AS CHAR
+    INDEX Llave01 Clave NroItm.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 3.35
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+FIND FacCorre WHERE FacCorre.CodCia = S-CODCIA 
+               AND  FacCorre.CodDiv = S-CODDIV 
+               AND  FacCorre.CodDoc = FacCPedm.coddoc 
+               AND  FacCorre.NroSer = INTEGER(SUBSTRING(FacCPedm.NroPed,1,3)) 
+              NO-LOCK.
+RUN lib/_port-name (FacCorre.Printer, OUTPUT s-port-name).
+IF s-port-name = '' THEN RETURN.
+
+DEFINE FRAME F-HdrPed
+    HEADER 
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(45)"
+    "MOSTRADOR : " AT 67 FacCPedm.CodDiv AT 80 
+    "Señor(es) : " TO 20 FacCPedm.NomCli FORMAT "X(50)"     "Fecha : " TO 90 FacCPedm.FchPed SKIP
+    "Direccion : " TO 20 Faccpedm.DirCli FORMAT "X(40)"     "Cond.Pago : " TO 90 C-NomCon        SKIP
+    "R.U.C.    : " TO 20 Faccpedm.RucCli FORMAT "X(8)"      "Vendedor  : " TO 90 C-NomVen        SKIP
+    "Observaciones : " TO 20 FacCPedm.Glosa VIEW-AS TEXT FORMAT "X(100)" SKIP
+    "------------------------------------------------------------------------------------------------------------------------------" SKIP
+    "ITEM CODIGO   CANTIDAD UND.               D E S C R I P C I O N                MARCA     DSCTO.   PRECIO UNIT.    MONTO NETO  " SKIP
+    "------------------------------------------------------------------------------------------------------------------------------" SKIP
+
+    WITH PAGE-TOP NO-LABELS NO-BOX STREAM-IO WIDTH 160.
+DEFINE FRAME F-DetaPed
+    I-NroItm FORMAT ">>>9"
+    DETA.codmat FORMAT "X(6)"
+    DETA.CanPed FORMAT ">>>,>>9.99"
+    DETA.undvta FORMAT "X(4)"
+    almmmatg.desmat FORMAT "x(50)"
+    almmmatg.desmar FORMAT "x(10)"
+    DETA.PorDto FORMAT ">>9.99"
+    DETA.preuni FORMAT ">,>>>,>>9.9999"
+    DETA.implin FORMAT ">>,>>>,>>9.99" SKIP
+    WITH NO-LABELS NO-BOX NO-UNDERLINE STREAM-IO WIDTH 160.
+
+RUN Carga-Detalle.
+RUN Carga-Promociones.
+
+{lib/_printer-to.i 62}
+
+PUT CONTROL {&PRN0} + {&PRN5A} + CHR(33) + {&PRN3}.     
+
+I-NroItm = 0.
+DEF VAR x-PorDto AS DEC NO-UNDO.
+
+FOR EACH DETA, FIRST Almmmatg OF DETA NO-LOCK BREAK BY DETA.Clave BY DETA.NroItm:
+    VIEW FRAME F-HdrPed.
+    VIEW FRAME F-FtrPed.
+    I-NroItm = I-NroItm + 1.
+    x-PorDto = ( 1 -  ( 1 - DETA.Por_Dsctos[1] / 100 ) *
+                ( 1 - DETA.Por_Dsctos[2] / 100 ) *
+                ( 1 - DETA.Por_Dsctos[3] / 100 ) ) * 100.
+    IF FIRST-OF(DETA.Clave) AND DETA.Clave = 'B'
+    THEN DO:
+        DOWN 2 WITH FRAME F-DetaPed.
+        DISPLAY
+            'PROMOCIONES' @ Almmmatg.desmat
+            WITH FRAME F-DetaPed.
+        UNDERLINE
+            Almmmatg.desmat 
+            WITH FRAME F-DetaPed.
+    END.
+    DISPLAY  
+        i-NroItm  
+        DETA.codmat
+        DETA.CanPed
+        DETA.undvta
+        Almmmatg.desmat
+        Almmmatg.desmar
+        DETA.PorDto WHEN DETA.Clave = 'A'
+        DETA.preuni WHEN DETA.Clave = 'A'
+        DETA.implin WHEN DETA.Clave = 'A'
+        WITH FRAME F-DetaPed.
+END.
+
+OUTPUT CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&IF DEFINED(EXCLUDE-Carga-Detalle) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Detalle Procedure 
+PROCEDURE Carga-Detalle :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+DEF VAR i-NroItm AS INT NO-UNDO.
+
+I-NroItm = 0.
+FOR EACH FacDPedm OF FacCPedm NO-LOCK WHERE Facdpedm.Libre_c05 <> 'OF' BY FacDPedm.NroItm :
+    I-NroItm = I-NroItm + 1.
+    CREATE DETA.
+    BUFFER-COPY FacDPedm TO DETA
+        ASSIGN 
+            Deta.Clave = 'A'
+            Deta.NroItm = i-NroItm.
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+
+&IF DEFINED(EXCLUDE-Carga-Promociones) = 0 &THEN
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Carga-Promociones Procedure 
+PROCEDURE Carga-Promociones :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+DEF VAR i-NroItm AS INT NO-UNDO.
+DEF VAR x-pordto AS DEC NO-UNDO.
+
+I-NroItm = 0.
+FOR EACH FacDPedm OF FacCPedm NO-LOCK WHERE Facdpedm.Libre_c05 = 'OF' BY FacDPedm.NroItm:
+    I-NroItm = I-NroItm + 1.
+    CREATE DETA.
+    BUFFER-COPY FacDPedm TO DETA
+        ASSIGN 
+            Deta.Clave = 'B'
+            Deta.NroItm = i-NroItm.
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ENDIF
+

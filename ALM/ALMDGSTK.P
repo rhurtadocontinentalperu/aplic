@@ -1,0 +1,110 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : ALMDGSTK.P
+    Purpose     :
+    Syntax      : DO ALMDGSTK(ROWID(AlmDMov)).
+    Description : Procedimiento de Desactualizar el Stock por Salidas.
+    Author(s)   : O.G.L.
+    Created     : 17/09/97
+    Notes       : Recibe como parametro el ROWID del mov. de detalle.
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.             */
+/*----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+DEFINE INPUT PARAMETER R-DMov AS ROWID.
+DEFINE VARIABLE I-CODMAT AS CHAR NO-UNDO.
+DEFINE VARIABLE C-CODALM AS CHAR NO-UNDO.
+DEFINE VARIABLE F-CANDES AS DECIMAL NO-UNDO.
+DEFINE VARIABLE F-PREUNI AS DECIMAL NO-UNDO.
+DEFINE SHARED VAR S-CODCIA AS INTEGER.
+def var tip as integer init 0.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 41.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+/* Ubicamos el detalle a Actualizar */
+        
+   FIND AlmDMov WHERE ROWID(AlmDMov) = R-DMov NO-LOCK NO-ERROR.
+   IF NOT AVAILABLE AlmDMov THEN RETURN.
+   ASSIGN
+         I-CODMAT = AlmDMov.CodMaT
+         C-CODALM = AlmDMov.CodAlm
+         F-CANDES = AlmDMov.CanDes
+         F-PREUNI = AlmDMov.PreUni.
+         tip = if almdmov.tipmov = "i" then -1 else 1.
+   IF AlmDMov.Factor > 0 THEN 
+       ASSIGN 
+            F-CANDES = AlmDMov.CanDes * AlmDMov.Factor * tip
+            F-PREUNI = AlmDMov.PreUni / AlmDMov.Factor.
+   
+   /* Des-Actualizamos a los Materiales por Almacen */
+   FIND Almmmate WHERE Almmmate.CodCia = S-CODCIA 
+                  AND  Almmmate.CodAlm = C-CODALM 
+                  AND  Almmmate.CodMat = I-CODMAT 
+                 EXCLUSIVE-LOCK NO-ERROR.
+   IF AVAILABLE Almmmate THEN 
+      ASSIGN Almmmate.StkAct = Almmmate.StkAct - F-CANDES.
+   RELEASE Almmmate.
+   /*        
+   FIND Almmmatg WHERE Almmmatg.CodCia = S-CODCIA 
+                  AND  Almmmatg.CodMat = I-CODMAT 
+                 EXCLUSIVE-LOCK NO-ERROR.
+   IF AVAILABLE Almmmatg THEN 
+      ASSIGN Almmmatg.FchUSal = AlmDMov.FchDoc.
+   RELEASE Almmmatg.
+   */
+   
+RETURN.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

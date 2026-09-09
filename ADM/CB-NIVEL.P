@@ -1,0 +1,73 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r2 GUI
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+&IF "{&NEW}" = "" &THEN 
+    DEFINE INPUT  PARAMETER  s-codcia       AS INTEGER.
+    DEFINE OUTPUT PARAMETER  cb-niveles AS CHAR.
+    DEFINE OUTPUT PARAMETER  X-MaxNivel     AS INTEGER.  
+&ELSE
+    DEFINE VARIABLE  s-codcia AS INTEGER INIT 1.
+    DEFINE VARIABLE  cb-niveles AS CHAR.
+    DEFINE VARIABLE  X-MaxNivel     AS INTEGER.
+&ENDIF
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+                                                                        */
+&ANALYZE-RESUME
+ 
+
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+DEFI VARI j AS INTEGER.
+    DEFI VARI nivel AS INTEGER INITIAL 0.
+    DEFI VARI cb-codcia AS INTEGER INIT 0.
+    FIND Empresas WHERE Empresas.CodCia = s-codcia NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE Empresas THEN DO :
+       cb-niveles = ?.
+       X-MaxNivel     = ?.
+    END. 
+    IF NOT Empresas.Campo-CodCbd THEN cb-codcia = s-codcia.
+    FIND FIRST cb-cfga WHERE cb-cfga.CodCia = cb-codcia AND cb-cfga.CodCfg = 1
+        NO-LOCK  NO-ERROR.
+    IF NOT AVAILABLE cb-cfga THEN DO :
+       cb-niveles = ?.
+       X-MaxNivel     = ?.
+    END. 
+    cb-niveles = "".
+    REPEAT j = 1 TO NUM-ENTRIES(cb-cfga.DetCfg, "."):
+        nivel = nivel + LENGTH( ENTRY( j, cb-cfga.detCfg, ".") ).
+        IF cb-niveles <> "" THEN cb-niveles = cb-niveles + ",".
+        cb-niveles = cb-niveles + STRING( nivel, "9").
+    END.
+    X-MaxNivel = nivel.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

@@ -1,0 +1,3 @@
+define var valor as char.
+run alm/d-clave.r(output valor).
+Message valor.

@@ -1,0 +1,234 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12
+&ANALYZE-RESUME
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS Procedure 
+/*--------------------------------------------------------------------------
+    File        : r-impcmp.p
+    Purpose     : 
+
+    Syntax      :
+
+    Description : Imprime Orden de Compra
+
+    Author(s)   :
+    Created     :
+    Notes       :
+  ------------------------------------------------------------------------*/
+/*          This .W file was created with the Progress UIB.               */
+/*------------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+DEFINE INPUT PARAMETER X-ROWID AS ROWID.
+
+DEFINE SHARED VARIABLE S-CODCIA AS INTEGER.
+DEFINE SHARED VARIABLE PV-CODCIA AS INTEGER.
+DEF SHARED VAR S-NomCia AS CHAR.
+DEF VAR C-ConPgo   AS CHAR FORMAT "X(50)" NO-UNDO.
+DEF VAR X-EnLetras AS CHAR FORMAT "X(100)" NO-UNDO.
+DEF VAR I-NroItm AS INTEGER NO-UNDO.
+DEF VAR C-Moneda AS CHAR INIT "S/." FORMAT "X(3)".
+DEF VAR C-UNIT0   AS DECIMAL INIT 0.
+DEF VAR C-UNIT1   AS DECIMAL INIT 0.
+DEF VAR C-UNIT2   AS DECIMAL INIT 0.
+DEF VAR C-IGV     AS DECIMAL INIT 0.
+DEF SHARED VAR s-coddiv LIKE gn-divi.coddiv.
+DEF        VAR W-DIRALM AS CHAR FORMAT "X(50)".
+DEF        VAR W-TLFALM AS CHAR FORMAT "X(13)".
+DEF VAR N-ITEM     AS INTEGER INIT 0 NO-UNDO.
+DEF VAR X-NRO      AS CHARACTER FORMAT "x(9)".
+DEF VAR X-TOT AS DECI INIT 0.
+
+DEFINE STREAM Reporte.
+
+FIND LG-liqcsg WHERE ROWID(LG-liqcsg) = X-ROWID NO-LOCK NO-ERROR.
+IF NOT AVAILABLE LG-liqcsg THEN RETURN.
+
+IF LG-liqcsg.Codmon = 2 THEN C-Moneda = "US$".
+FIND gn-prov WHERE gn-prov.CodCia = PV-CODCIA 
+              AND  gn-prov.CodPro = LG-liqcsg.CodPro 
+             NO-LOCK NO-ERROR.
+/*
+FIND gn-ConVt WHERE gn-ConVt.Codig = LG-liqcsg.CndCmp NO-LOCK NO-ERROR.
+IF AVAILABLE gn-ConVt THEN C-ConPgo = Gn-ConVt.Nombr.
+*/
+/*
+FIND Almacen WHERE Almacen.CodCia = LG-liqcsg.CodCia 
+              AND  Almacen.CodAlm = LG-liqcsg.CodAlm 
+             NO-LOCK NO-ERROR.
+*/
+DEF VAR X-MARGEN AS DECI INIT 0.
+DEF VAR X-UNDMIN AS CHAR INIT "".
+DEF VAR X-equival AS DECI INIT 0.
+DEF VAR X-precon AS DECI INIT 0.
+DEF VAR X-porce AS char INIT "%".
+DEF VAR F-Estado AS CHAR INIT "".
+
+IF LOOKUP(LG-liqcsg.FlgEst,"X,G,P,A,T,V") > 0 THEN
+F-Estado = ENTRY(LOOKUP(LG-liqcsg.FlgEst,"X,G,P,A,T,V"),"Rechazado,Emitido,Aprobado,Anulado,Aten.Total,Vencida").
+
+
+/************************  PUNTEROS EN POSICION  *******************************/
+IF LG-liqcsg.CodMon = 2 THEN RUN bin/_numero(LG-liqcsg.ImpMn2, 2, 1, OUTPUT X-EnLetras).
+IF LG-liqcsg.CodMon = 1 THEN RUN bin/_numero(LG-liqcsg.ImpMn1, 2, 1, OUTPUT X-EnLetras).
+
+X-EnLetras = "SON : " + X-EnLetras + (IF LG-liqcsg.Codmon = 1 THEN " NUEVOS SOLES" ELSE " DOLARES AMERICANOS").
+
+/************************  DEFINICION DE FRAMES  *******************************/
+
+DEFINE VAR W-VTA0 AS DECI .
+DEFINE VAR W-VTA1 AS DECI .
+DEFINE VAR W-VTA2 AS DECI .
+DEFINE VAR S-SUBTO AS DECI .
+DEFINE VAR S-TOTAL AS DECI.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE Procedure
+&Scoped-define DB-AWARE no
+
+
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: Procedure
+   Allow: 
+   Frames: 0
+   Add Fields to: Neither
+   Other Settings: CODE-ONLY COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+/* DESIGN Window definition (used by the UIB) 
+  CREATE WINDOW Procedure ASSIGN
+         HEIGHT             = 2
+         WIDTH              = 40.
+/* END WINDOW DEFINITION */
+                                                                        */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB Procedure 
+/* ************************* Included-Libraries *********************** */
+
+{src/bin/_prns.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+ 
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK Procedure 
+
+
+/* ***************************  Main Block  *************************** */
+
+
+RUN aderb/_prlist.p(
+    OUTPUT s-printer-list,
+    OUTPUT s-port-list,
+    OUTPUT s-printer-count).
+
+X-NRO = STRING(LG-liqcsg.NroSer, "999") +  STRING(LG-liqcsg.NroDoc, "999999").
+IF Lg-liqcsg.CodMon = 1 THEN X-tot = lg-liqcsg.ImpMn1.
+IF Lg-liqcsg.CodMon = 2 THEN X-tot = lg-liqcsg.ImpMn2.
+
+DEFINE FRAME F-HdrCmp
+    N-ITEM   FORMAT "Z9"
+    LG-liqcsgd.Codmat    FORMAT "X(6)"
+    Almmmatg.DesMat    FORMAT "X(37)"
+    Almmmatg.DesMar    FORMAT "X(9)"
+    LG-liqcsgd.CodUnd    FORMAT "X(3)"
+    LG-liqcsgd.CanDes    FORMAT "(>>>,>>9.99)" 
+    LG-liqcsgd.PreUni    FORMAT ">>,>>9.9999" 
+    LG-liqcsgd.IgvMat    FORMAT ">>9.99"
+    LG-Liqcsgd.ImpCto    FORMAT "(>>>,>>9.99)"
+       
+    HEADER
+    {&PRN2} + {&PRN7A} + {&PRN6A} + S-NOMCIA + {&PRN6B} + {&PRN7B} + {&PRN3} FORMAT "X(45)"  
+    "(" + S-CODDIV + ")" AT 70 
+    {&PRN6A} + F-Estado +  {&PRN6B} AT 90 FORMAT "X(15)" skip
+    {&PRN7A} + {&PRN6A} + "LIQ.CONSIGNACION " + {&PRN6B} + {&PRN7B} + {&PRN3} AT 10 FORMAT "X(22)" 
+    {&PRN7A} + {&PRN6A} + X-NRO + {&PRN6B} + {&PRN7B} + {&PRN3} format "x(12)"
+    SKIP
+    "Proveedor : " gn-prov.CodPro gn-prov.NomPro FORMAT "x(45)"
+    "Fecha Emision :" AT 85 LG-liqcsg.Fchdoc FORMAT "99/99/9999"
+    SKIP
+    "RUC : " gn-prov.Ruc  FORMAT "x(11)"
+    SKIP
+    "Ingreso Almacen :" LG-liqcsg.Nrorf2  FORMAT "XXX-XXXXXX" 
+    SKIP
+    "Orden Compra  : " Lg-liqcsg.NroRf1 FORMAT "x(40)"
+    SKIP
+    "Moneda        :" AT 85 IF LG-liqcsg.Codmon = 1 THEN "Soles" ELSE "Dolares"  
+     SKIP
+    "----------------------------------------------------------------------------------------------------------" SKIP
+    "IT CODIGO          DESCRIPCION                  MARCA     UM  CANTIDAD      PRECIO        IGV    TOTAL   " SKIP
+    "---------------------------------------------------------------------------------------------------------" SKIP
+/*    "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" SKIP
+ *     "         1         2         3         4         5         6         7         8         9         0         1" SKIP*/
+    WITH NO-LABEL NO-UNDERLINE NO-BOX WIDTH 160 STREAM-IO DOWN.         
+
+
+OUTPUT STREAM Reporte TO PRINTER PAGED PAGE-SIZE 62.
+
+/*OUTPUT STREAM Reporte TO PRINTER.*/
+PUT STREAM Reporte CONTROL {&PRN0} + {&PRN5A} + CHR(66) + {&PRN3}.     
+
+FOR EACH LG-liqcsgd OF LG-liqcsg  NO-LOCK,
+    FIRST Almmmatg OF LG-liqcsgd NO-LOCK : 
+    
+    W-VTA0 = lg-liqcsgd.prelis * (1 - (lg-liqcsgd.dsctos[1] / 100)).
+    W-VTA1 = w-vta0  * (1 - (lg-liqcsgd.dsctos[2] / 100)).
+    W-VTA2 = w-vta1  * (1 - (lg-liqcsgd.dsctos[3] / 100)).
+    IF lg-liqcsgd.AftIgv THEN    
+       S-SUBTO = ROUND(( W-VTA2 + ( W-VTA2 * (lg-liqcsgd.IgvMat / 100 ))) * lg-liqcsgd.CANDES,2).
+    ELSE 
+       S-SUBTO = ROUND( W-VTA2  * lg-liqcsgd.CANDES,2).
+    
+    S-TOTAL = S-TOTAL + lg-liqcsgd.impcto.
+            
+    n-item = n-item + 1.
+    
+    DISPLAY STREAM Reporte 
+       n-item
+       LG-liqcsgd.Codmat 
+       Almmmatg.DesMat
+       Almmmatg.DesMar
+       LG-liqcsgd.CodUnd
+       LG-liqcsgd.CanDes
+       LG-liqcsgd.PreUni 
+       LG-liqcsgd.IgvMat
+       LG-liqcsgd.ImpCto
+       WITH FRAME F-HdrCmp.
+    DOWN STREAM Reporte WITH FRAME F-HdrCmp.
+END.
+
+  DO WHILE LINE-COUNTER(Reporte) < PAGE-SIZE(Reporte) - 7 :
+     PUT STREAM Reporte "" skip.
+  END.
+  PUT STREAM Reporte "Observaciones :" FORMAT "X(15)" . 
+  PUT STREAM Reporte lg-liqcsg.Observ FORMAT "X(100)" AT 20 SKIP(2). 
+  PUT STREAM Reporte C-Moneda AT 100 S-TOTAL FORMAT "(>>>,>>9.99)" AT 104 SKIP.
+
+OUTPUT STREAM Reporte CLOSE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+

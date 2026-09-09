@@ -1,0 +1,2 @@
+FOR EACH integral.X58CPCOA:
+    DELETE FROM integral.X58CPCOA.

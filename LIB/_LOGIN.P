@@ -1,0 +1,9 @@
+/******************************************************************************* 
+*
+*   PROGRAM:  _login.p
+*
+*   PROGRAM SUMMARY:
+*       Evita que se ejecute el programa _login.p del directorio progress
+*
+*******************************************************************************/
+DEFINE INPUT PARAMETER viewAsDialog AS LOGICAL NO-UNDO.
