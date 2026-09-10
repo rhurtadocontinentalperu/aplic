@@ -1,4 +1,4 @@
-MESSAGE 'aquí estoy' VIEW-AS ALERT-BOX.
+/*MESSAGE 'aquí estoy' VIEW-AS ALERT-BOX.*/
 
 {lib_errors/pedido_master.i}
 
